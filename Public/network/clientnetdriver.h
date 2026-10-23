@@ -15,9 +15,10 @@ public:
     void receive();
     void connect();
     void close();
+    Connection*  getserver();
     virtual ~ClientNetDriver();
 private:
-    U8 connectImpl(FArchiveIn&archive);
+    U8 connectImpl(FArchiveIn&archive,U8 phase=-1);
     void tick();
     void parsePacket(void*buf,U32 siz);
     bool parseConnectionHello();

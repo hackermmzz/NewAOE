@@ -90,7 +90,27 @@ U32 FArchiveIn::Bits() const
     return bit_limit - bit_pos;
 }
 
+U32 FArchiveIn::ByteSize() const
+{
+    return (Bits()+7)>>3;
+}
+
 void FArchiveIn::SetPos(U32 bit_pos0)
 {
     bit_pos=bit_pos0;
+}
+
+U32 FArchiveIn::GetPos() const
+{
+    return bit_pos;
+}
+
+U32 FArchiveIn::BitsLeft() const
+{
+    return bit_limit-bit_pos;
+}
+
+bool FArchiveIn::IsEnd()const
+{
+    return bit_pos==bit_limit;
 }

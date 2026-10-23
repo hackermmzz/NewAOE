@@ -69,8 +69,9 @@ inline void BitCopy(
         return;
     }
 
-    // 偏移不同：每次取当前源字节和目标字节都能容纳的那段 bit。
-    while (BitCount > 0)
+    // 偏移不同：先补齐目标首字节。首部最多循环两次，因为每次至少
+    // 会让源或目标推进到下一个字节边界。
+    while (DBit != 0 && BitCount != 0)
     {
         const U32 SrcAvail = 8u - SBit;
         const U32 DestRoom = 8u - DBit;
@@ -102,5 +103,38 @@ inline void BitCopy(
             DBit = 0;
             ++D;
         }
+    }
+
+    if (BitCount == 0)
+    {
+        return;
+    }
+
+    // 目标现在按字节对齐。源仍不对齐，因此相邻两个源字节组成一个
+    // 16-bit 窗口，每次直接生成一个完整目标字节。相比逐段推进，热
+    // 循环中不再需要掩码合并和源/目标边界分支。
+    while (BitCount >= 8u)
+    {
+        const U16 Window = static_cast<U16>(S[0]) |
+            static_cast<U16>(static_cast<U16>(S[1]) << 8u);
+        *D = static_cast<Byte>(Window >> SBit);
+        ++S;
+        ++D;
+        BitCount -= 8u;
+    }
+
+    // 尾部不足一个字节，只覆盖目标低 BitCount 位。仅当有效位确实跨
+    // 过源字节边界时读取 S[1]，避免在输入末尾发生越界读取。
+    if (BitCount != 0)
+    {
+        U16 Window = S[0];
+        if (SBit + BitCount > 8u)
+        {
+            Window = static_cast<U16>(Window |
+                static_cast<U16>(static_cast<U16>(S[1]) << 8u));
+        }
+        const Byte TailMask = static_cast<Byte>((1u << BitCount) - 1u);
+        const Byte Bits = static_cast<Byte>((Window >> SBit) & TailMask);
+        *D = static_cast<Byte>((*D & static_cast<Byte>(~TailMask)) | Bits);
     }
 }

@@ -17,6 +17,8 @@ public:
     FArchive();
     template<class T>
     void Serialize(T&val);
+    template<class T,class...ARG>
+    void Serialize(T&a,ARG&...arg);
     void Serialize(I8&val);
     void Serialize(I16&val);
     void Serialize(I32&val);
@@ -36,7 +38,7 @@ public:
     bool IsError()const { return error; }
     virtual void* GetData();
     // 缓冲区里实际占用的字节数。有效 bit 不一定占满最后一个字节。
-    U32 ByteSize()const { return static_cast<U32>(data.size()); }
+    virtual U32 ByteSize()const { return static_cast<U32>(data.size()); }
     virtual void Clear()=0;
     // 写侧：已经写入的 bit 数。读侧：还剩多少 bit，出错后为 0。
     virtual U32 Bits()const=0;
@@ -47,5 +49,13 @@ void FArchive::Serialize(T &val)
 {
     val.Serialize(this);
 }
+
+template <class T, class... ARG>
+inline void FArchive::Serialize(T &a, ARG &...arg)
+{
+    Serialize(a);
+    Serialize(arg...);
+}
+
 
 #endif // FARCHIVE_H

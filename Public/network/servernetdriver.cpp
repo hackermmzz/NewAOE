@@ -2,6 +2,7 @@
 #include "Public/util/util.h"
 #include "Public/serializer/FarchiveOut.h"
 #include<algorithm>
+#include "Public/profile/profile.h"
 
 ServerNetDriver::ServerNetDriver(std::shared_ptr<Sock> sock_)
 {
@@ -11,8 +12,10 @@ ServerNetDriver::ServerNetDriver(std::shared_ptr<Sock> sock_)
 
 void ServerNetDriver::receive()
 {
+    PROFILE_TRACE();
+    //收包
     char buf[PACKET_MAX_SIZE*2];
-    for(;;){
+    for(I32 cnt=0;cnt<DRIVER_RECEIVE_MAX_PACKAGE_NUM;++cnt){
         auto info=sock->newInfo();
         auto siz=sock->read(buf,PACKET_MAX_SIZE,*info);
         if(siz==0){
@@ -20,8 +23,22 @@ void ServerNetDriver::receive()
         }
         parsePacket(buf,siz,info);
     }
+    //对connection执行刷新，告诉连接这一帧接收完毕
+    for(auto&conn:connections){
+        conn->postRecevive();
+    }
     //更新Tick
     tick();
+}
+
+void ServerNetDriver::send()
+{
+    Sock&sock=*(this->sock.get());
+    for(auto&conn:connections){
+        if(conn!=nullptr){
+            conn->send(sock);
+        }
+    }
 }
 
 std::shared_ptr<Connection> ServerNetDriver::getConnection(const std::string&cookie)
@@ -44,6 +61,11 @@ bool ServerNetDriver::keepConnectionAlive(const std::string&cookie)
     ConnectionInfo&info=itr->second;
     info.preAliveTime=GetTimeMS();
     return true;
+}
+
+const std::vector<std::shared_ptr<Connection>>& ServerNetDriver::getAllConnections()
+{
+    return connections;
 }
 
 ServerNetDriver::~ServerNetDriver()
@@ -79,6 +101,7 @@ void ServerNetDriver::closeConnection(const std::string&cookie)
 
 void ServerNetDriver::tick()
 {
+    PROFILE_TRACE();
     //处理长时间未建立连接的信息
     processConnectionEstablishTimeout();
     //处理超时连接
@@ -91,6 +114,8 @@ void ServerNetDriver::tick()
 
 void ServerNetDriver::processConnectionEstablishTimeout()
 {
+    PROFILE_TRACE();
+
     std::vector<std::string>nr;
     auto curTime=GetTimeMS();
     for(auto&ele:connectionEstablishPhase){
@@ -106,6 +131,8 @@ void ServerNetDriver::processConnectionEstablishTimeout()
 
 void ServerNetDriver::processTimeoutConnection()
 {
+    PROFILE_TRACE();
+
     std::vector<std::string>needRemove;
     auto curTime=GetTimeMS();
     for(auto itr=cookieToconnection.begin();itr!=cookieToconnection.end();++itr){
@@ -122,6 +149,8 @@ void ServerNetDriver::processTimeoutConnection()
 
 void ServerNetDriver::processConnectionClose()
 {
+    PROFILE_TRACE();
+
     std::vector<std::shared_ptr<Connection>>nr;
     for(auto&connection:connections){
         if(connection->closed()){
@@ -138,6 +167,8 @@ void ServerNetDriver::processConnectionClose()
 
 void ServerNetDriver::processPacketErrorConnection()
 {
+    PROFILE_TRACE();
+
     std::vector<std::string>nr;
     for(auto&ele:cookieToconnection){
         auto&info=ele.second;
@@ -154,6 +185,8 @@ void ServerNetDriver::processPacketErrorConnection()
 
 void ServerNetDriver::parsePacket(void *buf, U32 size, std::shared_ptr<AddrInfo> info)
 {
+    PROFILE_TRACE();
+
     FArchiveIn archive;
     archive.SetBuffer(buf,size<<3);
     //判断是否是连接包
@@ -193,6 +226,8 @@ bool ServerNetDriver::parseConnectionHello(FArchiveIn &archive, std::shared_ptr<
 
 void ServerNetDriver::parseConnectionRequest(FArchiveIn&archive,std::shared_ptr<AddrInfo> info)
 {
+    PROFILE_TRACE();
+
     U64 curTime=GetTimeMS();
     U8 phase=0;
     archive.Serialize(phase);
@@ -314,6 +349,8 @@ bool ServerNetDriver::parseAddNewConnection(FArchiveIn & archive,std::shared_ptr
 
 void ServerNetDriver::parseConnectionPacket(FArchiveIn &archive, std::shared_ptr<AddrInfo> info)
 {
+    PROFILE_TRACE();
+
     auto curTime=GetTimeMS();
     //获取cookie
     std::string cookie(PACKET_COOKIE_SIZE,0);
@@ -332,7 +369,7 @@ void ServerNetDriver::parseConnectionPacket(FArchiveIn &archive, std::shared_ptr
         auto connection=getConnection(cookie);
         if(connection){
             //交给connection处理包
-            status=connection->parsePacket(archive);
+            status=connection->receive(archive);
         }
     }
     //记录结果

@@ -36,6 +36,7 @@ void openNonBlocking(udp::socket&sock,const udp::endpoint&local,bool bindPort){
         }
     }
     sock.non_blocking(true,ec);
+    sock.set_option(asio::socket_base::receive_buffer_size(262144));    //设置为缓冲区最大值
     if(ec){
         sock.close();
     }

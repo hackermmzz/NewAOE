@@ -18,7 +18,11 @@ public:
     virtual void Serialize(void *dst, U32 bits);
     virtual void Clear();
     virtual U32 Bits()const;
+    virtual U32 ByteSize()const;
     virtual void SetPos(U32 bit_pos);
+    U32 GetPos()const;
+    bool IsEnd()const;
+    U32 BitsLeft()const;
 private:
     const void* buf;
     U32 bit_limit;

@@ -10,7 +10,7 @@
 #include"Public/serializer/FarchiveIn.h"
 #include <queue>
 #include<tuple>
-
+#include<thread>
 
 class ServerNetDriver{
 private:
@@ -32,7 +32,7 @@ private:
             U64 timeStamp;
         };
         std::deque<ProcessStateInfo>ProcessStateQueue;
-        U16 ProcessStateErrorCount;
+        U16 ProcessStateErrorCount=0;
     };
     //关闭连接信息
     struct ConnectionCloseInfo{
@@ -52,9 +52,13 @@ public:
     ServerNetDriver(std::shared_ptr<Sock> sock);
     //接收所有的包
     void receive();
+    //发送所有的包
+    void send();
     //根据cookie获取对应的连接
     std::shared_ptr<Connection> getConnection(const std::string&cookie);
     bool keepConnectionAlive(const std::string&cookie);
+    //获取所有连接
+    const std::vector<std::shared_ptr<Connection>>& getAllConnections();
     //
     virtual ~ServerNetDriver();
 private:

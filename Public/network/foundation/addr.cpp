@@ -1,5 +1,6 @@
 #include "Public/network/foundation/addr.h"
 #include<memory.h>
+#include<string>
 
 NetAddrInfo::NetAddrInfo():m_port(0){
     m_ip[0]=0;
@@ -32,7 +33,12 @@ U16 NetAddrInfo::port()const{
 
 const char *NetAddrInfo::Info() const
 {
-    return ip();
+    static thread_local char buf[IP_CAP+10];
+    std::string info(ip());
+    info+="_"+std::to_string(port());
+    memcpy(buf,info.data(),info.size());
+    buf[info.size()]=0;
+    return buf;
 }
 
 void NetAddrInfo::copy(const AddrInfo &info)

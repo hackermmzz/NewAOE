@@ -1,6 +1,7 @@
 #include "Public/network/clientnetdriver.h"
 #include "Public/serializer/FarchiveOut.h"
 #include "Public/util/util.h"
+#include "Public/profile/profile.h"
 
 ClientNetDriver::ClientNetDriver(std::shared_ptr<Sock> sock_, const AddrInfo &addrInfo)
 {
@@ -13,14 +14,18 @@ ClientNetDriver::ClientNetDriver(std::shared_ptr<Sock> sock_, const AddrInfo &ad
 
 void ClientNetDriver::receive()
 {
+    PROFILE_TRACE();
+
     char buf[PACKET_MAX_SIZE*2];
-    for(;;){
+    for(I32 i=0;i<DRIVER_RECEIVE_MAX_PACKAGE_NUM;i+=1){
         auto siz=sock->read(buf,PACKET_MAX_SIZE,*server_addr);
         if(siz==0){
             break;
         }
         parsePacket(buf,siz);
     }
+    //
+    if(server!=nullptr)server->postRecevive();
     //
     tick();
 }
@@ -52,6 +57,8 @@ void ClientNetDriver::connect()
         //
         if(ret){
             curPhase=connectImpl(archive);
+        }else{
+            connectImpl(archive,U8(curPhase+1));
         }
         //如果阶段变更了，说明网络还行，恢复回溯
         if(curPhase!=prePhase)backoff=1;
@@ -63,17 +70,20 @@ void ClientNetDriver::connect()
 void ClientNetDriver::close()
 {
     if(server==nullptr)return;
-    //
-    for(;;){
-        
-    }
+    //关闭连接
+    server->close();
+}
+
+Connection*  ClientNetDriver::getserver()
+{
+    return server.get();
 }
 
 ClientNetDriver::~ClientNetDriver()
 {
 }
 
-U8 ClientNetDriver::connectImpl(FArchiveIn &archive)
+U8 ClientNetDriver::connectImpl(FArchiveIn &archive,U8 try_phase)
 {
     archive.SetPos(0);
     //取出connect位
@@ -82,7 +92,7 @@ U8 ClientNetDriver::connectImpl(FArchiveIn &archive)
     if(!connect)return false;
     //连接
     U8 phase=0;
-    bool ok;
+    bool ok=false;
     U16 buf_len=0;
     std::vector<Byte> buf;
     archive.Serialize(&ok,1);
@@ -95,7 +105,7 @@ U8 ClientNetDriver::connectImpl(FArchiveIn &archive)
     }
     //如果读取出错，那么重HELLO开始重新连接
     if(archive.IsError()){
-        phase=U8(-1);
+        phase=U8(try_phase-1);
     }
     //
     bool status=false;
@@ -124,11 +134,18 @@ U8 ClientNetDriver::connectImpl(FArchiveIn &archive)
 
 void ClientNetDriver::tick()
 {
-    
+    PROFILE_TRACE();
+
+    //关闭连接
+    if(server!=nullptr&&server->closed()){
+        server.reset(nullptr);
+    }
 }
 
 void ClientNetDriver::parsePacket(void *buf, U32 siz)
 {
+    PROFILE_TRACE();
+
     FArchiveIn archive;
     archive.SetBuffer(buf,siz<<3);
     //判断是否是连接包
@@ -142,7 +159,7 @@ void ClientNetDriver::parsePacket(void *buf, U32 siz)
     }
     //普通包
     if(server!=nullptr){
-        bool status=server->parsePacket(archive);
+        bool status=server->receive(archive);
         //按道理都应该处理成功的，所以处理失败的情况直接assert
         Assert(!status,"按道理ClientDriver不可能处理包返回false的!");
     }
