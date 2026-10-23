@@ -1,5 +1,6 @@
 #include "Public/network/bunch.h"
 #include <algorithm>
+#include <iterator>
 #include "Public/util/util.h"
 #include "Public/network/conf.h"
 #include "Public/serializer/bitcopy.hpp"
@@ -278,11 +279,36 @@ void BunchReliableManager::pushFromWaitQueue()
 BunchUnReliableManager::BunchUnReliableManager()
 {
     globalBunchInd=0;
+    recvTotalBits=0;
+    recvLatestBunchInd=0;
+    recvLastProgressTime=0;
+    sendAckedCount=0;
+    sendNotifyCallback=nullptr;
 }
 
 
 void BunchUnReliableManager::notify(bool ack, BunchHeader &header)
 {
+    bool legal=(
+        !header.bReliable&&
+        !sendQueue.empty()&&
+        header.bunchInd>=sendQueue.front().info.header.bunchInd&&
+        header.bunchInd<=sendQueue.back().info.header.bunchInd);
+    if(!legal)return;
+    //不可靠Bunch只要有一个分片NAK，整个Bunch就发送失败，不做重传。
+    if(!ack){
+        finishSend(false);
+        return;
+    }
+    for(auto&info:sendQueue){
+        if(info.info.header.bunchInd!=header.bunchInd)continue;
+        if(!info.acked){
+            info.acked=true;
+            ++sendAckedCount;
+        }
+        break;
+    }
+    if(sendAckedCount==sendQueue.size())finishSend(true);
 }
 
 void BunchUnReliableManager::postsend()
@@ -291,22 +317,222 @@ void BunchUnReliableManager::postsend()
 
 void BunchUnReliableManager::send(const Byte *buf, U32 bit_size)
 {
+    sendWithNotify(buf,bit_size,nullptr);
 }
 
 void BunchUnReliableManager::sendWithNotify(const Byte *buf, U32 bit_size, BunchUnReliableManager::SendNotifyCallback notify)
 {
+    if(buf==nullptr||bit_size==0||bit_size>(BUNCH_MAX_SIZE<<3)){
+        if(notify)notify(false);
+        return;
+    }
+    std::shared_ptr<Byte[]>data(new Byte[(bit_size+7)>>3]);
+    memcpy(data.get(),buf,(bit_size+7)>>3);
+    waitQueue.push(std::remove_reference_t<decltype(waitQueue.front())>{data,bit_size,notify});
 }
 
 bool BunchUnReliableManager::receive(FArchiveIn &archive)
 {
-    return false;
+    bool breliable=false;
+    bool bPartial=false;
+    bool bFirstPartial=false;
+    bool bFinalPartial=false;
+    U16 bitSize=0;
+    U64 bunchInd=0;
+    archive.Serialize(&breliable,1);
+    archive.Serialize(&bPartial,1);
+    archive.Serialize(&bFirstPartial,1);
+    archive.Serialize(&bFinalPartial,1);
+    archive.Serialize(bitSize,bunchInd);
+    std::shared_ptr<Byte[]>data(new Byte[(bitSize+7)>>3]);
+    archive.Serialize(data.get(),bitSize);
+    if(archive.IsError()||breliable)return false;
+    if(bitSize==0)return true;
+    //已经处理或已经确定丢弃的旧分片无需再次进入队列。
+    if(bunchInd<=recvLatestBunchInd)return true;
+
+    //新的完整Bunch已经到达时，之前未拼完的不可靠Bunch不再等待。
+    if(!bPartial){
+        if(!recvQueue.empty())clearRecvQueue(recvQueue.back().ind);
+        FArchiveIn bunchArchive;
+        bunchArchive.SetBuffer(data.get(),bitSize);
+        bool ret=processReceivedBunch(bunchArchive);
+        if(ret)recvLatestBunchInd=std::max(recvLatestBunchInd,bunchInd);
+        return ret;
+    }
+
+    if(!recvQueue.empty()){
+        auto&tail=recvQueue.back();
+        //已经见到上一个Bunch的final，却仍缺少中间分片；更大的ind说明它已经丢包。
+        //新的first同样代表下一个Bunch开始，旧队列可直接放弃。
+        if(bunchInd>tail.ind&&(tail.tail||bFirstPartial)){
+            clearRecvQueue(tail.ind);
+        }
+    }
+
+    auto insertPos=recvQueue.end();
+    for(auto itr=recvQueue.begin();itr!=recvQueue.end();++itr){
+        if(itr->ind==bunchInd){
+            //重复分片虽然不重复入队，但说明这条不可靠Bunch仍有网络活动。
+            recvLastProgressTime=GetTimeMS();
+            return true;
+        }
+        if(itr->ind>bunchInd){
+            insertPos=itr;
+            break;
+        }
+    }
+    RecvInfo info;
+    info.data=data;
+    info.ind=bunchInd;
+    info.bit_size=bitSize;
+    info.head=bFirstPartial;
+    info.tail=bFinalPartial;
+    recvTotalBits+=bitSize;
+    recvQueue.insert(insertPos,info);
+    recvLastProgressTime=GetTimeMS();
+
+    if(recvTotalBits>(BUNCH_MAX_SIZE<<3)){
+        clearRecvQueue(recvQueue.back().ind);
+        return false;
+    }
+
+    if(recvQueue.front().head&&
+       recvQueue.back().tail&&
+       recvQueue.size()==recvQueue.back().ind-recvQueue.front().ind+1){
+        std::unique_ptr<Byte[]>merged(new Byte[(recvTotalBits+7)>>3]());
+        U32 bitOffset=0;
+        for(auto&fragment:recvQueue){
+            BitCopy(merged.get(),bitOffset,fragment.data.get(),0,fragment.bit_size);
+            bitOffset+=fragment.bit_size;
+        }
+        FArchiveIn bunchArchive;
+        bunchArchive.SetBuffer(merged.get(),recvTotalBits);
+        U64 latestInd=recvQueue.back().ind;
+        bool ret=processReceivedBunch(bunchArchive);
+        clearRecvQueue(ret?latestInd:0);
+        return ret;
+    }
+    return true;
 }
 
 std::pair<bool,BunchSendInfo> BunchUnReliableManager::getBunch()
 {
-    return  {false,BunchSendInfo{}};
+    if(needSendQueue.empty()){
+        if(!sendQueue.empty())return {false,BunchSendInfo{}};
+        if(waitQueue.empty())return {false,BunchSendInfo{}};
+        pushFromWaitQueue();
+    }
+    auto ret=needSendQueue.front();
+    needSendQueue.pop();
+    return {true,ret};
 }
 
 void BunchUnReliableManager::postreceive()
 {
+    if(recvQueue.empty())return;
+    bool stalled=recvLastProgressTime&&
+        GetTimeMS()-recvLastProgressTime>UNRELIABLE_BUNCH_RECV_STALL_TIMEOUT_MS;
+    if(stalled||recvGapTooLarge()){
+        clearRecvQueue(recvQueue.back().ind);
+    }
+}
+
+void BunchUnReliableManager::BunchSend(const BunchSendInfo &bunch)
+{
+    needSendQueue.push(bunch);
+}
+
+void BunchUnReliableManager::finishSend(bool success)
+{
+    sendAckedCount=0;
+    sendQueue.clear();
+    while(!needSendQueue.empty())needSendQueue.pop();
+    auto notify=sendNotifyCallback;
+    sendNotifyCallback=nullptr;
+    if(notify)notify(success);
+}
+
+void BunchUnReliableManager::clearRecvQueue(U64 latestInd)
+{
+    if(latestInd)recvLatestBunchInd=std::max(recvLatestBunchInd,latestInd);
+    recvQueue.clear();
+    recvTotalBits=0;
+    recvLastProgressTime=0;
+}
+
+bool BunchUnReliableManager::recvGapTooLarge() const
+{
+    if(recvQueue.size()<2)return false;
+    U64 totalSpan=recvQueue.back().ind-recvQueue.front().ind+1;
+    U64 maxMissing=totalSpan/UNRELIABLE_BUNCH_RECV_GAP_RATIO_DENOMINATOR;
+    auto previous=recvQueue.begin();
+    for(auto current=std::next(previous);current!=recvQueue.end();++current,++previous){
+        //只计算相邻两个已收到分片之间连续缺失的数量。
+        //例如100100110的最大缺口是2，而不是所有0的总数。
+        U64 missing=current->ind-previous->ind-1;
+        if(missing>maxMissing)return true;
+    }
+    return false;
+}
+
+bool BunchUnReliableManager::processReceivedBunch(FArchiveIn &archive)
+{
+    std::unique_ptr<Byte[]>data(new Byte[archive.ByteSize()+1]());
+    archive.Serialize(data.get(),archive.Bits());
+    if(archive.IsError())return false;
+    std::cout<<reinterpret_cast<const char*>(data.get())<<std::endl;
+    return true;
+}
+
+void BunchUnReliableManager::pushFromWaitQueue()
+{
+    auto info=waitQueue.front();
+    waitQueue.pop();
+    constexpr U32 limit=PACKET_MAX_SIZE-(sizeof(PacketNotificationHeader)+sizeof(Packet::packID)+sizeof(Packet::cookie)+sizeof(BunchHeader)+1);
+    constexpr U32 limitBits=limit<<3;
+    U32 offset=0;
+    U32 bitsLeft=std::get<1>(info);
+    Byte*buf=std::get<0>(info).get();
+    sendNotifyCallback=std::get<2>(info);
+    bool partial=bitsLeft>limitBits;
+    while(bitsLeft){
+        U32 bitSize=std::min(limitBits,bitsLeft);
+        if(bitSize!=bitsLeft)bitSize=bitSize>>3<<3;
+        bitsLeft-=bitSize;
+
+        BunchHeader header;
+        header.bReliable=false;
+        header.bPartial=partial;
+        header.bFirstPartial=partial&&offset==0;
+        header.bFinalPartial=partial&&bitsLeft==0;
+        header.bitSize=static_cast<U16>(bitSize);
+        header.bunchInd=++globalBunchInd;
+
+        U32 bytes=sizeof(BunchHeader)+((bitSize+7)>>3);
+        std::shared_ptr<Byte[]>bunch(new Byte[bytes]);
+        FArchiveOut out;
+        out.SetBuffer(bunch.get(),bytes<<3);
+        bool reliable=false;
+        bool first=header.bFirstPartial;
+        bool final=header.bFinalPartial;
+        U16 serializedBitSize=header.bitSize;
+        U64 bunchInd=header.bunchInd;
+        out.Serialize(&reliable,1);
+        out.Serialize(&partial,1);
+        out.Serialize(&first,1);
+        out.Serialize(&final,1);
+        out.Serialize(serializedBitSize);
+        out.Serialize(bunchInd);
+        out.Serialize(buf+offset,bitSize);
+
+        BunchSendInfo sendInfo;
+        sendInfo.bits=out.Bits();
+        sendInfo.close=false;
+        sendInfo.bunch=bunch;
+        sendInfo.header=header;
+        sendQueue.push_back(SendInfo{sendInfo,false});
+        BunchSend(sendInfo);
+        offset+=bitSize>>3;
+    }
 }

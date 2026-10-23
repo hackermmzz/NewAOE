@@ -74,6 +74,12 @@ void ClientNetDriver::close()
     server->close();
 }
 
+void ClientNetDriver::send()
+{
+    if(server==nullptr)return;
+    server->send(*sock);
+}
+
 Connection*  ClientNetDriver::getserver()
 {
     return server.get();

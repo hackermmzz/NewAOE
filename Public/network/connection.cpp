@@ -85,6 +85,21 @@ void Connection::reliableSend(const Byte *buf, U32 bits)
     reliableManager->send(buf,bits);
 }
 
+void Connection::unReliableSend(const Byte *buf, U32 bits)
+{
+    if(bclose)return;
+    unReliableManager->send(buf,bits);
+}
+
+void Connection::unReliableSendWithNotify(const Byte *buf, U32 bits, std::function<void(bool)> notify)
+{
+    if(bclose){
+        if(notify)notify(false);
+        return;
+    }
+    unReliableManager->sendWithNotify(buf,bits,notify);
+}
+
 void Connection::send(const Sock &sock)
 {
     //如果连接已经关闭了，就不发包了

@@ -15,6 +15,7 @@ public:
     void receive();
     void connect();
     void close();
+    void send();
     Connection*  getserver();
     virtual ~ClientNetDriver();
 private:

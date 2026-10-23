@@ -101,6 +101,26 @@ class BunchUnReliableManager:public BunchManager{
 private:
     U64 globalBunchInd;
     using SendNotifyCallback = std::function<void(bool)>;
+    struct SendInfo{
+        BunchSendInfo info;
+        bool acked;
+    };
+    struct RecvInfo{
+        std::shared_ptr<Byte[]>data;
+        U64 ind;
+        U32 bit_size;
+        bool head;
+        bool tail;
+    };
+    std::list<RecvInfo>recvQueue;
+    U32 recvTotalBits;
+    U64 recvLatestBunchInd;
+    U64 recvLastProgressTime;
+    std::list<SendInfo>sendQueue;
+    U16 sendAckedCount;
+    SendNotifyCallback sendNotifyCallback;
+    std::queue<BunchSendInfo>needSendQueue;
+    std::queue<std::tuple<std::shared_ptr<Byte[]>,U32,SendNotifyCallback>>waitQueue;
 public:
     BunchUnReliableManager();
     virtual void notify(bool ack,BunchHeader&header);
@@ -110,4 +130,11 @@ public:
     virtual bool receive(FArchiveIn&archive);
     virtual std::pair<bool,BunchSendInfo> getBunch();
     virtual void postreceive();
+private:
+    void BunchSend(const BunchSendInfo&bunch);
+    void finishSend(bool success);
+    void clearRecvQueue(U64 latestInd=0);
+    bool recvGapTooLarge()const;
+    bool processReceivedBunch(FArchiveIn&archive);
+    void pushFromWaitQueue();
 };

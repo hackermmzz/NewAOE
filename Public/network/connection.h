@@ -65,6 +65,8 @@ public:
     bool closed()const;
     bool receive(FArchiveIn&archive);
     void reliableSend(const Byte*buf,U32 bits);
+    void unReliableSend(const Byte*buf,U32 bits);
+    void unReliableSendWithNotify(const Byte*buf,U32 bits,std::function<void(bool)> notify);
     void send(const Sock& sock);
     std::shared_ptr<AddrInfo> getAddrInfo()const;
     std::string getCookie()const;

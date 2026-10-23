@@ -31,6 +31,10 @@ constexpr U32 CONNECTION_MAX_SENDING_QUEUE_SIZE=1024;
 constexpr U16 DRIVER_RECEIVE_MAX_PACKAGE_NUM=1024;
 //Connection接收方等待关闭时间，超时自动关闭(ms)
 constexpr U16 CONNECTION_DRAINING_TIME=2000;
+//不可靠Bunch分片队列长时间没有推进时，认为剩余分片已经丢失(ms)
+constexpr U32 UNRELIABLE_BUNCH_RECV_STALL_TIMEOUT_MS=1000/3;
+//不可靠Bunch接收队列中，单个缺口最多允许占当前Bunch索引跨度的比例分母
+constexpr U8 UNRELIABLE_BUNCH_RECV_GAP_RATIO_DENOMINATOR=3;
 
 //枚举类型，表示连接类型
 enum DriverTypeEnum{
