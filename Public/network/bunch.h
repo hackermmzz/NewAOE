@@ -44,6 +44,7 @@ public:
     virtual void postsend()=0;
     virtual bool receive(FArchiveIn&archive)=0;
     virtual std::pair<bool,BunchSendInfo> getBunch()=0;
+    virtual void postreceive()=0;
 };
 
 
@@ -86,7 +87,7 @@ public:
     virtual void postsend();
     virtual bool receive(FArchiveIn&archive);
     virtual std::pair<bool,BunchSendInfo> getBunch();
-
+    virtual void postreceive();
 private:
     void BunchSend(const BunchSendInfo&bunch);
     void NotifySendOK();
@@ -99,11 +100,14 @@ private:
 class BunchUnReliableManager:public BunchManager{
 private:
     U64 globalBunchInd;
-    
+    using SendNotifyCallback = std::function<void(bool)>;
 public:
     BunchUnReliableManager();
     virtual void notify(bool ack,BunchHeader&header);
     virtual void postsend();
+    virtual void send(const Byte*buf,U32 bit_size);
+    virtual void sendWithNotify(const Byte*buf,U32 bit_size,BunchUnReliableManager::SendNotifyCallback notify);
     virtual bool receive(FArchiveIn&archive);
     virtual std::pair<bool,BunchSendInfo> getBunch();
+    virtual void postreceive();
 };

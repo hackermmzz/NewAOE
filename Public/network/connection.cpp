@@ -180,6 +180,9 @@ void Connection::postRecevive()
     }
     sendHistoryBits>>=sendHistoryEnhance;
     sendHistorySeq=sendHistoryLatestSeq+1;
+    //通知管理器postreceive
+    reliableManager->postreceive();
+    unReliableManager->postreceive();
 }
 
 bool Connection::wrapBunchToPacket(std::vector<const BunchSendInfo*>&bunch, bool needAckedInfo)

@@ -185,6 +185,9 @@ std::pair<bool,BunchSendInfo> BunchReliableManager::getBunch()
     return {true,ret};
 }
 
+void BunchReliableManager::postreceive()
+{
+}
 
 void BunchReliableManager::BunchSend(const BunchSendInfo&bunch)
 {
@@ -270,6 +273,8 @@ void BunchReliableManager::pushFromWaitQueue()
     //
 }
 
+/********************************************************************不可靠bunch管理器************************************ */
+
 BunchUnReliableManager::BunchUnReliableManager()
 {
     globalBunchInd=0;
@@ -284,6 +289,14 @@ void BunchUnReliableManager::postsend()
 {
 }
 
+void BunchUnReliableManager::send(const Byte *buf, U32 bit_size)
+{
+}
+
+void BunchUnReliableManager::sendWithNotify(const Byte *buf, U32 bit_size, BunchUnReliableManager::SendNotifyCallback notify)
+{
+}
+
 bool BunchUnReliableManager::receive(FArchiveIn &archive)
 {
     return false;
@@ -292,4 +305,8 @@ bool BunchUnReliableManager::receive(FArchiveIn &archive)
 std::pair<bool,BunchSendInfo> BunchUnReliableManager::getBunch()
 {
     return  {false,BunchSendInfo{}};
+}
+
+void BunchUnReliableManager::postreceive()
+{
 }
