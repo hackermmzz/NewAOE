@@ -17,11 +17,14 @@ void ClientNetDriver::receive()
     PROFILE_TRACE();
 
     char buf[PACKET_MAX_SIZE*2];
+    auto recv_addr=sock->newInfo();
     for(I32 i=0;i<DRIVER_RECEIVE_MAX_PACKAGE_NUM;i+=1){
-        auto siz=sock->read(buf,PACKET_MAX_SIZE,*server_addr);
+        auto siz=sock->read(buf,PACKET_MAX_SIZE,*recv_addr);
         if(siz==0){
             break;
         }
+        //检测是否是恶意包
+        if(strcmp(recv_addr->Info(),server_addr->Info()))continue;
         parsePacket(buf,siz);
     }
     //
@@ -30,12 +33,19 @@ void ClientNetDriver::receive()
     tick();
 }
 
-void ClientNetDriver::connect()
+void ClientNetDriver::connect(bool reconnect)
 {
     //关闭现有连接
     if(server!=nullptr){
-        server->close();
-        server.reset(nullptr);
+        if(reconnect){
+            server->close();
+            while(server!=nullptr&&server->closed()==false){
+                receive();
+                send();
+            }
+        }else{
+            return;//因为现在已经有连接了
+        }
     }
     //
     char buf[PACKET_MAX_SIZE*2];
@@ -44,10 +54,13 @@ void ClientNetDriver::connect()
     I32 backoff=1;
     U8 prePhase=U8(-1);
     U8 curPhase=prePhase;
+    auto recv_addr=sock->newInfo();
     for(;curPhase!=CONN_REQ_OK;){
         //睡眠N秒钟
         bool ret=wait_for(backoff,[&]()->bool{
-            siz=sock->read(buf,PACKET_MAX_SIZE,*server_addr);
+            siz=sock->read(buf,PACKET_MAX_SIZE,*recv_addr);
+            //检查是否是恶意包
+            if(strcmp(recv_addr->Info(),server_addr->Info()))return false;
             if(siz){
                 archive.SetBuffer(buf,siz<<3);
                 return true;
@@ -64,6 +77,7 @@ void ClientNetDriver::connect()
         if(curPhase!=prePhase)backoff=1;
         else backoff=std::min(I32(backoff*2),I32(16));
         prePhase=curPhase;
+        archive.SetBuffer(buf,0);
     }
 }
 
@@ -105,12 +119,12 @@ U8 ClientNetDriver::connectImpl(FArchiveIn &archive,U8 try_phase)
     archive.Serialize(phase);
     archive.Serialize(buf_len);
     //取出数据
-    if(buf_len>0){
+    if(buf_len>0&&buf_len<=PACKET_COOKIE_SIZE){
         buf.resize(buf_len);
         archive.Serialize(&buf[0],buf_len<<3);
     }
-    //如果读取出错，那么重HELLO开始重新连接
-    if(archive.IsError()){
+    //如果读取出错或者拒绝连接，那么重HELLO开始重新连接
+    if(archive.IsError() || !ok){
         phase=U8(try_phase-1);
     }
     //
@@ -160,11 +174,16 @@ void ClientNetDriver::parsePacket(void *buf, U32 siz)
     if(archive.IsError())return;
     //重新建立连接
     if(bConnectionRequest){
-        connect();
+        server.reset(nullptr);
+        connect(false);
         return;
     }
     //普通包
     if(server!=nullptr){
+        //检查cookie是否存在且匹配
+        char cookie[PACKET_COOKIE_SIZE];
+        archive.Serialize(&cookie,PACKET_COOKIE_SIZE<<3);
+        if(archive.IsError() || memcmp(cookie,server->getCookie().data(),PACKET_COOKIE_SIZE))return;
         bool status=server->receive(archive);
         //按道理都应该处理成功的，所以处理失败的情况直接assert
         Assert(!status,"按道理ClientDriver不可能处理包返回false的!");
@@ -196,6 +215,7 @@ bool ClientNetDriver::parseRespNewConnection()
 
 bool ClientNetDriver::parseAddNewConnection(const std::vector<Byte>&data)
 {
+    if(data.size()!=PACKET_COOKIE_SIZE)return false;
     //拿到cookie
     std::string cookie(data.begin(),data.end());
     //创建连接
@@ -206,7 +226,7 @@ bool ClientNetDriver::parseAddNewConnection(const std::vector<Byte>&data)
     U8 phase=CONN_REQ_OK;
     out.Serialize(&connect,1);
     out.Serialize(phase);
-    out.Serialize(cookie.data(),PACKET_COOKIE_SIZE<<3);
+    out.Serialize(cookie.data(),data.size()<<3);
     auto ret=sock->write(out.GetData(),out.ByteSize(),*server_addr)==out.ByteSize();
     //
     if(ret==false){

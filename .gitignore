@@ -1,5 +1,10 @@
 .vscode
 build/
+build-window/
+build-vscode-windows/
+build-linux/
 build-wsl/
+build-web/
 __pycache__/
 *.py[cod]
+test/

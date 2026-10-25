@@ -59,7 +59,7 @@ void BunchReliableManager::send(const Byte *data, U32 bit_size)
 void BunchReliableManager::sendWithNotify(const Byte *data, U32 bit_size, BunchReliableManager::SendNotifyCallback callback)
 {
     if(bclose)return;//如果发送了关闭连接得可靠bunch，那么就不允许后续得可靠数据进入
-    if(bit_size==0||data==nullptr)return;
+    if(bit_size==0||bit_size>(BUNCH_MAX_SIZE<<3)||data==nullptr)return;
     std::shared_ptr<Byte[]>dataCP(new Byte[(bit_size+7)>>3]);
     memcpy(dataCP.get(),data,(bit_size+7)>>3);  //因为肯定是整数字节
     waitQueue.push(std::remove_reference_t<decltype(waitQueue.front())>{dataCP,bit_size,callback,false});
@@ -134,8 +134,14 @@ bool BunchReliableManager::receive(FArchiveIn &archive)
     info.tail=bFinalPartial;
     recvTotalBits+=info.bit_size;
     recvQueue.insert(fit_itr,info);
-    if(recvTotalBits>(BUNCH_MAX_SIZE<<3)){
-        //如果接收大小超过了最大限制，那么直接丢弃，返回false,不理他(因为这分明是故意发的恶心人的包)
+    if(recvTotalBits>(BUNCH_MAX_SIZE<<3) || 
+        recvQueue.size()>((BUNCH_MAX_SIZE+PACKET_MAX_SIZE-1)/PACKET_MAX_SIZE*2)){
+        /*
+        如果接收大小超过了最大限制或者接收的包数量太多了
+        （这里*2是因为很明显一个packet纯chunk数据除去最后一个分片肯定至少占一半），
+        那么直接丢弃，
+        返回false,不理他(因为这分明是故意发的恶心人的包)
+        */
         recvTotalBits=0;
         recvQueue.clear();
         return false;
@@ -392,7 +398,9 @@ bool BunchUnReliableManager::receive(FArchiveIn &archive)
     recvQueue.insert(insertPos,info);
     recvLastProgressTime=GetTimeMS();
 
-    if(recvTotalBits>(BUNCH_MAX_SIZE<<3)){
+    if(recvTotalBits>(BUNCH_MAX_SIZE<<3)||
+    recvQueue.size()>((BUNCH_MAX_SIZE+PACKET_MAX_SIZE-1)/PACKET_MAX_SIZE*2)
+    ){
         clearRecvQueue(recvQueue.back().ind);
         return false;
     }

@@ -4,6 +4,7 @@
 
 NetAddrInfo::NetAddrInfo():m_port(0){
     m_ip[0]=0;
+    m_info[0]=0;
 }
 
 NetAddrInfo::NetAddrInfo(const char*ip,U16 port):NetAddrInfo(){
@@ -21,6 +22,10 @@ void NetAddrInfo::set(const char*ip,U16 port){
         m_ip[i]=ip[i];
     }
     m_ip[i]=0;
+    //更新info
+    std::string new_info=std::string(m_ip)+"_"+std::to_string(port);
+    memcpy(m_info,new_info.data(),new_info.size());
+    m_info[new_info.size()]=0;
 }
 
 const char*NetAddrInfo::ip()const{
@@ -33,12 +38,7 @@ U16 NetAddrInfo::port()const{
 
 const char *NetAddrInfo::Info() const
 {
-    static thread_local char buf[IP_CAP+10];
-    std::string info(ip());
-    info+="_"+std::to_string(port());
-    memcpy(buf,info.data(),info.size());
-    buf[info.size()]=0;
-    return buf;
+    return m_info;
 }
 
 void NetAddrInfo::copy(const AddrInfo &info)
@@ -46,6 +46,7 @@ void NetAddrInfo::copy(const AddrInfo &info)
     const NetAddrInfo*info_=static_cast<const NetAddrInfo*>(&info);
     this->m_port=info_->m_port;
     memcpy(this->m_ip,info_->m_ip,this->IP_CAP);
+    memcpy(this->m_info,info_->m_info,sizeof(NetAddrInfo::m_info));
 }
 
 ProcAddrInfo::ProcAddrInfo(){

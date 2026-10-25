@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(NewAOE LANGUAGES CXX)
 
-# Configure with: cmake -S . -B build -DAOE_BUILD=Server
+# Configure with:
+#   Windows:   cmake -S . -B build-window -DAOE_BUILD=Server
+#   Linux/WSL: cmake -S . -B build-linux  -DAOE_BUILD=Server
 # Valid values are Server, Client, and Both (case-insensitive).
 set(AOE_BUILD "Both" CACHE STRING "Application to build: Server, Client, or Both")
 set_property(CACHE AOE_BUILD PROPERTY STRINGS Server Client Both)
@@ -21,7 +23,28 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(Boost REQUIRED CONFIG)
+# Logging and profiling are independent build features. Their interface
+# targets below always exist so every consumer receives the same 0/1 macro,
+# while disabled features contribute no source files or link dependencies.
+option(ENABLE_LOGGER "Build and enable the logger" ON)
+option(ENABLE_PROFILE_TRACE "Build and enable the profiler" ON)
+
+set(NEWAOE_BOOST_ROOT "${PROJECT_SOURCE_DIR}/Public/third-party/boost")
+if(NOT EXISTS "${NEWAOE_BOOST_ROOT}/boost/version.hpp")
+    message(FATAL_ERROR
+        "Vendored Boost headers were not found at ${NEWAOE_BOOST_ROOT}"
+    )
+endif()
+
+add_library(newaoe_boost_headers INTERFACE)
+add_library(NewAOE::boost_headers ALIAS newaoe_boost_headers)
+target_include_directories(newaoe_boost_headers SYSTEM INTERFACE
+    "${NEWAOE_BOOST_ROOT}"
+)
+# Every Boost component used by NewAOE is header-only. Disable MSVC's
+# auto-link pragmas so a platform-specific Boost binary is never requested.
+target_compile_definitions(newaoe_boost_headers INTERFACE BOOST_ALL_NO_LIB)
+
 find_package(Threads REQUIRED)
 
 # Debug keeps the normal unstripped build. Release and MinSizeRel are both
@@ -58,39 +81,83 @@ else()
     )
 endif()
 
-add_library(newaoe_profile STATIC
-    "${PROJECT_SOURCE_DIR}/Public/profile/profile_worker.cpp"
-)
-
+add_library(newaoe_profile INTERFACE)
 add_library(NewAOE::profile ALIAS newaoe_profile)
-target_include_directories(newaoe_profile PUBLIC "${PROJECT_SOURCE_DIR}")
-target_compile_features(newaoe_profile PUBLIC cxx_std_17)
-target_link_libraries(newaoe_profile PUBLIC Threads::Threads Boost::headers)
-if(WIN32)
-    target_link_libraries(newaoe_profile PUBLIC ws2_32 mswsock)
+target_include_directories(newaoe_profile INTERFACE "${PROJECT_SOURCE_DIR}")
+target_compile_features(newaoe_profile INTERFACE cxx_std_17)
+if(ENABLE_PROFILE_TRACE)
+    target_sources(newaoe_profile INTERFACE
+        "${PROJECT_SOURCE_DIR}/Public/profile/profile.cpp"
+        "${PROJECT_SOURCE_DIR}/Public/profile/profile_worker.cpp"
+    )
+    target_compile_definitions(newaoe_profile INTERFACE ENABLE_PROFILE_TRACE=1)
+    target_link_libraries(newaoe_profile INTERFACE
+        Threads::Threads
+        NewAOE::boost_headers
+    )
+    if(WIN32)
+        target_link_libraries(newaoe_profile INTERFACE ws2_32 mswsock)
+    endif()
+else()
+    target_compile_definitions(newaoe_profile INTERFACE
+        ENABLE_PROFILE_TRACE=0
+        AOE_DISABLE_PROFILING=1
+    )
 endif()
 
-add_library(newaoe_logger STATIC
-    "${PROJECT_SOURCE_DIR}/Public/logger/logger_worker.cpp"
-)
+add_library(newaoe_logger INTERFACE)
 add_library(NewAOE::logger ALIAS newaoe_logger)
-target_include_directories(newaoe_logger PUBLIC "${PROJECT_SOURCE_DIR}")
-target_compile_features(newaoe_logger PUBLIC cxx_std_17)
-target_link_libraries(newaoe_logger PUBLIC Threads::Threads)
+target_include_directories(newaoe_logger INTERFACE "${PROJECT_SOURCE_DIR}")
+target_compile_features(newaoe_logger INTERFACE cxx_std_17)
+if(ENABLE_LOGGER)
+    target_sources(newaoe_logger INTERFACE
+        "${PROJECT_SOURCE_DIR}/Public/logger/logger_worker.cpp"
+    )
+    target_compile_definitions(newaoe_logger INTERFACE ENABLE_LOGGER=1)
+    target_link_libraries(newaoe_logger INTERFACE Threads::Threads)
+else()
+    target_compile_definitions(newaoe_logger INTERFACE ENABLE_LOGGER=0)
+endif()
 
 option(AOE_BUILD_PROFILE_TESTS "Build the profile unit test" OFF)
 if(AOE_BUILD_PROFILE_TESTS)
+    if(NOT ENABLE_PROFILE_TRACE)
+        message(FATAL_ERROR
+            "AOE_BUILD_PROFILE_TESTS requires ENABLE_PROFILE_TRACE=ON"
+        )
+    endif()
     enable_testing()
-    add_executable(ProfileTests "${PROJECT_SOURCE_DIR}/test/profile_test.cpp")
+    add_executable(ProfileTests
+        "${PROJECT_SOURCE_DIR}/test/profile_test.cpp"
+        "${PROJECT_SOURCE_DIR}/Public/util/util.cpp"
+    )
     target_link_libraries(ProfileTests PRIVATE NewAOE::profile)
     add_test(NAME ProfileTests COMMAND ProfileTests)
 endif()
 
 option(AOE_BUILD_PROFILE_BENCHMARKS "Build the profile microbenchmark" OFF)
 if(AOE_BUILD_PROFILE_BENCHMARKS)
-    add_executable(ProfileBenchmark "${PROJECT_SOURCE_DIR}/test/profile_benchmark.cpp")
+    if(NOT ENABLE_PROFILE_TRACE)
+        message(FATAL_ERROR
+            "AOE_BUILD_PROFILE_BENCHMARKS requires ENABLE_PROFILE_TRACE=ON"
+        )
+    endif()
+    add_executable(ProfileBenchmark
+        "${PROJECT_SOURCE_DIR}/test/profile_benchmark.cpp"
+        "${PROJECT_SOURCE_DIR}/Public/util/util.cpp"
+    )
     target_link_libraries(ProfileBenchmark PRIVATE NewAOE::profile)
 endif()
+
+option(AOE_BUILD_SDL_DEMO "Build the vendored SDL2 demo" OFF)
+if(AOE_BUILD_SDL_DEMO)
+    enable_language(C)
+    add_subdirectory(test/sdl_demo)
+endif()
+
+option(AOE_BUILD_RENDER_TESTS "Build the SDL2 + Dear ImGui render smoke tests" OFF)
+option(AOE_BUILD_HUD_DEMO "Build the native SDL2 + ImGui HUD demo" OFF)
+option(AOE_BUILD_WEB_HUD_DEMO "Build the Emscripten SDL2 + ImGui HUD demo" OFF)
 
 if(MSVC)
     add_link_options(
@@ -117,6 +184,42 @@ endif()
 
 if(AOE_BUILD_NORMALIZED STREQUAL "client" OR AOE_BUILD_NORMALIZED STREQUAL "both")
     add_subdirectory(Client)
+endif()
+
+if(AOE_BUILD_RENDER_TESTS)
+    if(ANDROID OR EMSCRIPTEN)
+        message(STATUS
+            "AOE_BUILD_RENDER_TESTS is enabled, but native render tests are "
+            "not run for Android or Emscripten targets"
+        )
+    elseif(NOT TARGET NewAOE::render)
+        message(FATAL_ERROR
+            "AOE_BUILD_RENDER_TESTS requires AOE_BUILD=Server or Both and "
+            "ENABLE_GAME_RENDER=ON"
+        )
+    else()
+        enable_testing()
+        add_subdirectory(test/imgui_sdl2)
+    endif()
+endif()
+
+if(AOE_BUILD_HUD_DEMO OR AOE_BUILD_WEB_HUD_DEMO)
+    if(AOE_BUILD_WEB_HUD_DEMO AND NOT EMSCRIPTEN)
+        message(FATAL_ERROR
+            "AOE_BUILD_WEB_HUD_DEMO requires the Emscripten toolchain"
+        )
+    elseif(AOE_BUILD_HUD_DEMO AND EMSCRIPTEN)
+        message(FATAL_ERROR
+            "Use AOE_BUILD_WEB_HUD_DEMO for an Emscripten HUD build"
+        )
+    elseif(NOT TARGET NewAOE::render)
+        message(FATAL_ERROR
+            "The HUD demo requires AOE_BUILD=Server or Both and "
+            "ENABLE_GAME_RENDER=ON"
+        )
+    else()
+        add_subdirectory(test/hud_sdl_web)
+    endif()
 endif()
 
 message(STATUS "NewAOE build selection: ${AOE_BUILD}")

@@ -248,7 +248,7 @@ bool Connection::wrapBunchToPacket(std::vector<const BunchSendInfo*>&bunch, bool
     //额外信息
     packetWrapInfo.packetID=packetID;
     packetWrapInfo.bytes=out.ByteSize();
-    packetWrapInfo.historyInfo.ackedHistorySeq=recvLatestHistorySeq;
+    packetWrapInfo.historyInfo.ackedHistorySeq=needAckedInfo?recvLatestHistorySeq:0;
     packetWrapInfo.historyInfo.bunchHeader.clear();
     for(auto&bh:bunch)packetWrapInfo.historyInfo.bunchHeader.push_back(bh->header);
     //
@@ -258,10 +258,14 @@ bool Connection::wrapBunchToPacket(std::vector<const BunchSendInfo*>&bunch, bool
 bool Connection::sendWrapPacket(const Sock &sock)
 {
     //
-    bool success=packetWrapInfo.bytes==sock.write(packetWrapInfo.buf,packetWrapInfo.bytes,*TargetInfo);
+    auto real_write=sock.write(packetWrapInfo.buf,packetWrapInfo.bytes,*TargetInfo);
+    bool success=packetWrapInfo.bytes==real_write;
     if(success){
         //寄存起来
         packetAckedHistoryInfo[packetWrapInfo.packetID]=packetWrapInfo.historyInfo;
+    }else if(real_write==0){
+        //如果真实写入字节数为0，说明其实包没发出去，那么这个id是可以归还的，反之不为0那肯定发出去半成品的包，肯定会被接收方回复NAK的
+        --globalPacketID;
     }
     return success;
 }
@@ -277,11 +281,15 @@ void Connection::Acked(U64 packetID, bool acked)
     //
     auto&packetInfo=itr->second;
     auto&bunchHeader=packetInfo.bunchHeader;
-    //接收端知道了我已经收到了哪些包，要推进本地接收位图
-    U64 more=packetInfo.ackedHistorySeq+1-recvHistorySeq;
-    if(more>PACKET_ACKED_HISTORY_MAX_BITS)return;
-    recvHistotySeqEnhance=std::max(recvHistotySeqEnhance,more);
-    //通知相应的bunch已经发送成功了
+    if(acked){
+        //接收端知道了我已经收到了哪些包，要推进本地接收位图
+        if(packetInfo.ackedHistorySeq+1>recvHistorySeq){
+            U64 more=packetInfo.ackedHistorySeq+1-recvHistorySeq;
+            if(more>PACKET_ACKED_HISTORY_MAX_BITS)return;
+            recvHistotySeqEnhance=std::max(recvHistotySeqEnhance,more);
+        }
+    }
+    //通知相应的bunch已经了
     notifyBunchAcked(bunchHeader,acked);
 }
 
@@ -325,17 +333,23 @@ bool Connection::parseHeader(U64 packID,FArchiveIn&archive)
     if(archive.IsError())return false;
     //解析Bunch数据,如果解析失败就当是丢包处理就行了
     if(!parseBunch(archive))return false;
-    //处理ack信息
-    for(I64 i=historyCount-1,j=0;i>=0;--i,++j){
-        I64 targetSeq=ackedHistorySeq-i;
-        bool acked=bs.test(j);
-        Acked(targetSeq,acked);
+    //处理接收端ack情况,并且确保ackedHistorySeq落在正确范围
+    if(historyCount&&
+        ackedHistorySeq>=sendHistorySeq &&
+        ackedHistorySeq<globalPacketID
+    ){
+        //处理ack信息
+        for(I64 i=historyCount-1,j=0;i>=0;--i,++j){
+            I64 targetSeq=ackedHistorySeq-i;
+            bool acked=bs.test(j);
+            Acked(targetSeq,acked);
+        }
+        //发送包已知最新历史情况
+        sendHistoryLatestSeq=std::max(sendHistoryLatestSeq,ackedHistorySeq);
     }
     //更新接收的最大视野标记包收到
     recvLatestHistorySeq=std::max(recvLatestHistorySeq,packID);
     recvHistoryBits.set(packID-recvHistorySeq);
-    //发送包已知最新历史情况
-    sendHistoryLatestSeq=std::max(sendHistoryLatestSeq,ackedHistorySeq);
     //
     return true;
 }

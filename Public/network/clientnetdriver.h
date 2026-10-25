@@ -13,13 +13,13 @@ std::shared_ptr<Sock> sock;
 public:
     ClientNetDriver(std::shared_ptr<Sock> sock,const AddrInfo&addrInfo);
     void receive();
-    void connect();
+    void connect(bool reconnect);
     void close();
     void send();
     Connection*  getserver();
     virtual ~ClientNetDriver();
 private:
-    U8 connectImpl(FArchiveIn&archive,U8 phase=-1);
+    U8 connectImpl(FArchiveIn&archive,U8 phase=0);
     void tick();
     void parsePacket(void*buf,U32 siz);
     bool parseConnectionHello();

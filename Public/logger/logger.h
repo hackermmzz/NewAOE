@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Public/logger/conf.h"
-#include "Public/logger/logger_worker.h"
 #include "Public/type/type.h"
 #include "Public/util/util.h"
+
+#if ENABLE_LOGGER
+
+#include "Public/logger/logger_worker.h"
 
 #include <array>
 #include <atomic>
@@ -252,5 +255,18 @@ FORCE_INLINE void Logger::critical(const char *message) noexcept {
     log(spdlog::level::critical, message);
 }
 
-// 函数追踪。默认级别是 info 时这次调用会被丢掉。
-#define LOG_TRACE() ::Logger::trace(__func__)
+//宏定义
+#define LOGGER_TRACE() logger::trace(__func__)
+#define LOGGER_DEBUG(msg) logger::debug(msg)
+#define LOGGER_INFO(msg) logger::info(msg)
+#define LOGGER_WARN(msg) logger::warn(msg)
+#define LOGGER_ERR(msg) logger::err(msg)
+#define LOGGER_CRITICAL(msg) logger::critical(msg)
+#else
+#define LOGGER_TRACE() ((void)0)
+#define LOGGER_DEBUG(msg) ((void)0)
+#define LOGGER_INFO(msg) ((void)0)
+#define LOGGER_WARN(msg) ((void)0)
+#define LOGGER_ERR(msg) ((void)0)
+#define LOGGER_CRITICAL(msg) ((void)0)
+#endif // ENABLE_LOGGER

@@ -24,6 +24,7 @@ private:
     static constexpr U32 IP_CAP=64;
     char m_ip[IP_CAP];
     U16 m_port;
+    char m_info[IP_CAP+10];
 };
 
 

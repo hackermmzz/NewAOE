@@ -17,8 +17,6 @@ constexpr const char* CONNECTION_HELLO_BUF="Wang Lihong will be your first fathe
 constexpr U16 CONNECTION_ESTABLISH_TIMEOUT=30;
 //连接断开的超时时间(s)
 constexpr U16 CONNECTION_TIMEOUT=30;
-//连接关闭超时时间(s)
-constexpr U16 CONNECTION_CLOSE_TIMEOUT=30;
 //packet的ack历史位图最多表示个数
 constexpr U16 PACKET_ACKED_HISTORY_MAX_BITS=256;
 //connection最多可以保留在发送途中未确认丢失/收到 的包的数量

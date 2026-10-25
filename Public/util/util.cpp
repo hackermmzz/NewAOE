@@ -6,6 +6,15 @@
 #include<iostream>
 #include <chrono>
 
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#elif defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
+#include <unistd.h>
+#endif
+
 U64 GetTimeMS()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>
@@ -49,10 +58,8 @@ bool wait_for(U32 seconds, const std::function<bool()> &cond)
 uint64_t GetCurrentPid()
 {
     #if defined(_WIN32)
-        #include <windows.h>
         return static_cast<uint64_t>(GetCurrentProcessId());
     #elif defined(__ANDROID__) || defined(__linux__) || defined(__APPLE__)
-        #include <unistd.h>
         return static_cast<uint64_t>(getpid());
     #else
         return 0;

@@ -174,7 +174,7 @@ U32 ProcSock::read(void*buf,U32 siz,AddrInfo&addr)const{
         if(!m_impl->queue->try_receive(m_impl->scratch.data(),m_impl->scratch.size(),recvd,priority)){
             return 0;
         }
-        if(recvd>siz || recvd<ProcAddrInfo::NAME_CAP){
+        if(recvd>siz+ProcAddrInfo::NAME_CAP || recvd<ProcAddrInfo::NAME_CAP){
             return 0;
         }
         //先拷贝名称

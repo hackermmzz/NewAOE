@@ -2,6 +2,12 @@
 
 #include "Public/type/type.h"
 
+
+//日志记录开关
+#ifndef ENABLE_LOGGER
+#define ENABLE_LOGGER 1
+#endif
+
 // 级别数值和 spdlog::level 一致。数值越大越严重。
 namespace spdlog {
 namespace level {

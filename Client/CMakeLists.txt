@@ -5,16 +5,25 @@ file(GLOB_RECURSE NEWAOE_CLIENT_SOURCES CONFIGURE_DEPENDS
 )
 
 file(GLOB_RECURSE NEWAOE_PUBLIC_SOURCES CONFIGURE_DEPENDS
-    "${PROJECT_SOURCE_DIR}/Public/*.cpp"
-    "${PROJECT_SOURCE_DIR}/Public/*.cc"
-    "${PROJECT_SOURCE_DIR}/Public/*.cxx"
+    "${PROJECT_SOURCE_DIR}/Public/network/*.cpp"
+    "${PROJECT_SOURCE_DIR}/Public/network/*.cc"
+    "${PROJECT_SOURCE_DIR}/Public/network/*.cxx"
+    "${PROJECT_SOURCE_DIR}/Public/serializer/*.cpp"
+    "${PROJECT_SOURCE_DIR}/Public/serializer/*.cc"
+    "${PROJECT_SOURCE_DIR}/Public/serializer/*.cxx"
+    "${PROJECT_SOURCE_DIR}/Public/type/*.cpp"
+    "${PROJECT_SOURCE_DIR}/Public/type/*.cc"
+    "${PROJECT_SOURCE_DIR}/Public/type/*.cxx"
+    "${PROJECT_SOURCE_DIR}/Public/util/*.cpp"
+    "${PROJECT_SOURCE_DIR}/Public/util/*.cc"
+    "${PROJECT_SOURCE_DIR}/Public/util/*.cxx"
+    "${PROJECT_SOURCE_DIR}/Public/vec/*.cpp"
+    "${PROJECT_SOURCE_DIR}/Public/vec/*.cc"
+    "${PROJECT_SOURCE_DIR}/Public/vec/*.cxx"
 )
 
-# Vendored sources stay out of this executable.
-list(FILTER NEWAOE_PUBLIC_SOURCES EXCLUDE REGEX "/third-party/")
-# The profiler and logger are built once as shared project dependencies.
-list(FILTER NEWAOE_PUBLIC_SOURCES EXCLUDE REGEX "/profile/")
-list(FILTER NEWAOE_PUBLIC_SOURCES EXCLUDE REGEX "/logger/")
+# Shared feature targets contribute profiler/logger sources only when their
+# independent build switches are enabled.
 
 if(NOT NEWAOE_CLIENT_SOURCES)
     message(FATAL_ERROR "No C++ source files were found in ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -30,7 +39,7 @@ target_include_directories(Client PRIVATE
 )
 
 target_link_libraries(Client PRIVATE
-    Boost::headers
+    NewAOE::boost_headers
     Threads::Threads
     NewAOE::profile
     NewAOE::logger

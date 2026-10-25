@@ -22,12 +22,14 @@ inline std::string ProfileSharedMemoryName(std::uint64_t pid) {
 constexpr U32 ProfileSharedMemoryBytes = 4U * 1024U * 1024U;
 
 /********************************开关，是否开启性能追踪**************/
+#ifndef ENABLE_PROFILE_TRACE
 #define ENABLE_PROFILE_TRACE 1
+#endif
 
 #if ENABLE_PROFILE_TRACE
 #define PROFILE_TRACE() AOE_PROFILE_FUNCTION()
 #else
-#define PROFILE_TRACE() {} // 空实现，编译器直接优化没了
+#define PROFILE_TRACE() ((void)0) // 空实现，编译器直接优化没了
 #endif
 
 /********************************************************************************************************** */

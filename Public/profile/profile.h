@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Public/profile/conf.h"
+#include "Public/type/type.h"
+#include "Public/util/util.h"
+
+#if ENABLE_PROFILE_TRACE
 
 
 #include <algorithm>
@@ -12,10 +17,7 @@
 #include <string_view>
 #include <thread>
 
-#include "Public/profile/conf.h"
 #include "Public/profile/profile_worker.h"
-#include "Public/type/type.h"
-#include "Public/util/util.h"
 
 
 class ProfileLabel final {
@@ -171,7 +173,7 @@ struct ThreadProfileBuffer {
     }
 };
 
-inline thread_local ThreadProfileBuffer threadProfileBuffer;
+extern thread_local ThreadProfileBuffer threadProfileBuffer;
 
 FORCE_INLINE void hangPending(std::list<PendingChunk> &lst, const Byte *data, U32 size) {
     lst.emplace_back();
@@ -484,3 +486,10 @@ FORCE_INLINE bool ProfileScope::DecodeLabel(const Byte *data, U16 size, LabelVie
 
 #define AOE_PROFILE_FUNCTION() AOE_PROFILE_SCOPE(__func__)
 #endif
+
+#else
+
+#define AOE_PROFILE_SCOPE(module) ((void)0)
+#define AOE_PROFILE_FUNCTION() ((void)0)
+
+#endif // ENABLE_PROFILE_TRACE
