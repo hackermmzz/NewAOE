@@ -1,16 +1,25 @@
 #include "renderInstance.h"
 
-#include <SDL.h>
+#include <cstdio>
+
+#include "imgui.h"
+
+#define SOKOL_NO_ENTRY
+
+#define SOKOL_APP_IMPL
+#include "sokol_app.h"
 
 #define SOKOL_GFX_IMPL
 #include "sokol_gfx.h"
 
+#define SOKOL_GLUE_IMPL
+#include "sokol_glue.h"
+
 #define SOKOL_LOG_IMPL
 #include "sokol_log.h"
 
-#ifndef AOE_GFX_GLES
-#define AOE_GFX_GLES 0
-#endif
+#define SOKOL_IMGUI_IMPL
+#include "util/sokol_imgui.h"
 
 #ifndef ENABLE_LOGGER
 #define ENABLE_LOGGER 0
@@ -21,20 +30,6 @@ namespace {
 constexpr int kInitialWindowWidth = 1280;
 constexpr int kInitialWindowHeight = 720;
 
-bool setGlAttribute(SDL_GLattr attribute, int value) {
-    if (SDL_GL_SetAttribute(attribute, value) == 0) {
-        return true;
-    }
-    SDL_LogError(
-        SDL_LOG_CATEGORY_VIDEO,
-        "SDL_GL_SetAttribute(%d, %d) failed: %s",
-        static_cast<int>(attribute),
-        value,
-        SDL_GetError()
-    );
-    return false;
-}
-
 }  // namespace
 
 RenderInstance::~RenderInstance() {
@@ -42,185 +37,133 @@ RenderInstance::~RenderInstance() {
 }
 
 bool RenderInstance::init() {
-    if (sokolReady_) {
-        return true;
-    }
-
-    SDL_SetMainReady();
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS | SDL_INIT_TIMER) != 0) {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_APPLICATION,
-            "SDL_Init failed: %s",
-            SDL_GetError()
-        );
-        return false;
-    }
-    sdlReady_ = true;
-
-    SDL_GL_ResetAttributes();
-
-#if AOE_GFX_GLES
-    const bool profileReady =
-        setGlAttribute(
-            SDL_GL_CONTEXT_PROFILE_MASK,
-            SDL_GL_CONTEXT_PROFILE_ES
-        ) &&
-        setGlAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3) &&
-        setGlAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#else
-    const bool profileReady =
-        setGlAttribute(
-            SDL_GL_CONTEXT_PROFILE_MASK,
-            SDL_GL_CONTEXT_PROFILE_CORE
-        ) &&
-        setGlAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4) &&
-        setGlAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-#endif
-
-    const bool framebufferReady =
-        setGlAttribute(SDL_GL_DOUBLEBUFFER, 1) &&
-        setGlAttribute(SDL_GL_RED_SIZE, 8) &&
-        setGlAttribute(SDL_GL_GREEN_SIZE, 8) &&
-        setGlAttribute(SDL_GL_BLUE_SIZE, 8) &&
-        setGlAttribute(SDL_GL_ALPHA_SIZE, 8) &&
-        setGlAttribute(SDL_GL_DEPTH_SIZE, 24) &&
-        setGlAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-    if (!profileReady || !framebufferReady) {
-        shutdown();
-        return false;
-    }
-
-    window_ = SDL_CreateWindow(
-        "NewAOE",
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        kInitialWindowWidth,
-        kInitialWindowHeight,
-        SDL_WINDOW_OPENGL |
-            SDL_WINDOW_SHOWN |
-            SDL_WINDOW_RESIZABLE |
-            SDL_WINDOW_ALLOW_HIGHDPI
-    );
-    if (window_ == nullptr) {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_VIDEO,
-            "SDL_CreateWindow failed: %s",
-            SDL_GetError()
-        );
-        shutdown();
-        return false;
-    }
-
-    glContext_ = SDL_GL_CreateContext(window_);
-    if (glContext_ == nullptr) {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_VIDEO,
-            "SDL_GL_CreateContext failed: %s",
-            SDL_GetError()
-        );
-        shutdown();
-        return false;
-    }
-
-    if (SDL_GL_MakeCurrent(window_, glContext_) != 0) {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_VIDEO,
-            "SDL_GL_MakeCurrent failed: %s",
-            SDL_GetError()
-        );
-        shutdown();
-        return false;
-    }
-
-#ifndef __EMSCRIPTEN__
-    if (SDL_GL_SetSwapInterval(1) != 0) {
-        SDL_LogWarn(
-            SDL_LOG_CATEGORY_VIDEO,
-            "VSync is unavailable: %s",
-            SDL_GetError()
-        );
-    }
-#endif
-
-    sg_desc descriptor{};
-    descriptor.environment.defaults.color_format = SG_PIXELFORMAT_RGBA8;
-    descriptor.environment.defaults.depth_format =
-        SG_PIXELFORMAT_DEPTH_STENCIL;
-    descriptor.environment.defaults.sample_count = 1;
-#if ENABLE_LOGGER
-    descriptor.logger.func = slog_func;
-#endif
-
-    sg_setup(&descriptor);
-    if (!sg_isvalid()) {
-        SDL_LogError(
-            SDL_LOG_CATEGORY_RENDER,
-            "sokol_gfx initialization failed"
-        );
-        shutdown();
-        return false;
-    }
-
-    sokolReady_ = true;
+    configured_ = true;
     return true;
 }
 
 bool RenderInstance::run() {
-    if (!sokolReady_) {
+    if (!configured_ || appRunning_) {
         return false;
     }
 
-    SDL_Event event{};
-    while (SDL_PollEvent(&event) != 0) {
-        if (event.type == SDL_QUIT) {
-            return false;
-        }
+    appRunning_ = true;
+
+    sapp_desc descriptor{};
+    descriptor.user_data = this;
+    descriptor.init_userdata_cb = &RenderInstance::appInit;
+    descriptor.frame_userdata_cb = &RenderInstance::appFrame;
+    descriptor.cleanup_userdata_cb = &RenderInstance::appCleanup;
+    descriptor.event_userdata_cb = &RenderInstance::appEvent;
+    descriptor.width = kInitialWindowWidth;
+    descriptor.height = kInitialWindowHeight;
+    descriptor.depth_format = SAPP_PIXELFORMAT_DEPTH_STENCIL;
+    descriptor.sample_count = 1;
+    descriptor.high_dpi = true;
+    descriptor.window_title = "NewAOE";
+#if ENABLE_LOGGER
+    descriptor.logger.func = slog_func;
+#endif
+
+    sapp_run(&descriptor);
+
+#ifdef __EMSCRIPTEN__
+    // sapp_run() returns immediately on the web while Sokol keeps driving its
+    // own browser main loop.
+    return true;
+#else
+    // On desktop sapp_run() returns only after the window has closed.
+    return false;
+#endif
+}
+
+void RenderInstance::appInit(void* userData) {
+    static_cast<RenderInstance*>(userData)->initializeGraphics();
+}
+
+void RenderInstance::appFrame(void* userData) {
+    static_cast<RenderInstance*>(userData)->renderFrame();
+}
+
+void RenderInstance::appCleanup(void* userData) {
+    static_cast<RenderInstance*>(userData)->shutdown();
+}
+
+void RenderInstance::appEvent(const sapp_event* event, void* userData) {
+    static_cast<RenderInstance*>(userData)->handleEvent(event);
+}
+
+void RenderInstance::initializeGraphics() {
+    sg_desc graphicsDescriptor{};
+    graphicsDescriptor.environment = sglue_environment();
+#if ENABLE_LOGGER
+    graphicsDescriptor.logger.func = slog_func;
+#endif
+    sg_setup(&graphicsDescriptor);
+    if (!sg_isvalid()) {
+        std::fputs("sokol_gfx initialization failed\n", stderr);
+        sapp_request_quit();
+        return;
+    }
+    sokolReady_ = true;
+
+    simgui_desc_t imguiDescriptor{};
+#if ENABLE_LOGGER
+    imguiDescriptor.logger.func = slog_func;
+#endif
+    simgui_setup(&imguiDescriptor);
+    imguiReady_ = true;
+}
+
+void RenderInstance::renderFrame() {
+    if (!sokolReady_ || !imguiReady_) {
+        return;
     }
 
-    int drawableWidth = 0;
-    int drawableHeight = 0;
-    SDL_GL_GetDrawableSize(window_, &drawableWidth, &drawableHeight);
-    if (drawableWidth <= 0 || drawableHeight <= 0) {
-        return true;
-    }
+    simgui_frame_desc_t frameDescriptor{};
+    frameDescriptor.width = sapp_width();
+    frameDescriptor.height = sapp_height();
+    frameDescriptor.delta_time = sapp_frame_duration();
+    frameDescriptor.dpi_scale = sapp_dpi_scale();
+    simgui_new_frame(&frameDescriptor);
+
+    ImGui::SetNextWindowPos(ImVec2(16.0F, 16.0F), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowBgAlpha(0.88F);
+    ImGui::Begin("NewAOE");
+    ImGui::TextUnformatted("Sokol + Dear ImGui renderer");
+    ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+    ImGui::End();
+
+    simgui_flush();
 
     sg_pass pass{};
     pass.action.colors[0].load_action = SG_LOADACTION_CLEAR;
     pass.action.colors[0].store_action = SG_STOREACTION_STORE;
-    pass.action.colors[0].clear_value.r = 0.03F;
-    pass.action.colors[0].clear_value.g = 0.05F;
-    pass.action.colors[0].clear_value.b = 0.05F;
-    pass.action.colors[0].clear_value.a = 1.0F;
-    pass.swapchain.width = drawableWidth;
-    pass.swapchain.height = drawableHeight;
-    pass.swapchain.sample_count = 1;
-    pass.swapchain.color_format = SG_PIXELFORMAT_RGBA8;
-    pass.swapchain.depth_format = SG_PIXELFORMAT_DEPTH_STENCIL;
-    pass.swapchain.gl.framebuffer = 0;
-
+    pass.action.colors[0].clear_value = {0.03F, 0.05F, 0.05F, 1.0F};
+    pass.swapchain = sglue_swapchain();
     sg_begin_pass(&pass);
+    simgui_draw();
     sg_end_pass();
     sg_commit();
-    SDL_GL_SwapWindow(window_);
-    return true;
+}
+
+void RenderInstance::handleEvent(const sapp_event* event) {
+    if (imguiReady_) {
+        simgui_handle_event(event);
+    }
+    if (event->type == SAPP_EVENTTYPE_KEY_DOWN && !event->key_repeat &&
+        event->key_code == SAPP_KEYCODE_ESCAPE) {
+        sapp_request_quit();
+    }
 }
 
 void RenderInstance::shutdown() noexcept {
+    if (imguiReady_) {
+        simgui_shutdown();
+        imguiReady_ = false;
+    }
     if (sokolReady_) {
         sg_shutdown();
         sokolReady_ = false;
     }
-    if (glContext_ != nullptr) {
-        SDL_GL_DeleteContext(glContext_);
-        glContext_ = nullptr;
-    }
-    if (window_ != nullptr) {
-        SDL_DestroyWindow(window_);
-        window_ = nullptr;
-    }
-    if (sdlReady_) {
-        SDL_Quit();
-        sdlReady_ = false;
-    }
+    appRunning_ = false;
 }

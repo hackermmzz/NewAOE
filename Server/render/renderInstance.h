@@ -1,6 +1,6 @@
 #pragma once
 
-struct SDL_Window;
+struct sapp_event;
 
 class RenderInstance {
 public:
@@ -16,10 +16,18 @@ public:
     bool run();
 
 private:
+    static void appInit(void* userData);
+    static void appFrame(void* userData);
+    static void appCleanup(void* userData);
+    static void appEvent(const sapp_event* event, void* userData);
+
+    void initializeGraphics();
+    void renderFrame();
+    void handleEvent(const sapp_event* event);
     void shutdown() noexcept;
 
-    SDL_Window* window_ = nullptr;
-    void* glContext_ = nullptr;
-    bool sdlReady_ = false;
+    bool configured_ = false;
+    bool appRunning_ = false;
     bool sokolReady_ = false;
+    bool imguiReady_ = false;
 };

@@ -8,3 +8,4 @@ build-web/
 __pycache__/
 *.py[cod]
 test/
+tmp/

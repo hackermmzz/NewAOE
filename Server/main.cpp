@@ -24,10 +24,6 @@
 #include "Server/render/renderInstance.h"
 #endif
 
-#ifdef __EMSCRIPTEN__
-#include <emscripten/emscripten.h>
-#endif
-
 using namespace std;
 
 
@@ -157,25 +153,6 @@ void StartAudioPlayThread(){
 
 
 /****************************************开启游戏画面的渲染*********************/
-#ifdef __EMSCRIPTEN__
-    void GameRenderRunHook(){   //web端的画面渲染的回调
-        if (!ProgramRun.load()) {
-            emscripten_cancel_main_loop();
-            return;
-        }
-        auto*ins=GetInstance<RenderInstance>();
-        Assert(ins==nullptr,"RenderInstance怎么可能是null?");
-        if (ins == nullptr) {
-            emscripten_cancel_main_loop();
-            return;
-        }
-        if (!ins->run()) {
-            ProgramRun.store(false);
-            emscripten_cancel_main_loop();
-        }
-    }
-#endif
-
 void StartGameRender(){
     #if ENABLE_GAME_RENDER
         //注册实例对象
@@ -188,17 +165,11 @@ void StartGameRender(){
             return;
         }
         //
-        #ifdef __EMSCRIPTEN__
-            emscripten_set_main_loop(GameRenderRunHook, 0, true);
-        #else
-            //渲染放到主线程
-            if (ins == nullptr) return;
-            while(ProgramRun.load()){
-                if (!ins->run()) {
-                    ProgramRun.store(false);
-                    break;
-                }
-            }
-        #endif
+        // sokol_app owns the native/browser event loop. On desktop this call
+        // blocks until the window closes; on WebAssembly it installs the
+        // browser callback and returns immediately.
+        if (!ins->run()) {
+            ProgramRun.store(false);
+        }
     #endif
 }
