@@ -29,7 +29,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Header-only third-party libraries expose namespaced targets so consumers do
 # not need to know their on-disk layout.
-add_subdirectory(Public/third-party/fixed_point)
+add_subdirectory(Public/fixed_point)
 
 # Build the browser integration demo without pulling server, networking,
 # audio or editor UI dependencies into the WebAssembly bundle. Its asset

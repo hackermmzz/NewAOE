@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fixed.hpp"
+#include "Public/fixed_point/fixed.hpp"
 #include <cmath>
 
 // ============================================================================
@@ -13,7 +13,7 @@
 // ============================================================================
 
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> pow(const Fixed<BaseType, Store, FractionBits>& base, int exp)
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> pow(const Fixed<BaseType, Store, FractionBits>& base, int exp)
 {
     using F = Fixed<BaseType, Store, FractionBits>;
 
@@ -52,7 +52,7 @@ __forceinline Fixed<BaseType, Store, FractionBits> pow(const Fixed<BaseType, Sto
 // ============================================================================
 
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> sqrt(const Fixed<BaseType, Store, FractionBits>& x,
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> sqrt(const Fixed<BaseType, Store, FractionBits>& x,
                                            int iterations=32)
 {
     using F = Fixed<BaseType, Store, FractionBits>;
@@ -91,25 +91,25 @@ __forceinline Fixed<BaseType, Store, FractionBits> sqrt(const Fixed<BaseType, St
 
 //abs
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> abs(const Fixed<BaseType, Store, FractionBits>& x){
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> abs(const Fixed<BaseType, Store, FractionBits>& x){
     return x.abs();
 }
 
 //floor
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> floor(const Fixed<BaseType, Store, FractionBits>& x){
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> floor(const Fixed<BaseType, Store, FractionBits>& x){
     return x.floor();
 }
 
 //round
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> round(const Fixed<BaseType, Store, FractionBits>& x){
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> round(const Fixed<BaseType, Store, FractionBits>& x){
     return x.round();
 }
 
 //ceil
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> ceil(const Fixed<BaseType, Store, FractionBits>& x){
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> ceil(const Fixed<BaseType, Store, FractionBits>& x){
     return x.ceil();
 }
 // ============================================================================
@@ -122,7 +122,7 @@ __forceinline Fixed<BaseType, Store, FractionBits> ceil(const Fixed<BaseType, St
 // ============================================================================
 
 template <typename BaseType, typename Store, int FractionBits>
-__forceinline Fixed<BaseType, Store, FractionBits> atan2(const Fixed<BaseType, Store, FractionBits>& y,
+FORCE_INLINE Fixed<BaseType, Store, FractionBits> atan2(const Fixed<BaseType, Store, FractionBits>& y,
                                             const Fixed<BaseType, Store, FractionBits>& x)
 {
     using F = Fixed<BaseType, Store, FractionBits>;
