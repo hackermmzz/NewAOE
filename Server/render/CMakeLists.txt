@@ -40,6 +40,8 @@ if(NOT TARGET newaoe_imgui)
     target_compile_features(newaoe_imgui INTERFACE cxx_std_17)
 endif()
 
+add_subdirectory(game/engine)
+
 add_library(newaoe_render INTERFACE)
 add_library(NewAOE::render ALIAS newaoe_render)
 
@@ -52,7 +54,10 @@ target_include_directories(newaoe_render INTERFACE
     "${NEWAOE_SOKOL_DIR}"
 )
 target_compile_features(newaoe_render INTERFACE cxx_std_17)
-target_link_libraries(newaoe_render INTERFACE NewAOE::imgui)
+target_link_libraries(newaoe_render INTERFACE
+    NewAOE::imgui
+    NewAOE::game_render_engine
+)
 
 if(EMSCRIPTEN OR ANDROID)
     target_compile_definitions(newaoe_render INTERFACE SOKOL_GLES3)
@@ -91,25 +96,38 @@ elseif(APPLE)
         "${CMAKE_CURRENT_LIST_DIR}/renderInstance.cpp"
         PROPERTIES LANGUAGE OBJCXX
     )
-    find_library(NEWAOE_APPKIT_FRAMEWORK AppKit REQUIRED)
     find_library(NEWAOE_QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
     find_library(NEWAOE_METAL_FRAMEWORK Metal REQUIRED)
-    target_link_libraries(newaoe_render INTERFACE
-        "${NEWAOE_APPKIT_FRAMEWORK}"
-        "${NEWAOE_QUARTZCORE_FRAMEWORK}"
-        "${NEWAOE_METAL_FRAMEWORK}"
-    )
+    if(IOS)
+        find_library(NEWAOE_UIKIT_FRAMEWORK UIKit REQUIRED)
+        find_library(NEWAOE_FOUNDATION_FRAMEWORK Foundation REQUIRED)
+        find_library(NEWAOE_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+        target_link_libraries(newaoe_render INTERFACE
+            "${NEWAOE_UIKIT_FRAMEWORK}"
+            "${NEWAOE_FOUNDATION_FRAMEWORK}"
+            "${NEWAOE_COREGRAPHICS_FRAMEWORK}"
+            "${NEWAOE_QUARTZCORE_FRAMEWORK}"
+            "${NEWAOE_METAL_FRAMEWORK}"
+        )
+    else()
+        find_library(NEWAOE_APPKIT_FRAMEWORK AppKit REQUIRED)
+        target_link_libraries(newaoe_render INTERFACE
+            "${NEWAOE_APPKIT_FRAMEWORK}"
+            "${NEWAOE_QUARTZCORE_FRAMEWORK}"
+            "${NEWAOE_METAL_FRAMEWORK}"
+        )
+    endif()
 elseif(UNIX)
     find_package(OpenGL REQUIRED)
-    find_package(X11 REQUIRED)
+    find_package(X11 REQUIRED COMPONENTS Xi Xcursor)
     target_include_directories(newaoe_render SYSTEM INTERFACE
         "${X11_INCLUDE_DIR}"
     )
     target_link_libraries(newaoe_render INTERFACE
         OpenGL::GL
-        ${X11_LIBRARIES}
-        ${X11_Xi_LIB}
-        ${X11_Xcursor_LIB}
+        X11::X11
+        X11::Xi
+        X11::Xcursor
         ${CMAKE_DL_LIBS}
         Threads::Threads
         m

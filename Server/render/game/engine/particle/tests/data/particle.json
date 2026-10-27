@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "name": "Serialization 测试",
+  "material": {
+    "baseTexture": "textures/particle.png",
+    "normalTexture": "",
+    "emissiveTexture": "",
+    "tint": [1, 1, 1, 1],
+    "emissive": [0, 0, 0, 1],
+    "opacity": 1,
+    "alphaCutoff": 0,
+    "roughness": 0.400000006,
+    "metallic": 0,
+    "blendMode": "premultipliedAlpha"
+  },
+  "emitter": {
+    "maxParticles": 4096,
+    "emissionRate": 32,
+    "duration": 5,
+    "looping": true,
+    "simulationSpace": "local",
+    "inheritVelocity": 0.25,
+    "shape": "circle",
+    "shapeExtents": [32, 32, 0],
+    "shapeRadius": 12,
+    "shapeDistribution": "uniform",
+    "lifetime": {"minimum": 1, "maximum": 2, "distribution": "normal"},
+    "position": {"minimum": [0, 0, 0], "maximum": [0, 0, 0], "distribution": "uniform"},
+    "velocity": {"minimum": [0, 0, 0], "maximum": [0, 0, 0], "distribution": "uniform"},
+    "acceleration": {"minimum": [0, 0, 0], "maximum": [0, 0, 0], "distribution": "uniform"},
+    "gravity": [0, 98, 0],
+    "drag": 0,
+    "sizeMultiplier": {"minimum": 1, "maximum": 1, "distribution": "uniform"},
+    "rotationOffset": {"minimum": 0, "maximum": 0, "distribution": "uniform"},
+    "sizeCurve": [
+      {"time": 0, "value": [8, 8]},
+      {"time": 1, "value": [0, 0]}
+    ],
+    "colorCurve": [
+      {"time": 0, "value": [1, 1, 1, 1]},
+      {"time": 1, "value": [1, 1, 1, 0]}
+    ],
+    "rotationCurve": [
+      {"time": 0, "value": 0},
+      {"time": 1, "value": 0}
+    ],
+    "bursts": [
+      {"time": 0.25, "countMinimum": 2, "countMaximum": 5, "cycles": 2, "interval": 0.5}
+    ]
+  }
+}

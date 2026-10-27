@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b0d">
+  <title>NewAOE 烟雾弹 Transform2D 拖尾</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%; margin: 0; overflow: hidden;
+      color: #d9e2dc;
+      background: radial-gradient(circle at 50% 55%, #20282a 0, #0e1316 45%, #07090c 100%);
+      font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+    }
+    #canvas { display: block; width: 100vw; height: 100vh; border: 0; outline: 0; background: transparent; }
+    #header {
+      position: fixed; top: 20px; left: 24px; z-index: 2;
+      pointer-events: none; text-shadow: 0 2px 14px #000;
+    }
+    #header strong { display: block; color: #c5d2c8; font-size: 18px; letter-spacing: .08em; }
+    #header span { display: block; margin-top: 5px; color: #84948b; font: 12px ui-monospace, Consolas, monospace; }
+    #legend {
+      position: fixed; left: 24px; bottom: 20px; z-index: 2;
+      padding: 9px 12px; border: 1px solid #3c4944; border-radius: 7px;
+      color: #94a49c; background: #08100dcc; font: 11px ui-monospace, Consolas, monospace;
+      pointer-events: none;
+    }
+    #status {
+      position: fixed; inset: 0; z-index: 3; display: grid; place-items: center;
+      color: #bbc9c0; background: radial-gradient(circle, #18201c 0, #080b0d 55%);
+      font: 12px ui-monospace, Consolas, monospace; letter-spacing: .1em;
+      pointer-events: none; transition: opacity .22s ease;
+    }
+    #status.ready { opacity: 0; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <strong>NEWAOE · SMOKE GRENADE</strong>
+    <span>World Space · Transform2D 插值 · 速度继承 · WebGL2</span>
+  </div>
+  <div id="legend">SPACE 暂停/继续 · R 重置</div>
+  <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="status">正在加载烟雾弹粒子资源…</div>
+  <script>
+    const statusElement = document.getElementById('status');
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      print: (...args) => console.log(...args),
+      printErr: (...args) => {
+        console.error(...args);
+        const line = args.join(' ');
+        if (/ERROR|VALIDATION|FAILED|sg_draw|sg_apply/i.test(line)) {
+          statusElement.classList.remove('ready');
+          statusElement.textContent = line;
+        }
+      },
+      setStatus: (text) => {
+        statusElement.textContent = text || '';
+        statusElement.classList.toggle('ready', !text);
+      },
+      onRuntimeInitialized: () => {
+        statusElement.classList.add('ready');
+        Module.canvas.focus();
+      }
+    };
+    window.addEventListener('error', event => {
+      statusElement.classList.remove('ready');
+      statusElement.textContent = `启动失败：${event.message}`;
+    });
+  </script>
+  <script src="SokolSmokeDemo.js"></script>
+</body>
+</html>
+

@@ -21,6 +21,10 @@
 #define SOKOL_IMGUI_IMPL
 #include "util/sokol_imgui.h"
 
+#if defined(LoadImage)
+#undef LoadImage
+#endif
+
 #ifndef ENABLE_LOGGER
 #define ENABLE_LOGGER 0
 #endif
@@ -76,6 +80,107 @@ bool RenderInstance::run() {
 #endif
 }
 
+newaoe::render::TextureHandle RenderInstance::LoadImage(
+    std::string_view path) {
+    return LoadTexture(path);
+}
+
+newaoe::render::TextureHandle RenderInstance::LoadTexture(
+    std::string_view path) {
+    return engine_.LoadTexture(path);
+}
+
+newaoe::render::TextureHandle RenderInstance::LoadLinearImage(
+    std::string_view path) {
+    return engine_.LoadLinearImage(path);
+}
+
+bool RenderInstance::ReleaseImage(
+    newaoe::render::TextureHandle texture) noexcept {
+    return engine_.ReleaseImage(texture);
+}
+
+void RenderInstance::DrawImage(
+    newaoe::render::TextureHandle texture,
+    const newaoe::render::WorldRect& destination) {
+    engine_.DrawImage(texture, destination);
+}
+
+void RenderInstance::DrawImage(
+    newaoe::render::TextureHandle texture,
+    const newaoe::render::WorldRect& destination,
+    const newaoe::render::SpriteMaterial& material) {
+    engine_.DrawImage(texture, destination, material);
+}
+
+newaoe::render::ParticleSystemHandle RenderInstance::LoadParticleSystem(
+    std::string_view directory) {
+    return engine_.LoadParticleSystem(directory);
+}
+
+bool RenderInstance::ReleaseParticleSystem(
+    newaoe::render::ParticleSystemHandle system) noexcept {
+    return engine_.ReleaseParticleSystem(system);
+}
+
+bool RenderInstance::PlayParticleSystem(
+    newaoe::render::ParticleSystemHandle system) noexcept {
+    return engine_.PlayParticleSystem(system);
+}
+
+bool RenderInstance::PauseParticleSystem(
+    newaoe::render::ParticleSystemHandle system) noexcept {
+    return engine_.PauseParticleSystem(system);
+}
+
+bool RenderInstance::StopParticleSystem(
+    newaoe::render::ParticleSystemHandle system) noexcept {
+    return engine_.StopParticleSystem(system);
+}
+
+bool RenderInstance::SetParticleSystemPosition(
+    newaoe::render::ParticleSystemHandle system,
+    newaoe::render::Vec2 position) noexcept {
+    return engine_.SetParticleSystemPosition(system, position);
+}
+
+bool RenderInstance::SetParticleSystemTransform(
+    newaoe::render::ParticleSystemHandle system,
+    const newaoe::render::ParticleTransform2D& transform) noexcept {
+    return engine_.SetParticleSystemTransform(system, transform);
+}
+
+newaoe::render::Camera2D& RenderInstance::Camera() noexcept {
+    return engine_.Camera();
+}
+
+const newaoe::render::Camera2D& RenderInstance::Camera() const noexcept {
+    return engine_.Camera();
+}
+
+void RenderInstance::SetLight(
+    const newaoe::render::DirectionalLight& light) noexcept {
+    engine_.SetLight(light);
+}
+
+void RenderInstance::SetPostProcess(
+    const newaoe::render::PostProcessSettings& settings) noexcept {
+    engine_.SetPostProcess(settings);
+}
+
+const newaoe::render::RenderStats& RenderInstance::Stats() const noexcept {
+    return engine_.Stats();
+}
+
+const newaoe::render::RenderCapabilities& RenderInstance::Capabilities()
+    const noexcept {
+    return engine_.Capabilities();
+}
+
+const std::string& RenderInstance::LastError() const noexcept {
+    return engine_.LastError();
+}
+
 void RenderInstance::appInit(void* userData) {
     static_cast<RenderInstance*>(userData)->initializeGraphics();
 }
@@ -95,6 +200,16 @@ void RenderInstance::appEvent(const sapp_event* event, void* userData) {
 void RenderInstance::initializeGraphics() {
     sg_desc graphicsDescriptor{};
     graphicsDescriptor.environment = sglue_environment();
+    // Particle assets own several texture/LUT views and playback instances
+    // own persistent birth-record pages.  Sokol's small defaults are ideal
+    // for samples but would cap a real effect library long before the
+    // engine's explicit particle budgets are reached.
+    graphicsDescriptor.buffer_pool_size = 8192;
+    graphicsDescriptor.image_pool_size = 2048;
+    graphicsDescriptor.sampler_pool_size = 256;
+    graphicsDescriptor.shader_pool_size = 128;
+    graphicsDescriptor.pipeline_pool_size = 256;
+    graphicsDescriptor.view_pool_size = 4096;
 #if ENABLE_LOGGER
     graphicsDescriptor.logger.func = slog_func;
 #endif
@@ -105,6 +220,13 @@ void RenderInstance::initializeGraphics() {
         return;
     }
     sokolReady_ = true;
+
+    if (!engine_.Initialize()) {
+        std::fprintf(stderr, "render engine initialization failed: %s\n",
+                     engine_.LastError().c_str());
+        sapp_request_quit();
+        return;
+    }
 
     simgui_desc_t imguiDescriptor{};
 #if ENABLE_LOGGER
@@ -119,6 +241,9 @@ void RenderInstance::renderFrame() {
         return;
     }
 
+    engine_.BeginFrame(static_cast<float>(sapp_frame_duration()), sapp_width(),
+                       sapp_height());
+
     simgui_frame_desc_t frameDescriptor{};
     frameDescriptor.width = sapp_width();
     frameDescriptor.height = sapp_height();
@@ -131,15 +256,30 @@ void RenderInstance::renderFrame() {
     ImGui::Begin("NewAOE");
     ImGui::TextUnformatted("Sokol + Dear ImGui renderer");
     ImGui::Text("%.1f FPS", ImGui::GetIO().Framerate);
+    const newaoe::render::RenderStats& stats = engine_.Stats();
+    ImGui::Text("Sprites: %zu (%zu draw calls)", stats.submittedSprites,
+                stats.spriteDrawCalls);
+    ImGui::Text("Particles: %zu (%zu draw calls)", stats.visibleParticles,
+                stats.particleDrawCalls);
+    if (!engine_.LastError().empty()) {
+        ImGui::TextWrapped("Renderer: %s", engine_.LastError().c_str());
+    }
     ImGui::End();
 
     simgui_flush();
 
+    const sg_swapchain swapchain = sglue_swapchain();
+    engine_.Render(swapchain);
+
     sg_pass pass{};
-    pass.action.colors[0].load_action = SG_LOADACTION_CLEAR;
+    // Preserve the tone-mapped engine output and composite tooling on top.
+    pass.action.colors[0].load_action = SG_LOADACTION_LOAD;
     pass.action.colors[0].store_action = SG_STOREACTION_STORE;
-    pass.action.colors[0].clear_value = {0.03F, 0.05F, 0.05F, 1.0F};
-    pass.swapchain = sglue_swapchain();
+    pass.action.depth.load_action = SG_LOADACTION_DONTCARE;
+    pass.action.depth.store_action = SG_STOREACTION_DONTCARE;
+    pass.action.stencil.load_action = SG_LOADACTION_DONTCARE;
+    pass.action.stencil.store_action = SG_STOREACTION_DONTCARE;
+    pass.swapchain = swapchain;
     sg_begin_pass(&pass);
     simgui_draw();
     sg_end_pass();
@@ -161,6 +301,7 @@ void RenderInstance::shutdown() noexcept {
         simgui_shutdown();
         imguiReady_ = false;
     }
+    engine_.Shutdown();
     if (sokolReady_) {
         sg_shutdown();
         sokolReady_ = false;

@@ -5,16 +5,20 @@ project(NewAOE LANGUAGES CXX)
 # Configure with:
 #   Windows:   cmake -S . -B build-window -DAOE_BUILD=Server
 #   Linux/WSL: cmake -S . -B build-linux  -DAOE_BUILD=Server
-# Valid values are Server, Client, and Both (case-insensitive).
-set(AOE_BUILD "Both" CACHE STRING "Application to build: Server, Client, or Both")
-set_property(CACHE AOE_BUILD PROPERTY STRINGS Server Client Both)
+# Engine builds only the standalone particle-system editor.  Keeping that
+# path isolated is important: editor builds must not pull the game server,
+# networking, audio, logger or profiler into the tool executable.
+set(AOE_BUILD "Both" CACHE STRING
+    "Application to build: Server, Client, Both, or Engine"
+)
+set_property(CACHE AOE_BUILD PROPERTY STRINGS Server Client Both Engine)
 
 string(TOLOWER "${AOE_BUILD}" AOE_BUILD_NORMALIZED)
-set(AOE_VALID_BUILD_VALUES server client both)
+set(AOE_VALID_BUILD_VALUES server client both engine)
 if(NOT AOE_BUILD_NORMALIZED IN_LIST AOE_VALID_BUILD_VALUES)
     message(FATAL_ERROR
         "Invalid AOE_BUILD value '${AOE_BUILD}'. "
-        "Expected Server, Client, or Both."
+        "Expected Server, Client, Both, or Engine."
     )
 endif()
 
@@ -22,6 +26,59 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Header-only third-party libraries expose namespaced targets so consumers do
+# not need to know their on-disk layout.
+add_subdirectory(Public/third-party/fixed_point)
+
+# Build the browser integration demo without pulling server, networking,
+# audio or editor UI dependencies into the WebAssembly bundle. Its asset
+# directory is the direct output of ParticleSystemEditor --offscreen.
+option(AOE_BUILD_WEB_FIRE_DEMO
+    "Build only the Emscripten fire-particle integration demo" OFF)
+option(AOE_BUILD_WEB_SMOKE_DEMO
+    "Build only the Emscripten smoke-grenade integration demo" OFF)
+if(AOE_BUILD_WEB_FIRE_DEMO AND AOE_BUILD_WEB_SMOKE_DEMO)
+    message(FATAL_ERROR
+        "Select only one Web particle integration demo at a time")
+endif()
+if(AOE_BUILD_WEB_FIRE_DEMO)
+    if(NOT EMSCRIPTEN)
+        message(FATAL_ERROR
+            "AOE_BUILD_WEB_FIRE_DEMO requires the Emscripten toolchain")
+    endif()
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    add_subdirectory(Server/render/game/engine/WebFireDemo)
+    message(STATUS "NewAOE build selection: Web fire-particle demo")
+    return()
+endif()
+if(AOE_BUILD_WEB_SMOKE_DEMO)
+    if(NOT EMSCRIPTEN)
+        message(FATAL_ERROR
+            "AOE_BUILD_WEB_SMOKE_DEMO requires the Emscripten toolchain")
+    endif()
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    add_subdirectory(Server/render/game/engine/WebSmokeDemo)
+    message(STATUS "NewAOE build selection: Web smoke-grenade demo")
+    return()
+endif()
+
+# The editor deliberately takes the short path through the root build.  Its
+# own CMakeLists owns Sokol, Dear ImGui, stb_image and platform link details.
+# In particular, an Engine configure does not even validate server-only
+# dependencies such as Boost.
+if(AOE_BUILD_NORMALIZED STREQUAL "engine")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    foreach(config Debug Release RelWithDebInfo MinSizeRel)
+        string(TOUPPER "${config}" config_upper)
+        set("CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config_upper}" "${CMAKE_BINARY_DIR}/bin")
+    endforeach()
+
+    add_subdirectory(Server/render/game/engine/ParticleSystemEditor)
+    message(STATUS "NewAOE build selection: ${AOE_BUILD}")
+    message(STATUS "Executable output directory: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    return()
+endif()
 
 # Logging and profiling are independent build features. Their interface
 # targets below always exist so every consumer receives the same 0/1 macro,
@@ -163,6 +220,10 @@ if(MSVC)
     add_link_options(
         "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:REF>"
         "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:ICF>"
+    )
+elseif(APPLE)
+    add_link_options(
+        "$<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,-dead_strip>"
     )
 else()
     add_link_options(

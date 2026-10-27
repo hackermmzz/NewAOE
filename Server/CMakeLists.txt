@@ -41,11 +41,26 @@ file(GLOB_RECURSE NEWAOE_PUBLIC_SOURCES CONFIGURE_DEPENDS
 # Shared feature targets contribute profiler/logger sources only when their
 # independent build switches are enabled.
 
-add_executable(Server
+set(NEWAOE_SERVER_SOURCES
     main.cpp
     conf.h
     ${NEWAOE_PUBLIC_SOURCES}
 )
+
+if(IOS)
+    # iOS executables must be application bundles.  CMake supplies the
+    # platform Info.plist defaults; signing/team selection stays with the
+    # consuming Xcode build.
+    add_executable(Server MACOSX_BUNDLE ${NEWAOE_SERVER_SOURCES})
+    set_target_properties(Server PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_NAME "NewAOE"
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.newaoe.game"
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+        MACOSX_BUNDLE_BUNDLE_VERSION "1"
+    )
+else()
+    add_executable(Server ${NEWAOE_SERVER_SOURCES})
+endif()
 
 target_include_directories(Server PRIVATE
     "${PROJECT_SOURCE_DIR}"
@@ -58,6 +73,7 @@ target_compile_definitions(Server PRIVATE
 
 target_link_libraries(Server PRIVATE
     NewAOE::boost_headers
+    NewAOE::fixed_point
     Threads::Threads
     NewAOE::profile
     NewAOE::logger

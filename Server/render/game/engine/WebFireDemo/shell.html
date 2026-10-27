@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05070c">
+  <title>NewAOE 火焰粒子系统</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: #f9dfb4;
+      background: radial-gradient(circle at 50% 76%, #2b1009 0, #090a0f 38%, #05070c 72%);
+      font-family: Inter, "Microsoft YaHei", system-ui, sans-serif;
+    }
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      border: 0;
+      outline: 0;
+      background: transparent;
+    }
+    #header {
+      position: fixed;
+      top: 20px;
+      left: 24px;
+      z-index: 2;
+      pointer-events: none;
+      text-shadow: 0 2px 14px #000;
+    }
+    #header strong { display: block; color: #ffb352; font-size: 18px; letter-spacing: .08em; }
+    #header span { display: block; margin-top: 5px; color: #a9917b; font: 12px ui-monospace, Consolas, monospace; }
+    #status {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      color: #ffad48;
+      background: radial-gradient(circle at 50% 70%, #291008 0, #080a12 46%);
+      font: 12px ui-monospace, Consolas, monospace;
+      letter-spacing: .11em;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+    #status.ready { opacity: 0; }
+  </style>
+</head>
+<body>
+  <div id="header">
+    <strong>NEWAOE · FIRE PARTICLE</strong>
+    <span>同一份 particle.json · WebGL2 · Deferred + Bloom</span>
+  </div>
+  <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="status">正在加载火焰粒子资源…</div>
+  <script>
+    const statusElement = document.getElementById('status');
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      print: (...args) => console.log(...args),
+      printErr: (...args) => console.error(...args),
+      setStatus: (text) => {
+        statusElement.textContent = text || '';
+        statusElement.classList.toggle('ready', !text);
+      },
+      onRuntimeInitialized: () => {
+        statusElement.classList.add('ready');
+        Module.canvas.focus();
+      }
+    };
+    window.addEventListener('error', event => {
+      statusElement.classList.remove('ready');
+      statusElement.textContent = `启动失败：${event.message}`;
+    });
+  </script>
+  <script src="SokolFireDemo.js"></script>
+</body>
+</html>

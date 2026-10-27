@@ -40,6 +40,7 @@ target_include_directories(Client PRIVATE
 
 target_link_libraries(Client PRIVATE
     NewAOE::boost_headers
+    NewAOE::fixed_point
     Threads::Threads
     NewAOE::profile
     NewAOE::logger

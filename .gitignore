@@ -1,5 +1,7 @@
 .vscode
 build/
+build-engine/
+build-engine-mingw/
 build-window/
 build-vscode-windows/
 build-linux/
