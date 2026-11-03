@@ -59,7 +59,9 @@ if(IOS)
         MACOSX_BUNDLE_BUNDLE_VERSION "1"
     )
 else()
-    add_executable(Server ${NEWAOE_SERVER_SOURCES})
+    add_executable(Server ${NEWAOE_SERVER_SOURCES}
+        core/Public/var/Civilization.h
+        core/Module/Development/development.h)
 endif()
 
 target_include_directories(Server PRIVATE

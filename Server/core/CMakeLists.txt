@@ -13,6 +13,8 @@ add_library(NewAOE::core ALIAS newaoe_core)
 target_sources(newaoe_core INTERFACE
     "${CMAKE_CURRENT_LIST_DIR}/coreInstance.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/coreInstance.h"
+    "${CMAKE_CURRENT_LIST_DIR}/BaseObject/CrashBox.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/BaseObject/CrashBox.h"
 )
 
 target_include_directories(newaoe_core INTERFACE
