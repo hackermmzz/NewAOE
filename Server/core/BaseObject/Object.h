@@ -25,10 +25,10 @@ public:
 	Object();
 	I32 getSort();
 	I32 getType();
-    	I32 getPlayerRepresent();
+    I32 getPlayerRepresent();
 	void setPlayerRepresent(I32 playerRepresent);
 	IVec2 getBlockPos();
-	Vec2 getDetailPos();
+	IVec2 getDetailPos();
 	string getName();
 	I32 getVision();
   	I32 getglobalNum();
