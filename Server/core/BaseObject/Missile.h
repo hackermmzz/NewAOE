@@ -15,6 +15,4 @@ protected:
 	WeakPtr<Development> playerScience;
 public:
     Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
-
- };
-
+};
