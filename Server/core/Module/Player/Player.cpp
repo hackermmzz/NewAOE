@@ -34,6 +34,7 @@ Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> play
 BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent){
     SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,playerRepresent,Percent));
     buildingResources.emplace_back(br);
+    buildings.emplace_back(br);
     return br.get();
 }
 
@@ -97,6 +98,7 @@ void Player::removeBuildingResource(I32 globalID){
             return;
         }
     }
+    removeBuildingResource(globalID);
 }
 
 void Player::removeMissile(I32 globalID){
