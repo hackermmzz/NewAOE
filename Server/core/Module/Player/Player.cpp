@@ -3,6 +3,14 @@
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;
     this->teamID = teamID;
+    for(I32 i=0;i<4;i++){
+        ResourceGroup[i] = BasicStartResource[i];
+    }
+    for(auto& feature : FeatureStartResource){
+        if(feature.first == civilization){
+            ResourceGroup[feature.second.first]== feature.second.second;
+        }
+    }
 }
 
 Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent){
@@ -100,24 +108,29 @@ void Player::removeMissile(I32 globalID){
     }
 }
 
-bool Player::changeWood (I32 amount){
-    if(wood + amount < 0) return false;
-    wood += amount;
-    return true;
+I32 Player::getResource(I32 resourceSort){
+    return ResourceGroup[resourceSort];
 }
-bool Player::changeFood (I32 amount){
-    if(food + amount < 0) return false;
-    food += amount;
-    return true;
+
+array<I32,4> Player::getResource(){
+    return ResourceGroup;
 }
-bool Player::changeGold (I32 amount){
-    if(gold + amount < 0) return false;
-    gold += amount;
-    return true;
-}
-bool Player::changeStone(I32 amount){
-    if(stone + amount < 0) return false;
-    stone += amount;
+
+bool Player::changeResource(I32 resourceSort, I32 changeAmount){
+    if(ResourceGroup[resourceSort] + changeAmount < 0){
+        return false;
+    }
+    ResourceGroup[resourceSort] += changeAmount;
     return true;
 }
 
+bool Player::changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount){
+    if(ResourceGroup[RESOURCESORT_WOOD] + changeWoodAmount < 0 || ResourceGroup[RESOURCESORT_FOOD] + changeFoodAmount < 0 || ResourceGroup[RESOURCESORT_STONE] + changeStoneAmount < 0 || ResourceGroup[RESOURCESORT_GOLD] + changeGoldAmount < 0){
+        return false;
+    }
+    ResourceGroup[RESOURCESORT_WOOD]  += changeWoodAmount;
+    ResourceGroup[RESOURCESORT_FOOD]  += changeFoodAmount;
+    ResourceGroup[RESOURCESORT_STONE] += changeStoneAmount;
+    ResourceGroup[RESOURCESORT_GOLD]  += changeGoldAmount;
+    return true;
+}
