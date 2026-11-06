@@ -2,21 +2,21 @@
 
 /********** 建筑种类 **********/
 enum BUILDING_TYPE {
-    BUILDING_HOME = 0,
-    BUILDING_GRANARY,
-    BUILDING_CENTER,
-    BUILDING_STOCK,
-    BUILDING_FARM,
-    BUILDING_MARKET,
-    BUILDING_ARROWTOWER,
-    BUILDING_ARMYCAMP,
-    BUILDING_STABLE,
-    BUILDING_RANGE,
-    BUILDING_DOCK,
-    BUILDING_SIEGE,
-    BUILDING_COLLAGE,
-    BUILDING_TEMPLE,//这个还未增加，本次也不用增加
-    BUILDING_WALL,//这个还未增加，本次也不用增加
+    BUILDING_HOME = 0,          //房屋
+    BUILDING_GRANARY,           //谷仓
+    BUILDING_CENTER,            //市镇中心
+    BUILDING_STOCK,             //仓库
+    BUILDING_FARM,              //农场
+    BUILDING_MARKET,            //市场
+    BUILDING_ARROWTOWER,        //箭塔
+    BUILDING_ARMYCAMP,          //军营
+    BUILDING_STABLE,            //马厩
+    BUILDING_RANGE,             //靶场
+    BUILDING_DOCK,              //船坞
+    BUILDING_SIEGE,             //攻城武器厂
+    BUILDING_COLLAGE,           //学院
+    BUILDING_TEMPLE,            //神庙。这个还未增加，本次也不用增加
+    BUILDING_WALL,              //城墙。这个还未增加，本次也不用增加
     BUILDING_TYPE_MAXNUM,
 };
 
