@@ -12,7 +12,7 @@ protected:
 	I32 resourceSort;
 	bool gatherAble;	//是否可采集
 public:
-	bool isGatherAble();	//是否可采集，比如动物死亡才可以采集类似这样，那默认刚开始就不可以采集
+	virtual bool isGatherAble();	//是否可采集，比如动物死亡才可以采集类似这样，那默认刚开始就不可以采集
 	I32 getResourceSort();
 	Double getCntLeft();
 	Double getMaxCnt();
