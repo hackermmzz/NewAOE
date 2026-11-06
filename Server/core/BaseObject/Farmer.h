@@ -20,6 +20,6 @@ public:
     I32 getResourceSort();              //获取资源类型
     I32 getQuantityGather();            //获取资源采摘速度
     bool isFullBackpack();              //是否采摘满了
-    void addResource(I32 quantity,I32 resourceSort);      //增加资源
+    void addResource(I32 quantity,I32 resourceSort);      //增加手持的资源
     void transportHuman(SafePtr<Human> human);            //运输人员
   };

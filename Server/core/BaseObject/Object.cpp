@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "Server/core/Module/Player/Player.h"
 
 U64 Object::globalSNIndex=1;	//给全局对象分配SN
 
@@ -43,4 +44,17 @@ bool Object::checkCrash(const Object*obj){
 }
 void Object::tick(){
     //待完成
+}
+/*void Object::setplayer(WeakPtr<Player> player){
+    this->player = player;
+}
+void Object::getplayer(WeakPtr<Player> player){
+    player = this->player;
+}*/
+void Object::setBelong(I32 playerID,I32 teamID){
+    this->playerID = playerID;
+    this->teamID = teamID;
+}
+std::pair<I32,I32> Object::getBelong(){
+    return std::make_pair(playerID,teamID);
 }
