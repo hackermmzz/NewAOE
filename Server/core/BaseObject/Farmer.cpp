@@ -48,5 +48,6 @@ void Farmer::addResource(I32 quantity,I32 resourceSort){
 
 void Farmer::transportHuman(SafePtr<Human> human){
     humanTransport.emplace_back(human);
+    human->setTransported(true);
 }
 

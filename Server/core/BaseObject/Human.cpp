@@ -1,7 +1,10 @@
 #include "Human.h"
 
 Human::Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience, I32 playerRepresent){
+    this->sort = sort;
+    this->detail_pos = detailPos;
     this->playerScience = playerScience;
+    SN = playerRepresent;
     transported = false;
 }
 

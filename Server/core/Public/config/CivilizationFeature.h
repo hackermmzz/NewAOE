@@ -15,3 +15,4 @@ constexpr I32 BasicStartResource[4]={200,200,150,0};
 //特色文明基础资源量
 constexpr std::array<std::pair<I32,std::pair<I32,I32>>, 1> FeatureStartResource={{ {CIVILIZATION_SHANG, {RESOURCESORT_FOOD,160}} }};
 
+

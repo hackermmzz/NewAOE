@@ -6,6 +6,7 @@
 #include "Server/core/BaseObject/WeakPointer.hpp"
 #include "Server/core/Module/Development/development.h"
 #include "Server/core/BaseObject/Object.h"
+#include "Server/core/Public/var/Missile.h"
 
 class Missile : public MoveObject,public Attacker
 {
