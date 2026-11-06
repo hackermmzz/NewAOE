@@ -1,0 +1,35 @@
+#include "Building.h"
+
+
+
+Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent):Object()
+{
+    sort = SORT_BUILDING;
+    this->type = type;
+    if(type ==BUILDING_HOME || type == BUILDING_ARROWTOWER){
+        this->fundation = FOUNDATION_MIDDLE;
+    }else if(type == BUILDING_WALL){
+        this->fundation = FOUNDATION_SMALL;
+    }else{
+        this->fundation = FOUNDATION_BIG;
+    }
+    this->block_pos = blockPos;
+    this->playerScience = playerScience;
+    this->SN = playerRepresent;
+    this->constructed = false;
+}
+bool Building::isConstructed(){
+    return constructed;
+}
+bool Building::isMatchResourceType(int productSort){
+    if(type == BUILDING_CENTER){
+        return true;
+    }
+    if(type == BUILDING_GRANARY&&productSort == PRODUCTSORT_GRANARYFOOD){
+        return true;
+    }
+    if(type == BUILDING_STOCK&&(productSort == PRODUCTSORT_STOCKFOOD||productSort == PRODUCTSORT_WOOD||productSort == PRODUCTSORT_STONE||productSort == PRODUCTSORT_GOLD)){
+        return true;
+    }
+    return false;
+}
