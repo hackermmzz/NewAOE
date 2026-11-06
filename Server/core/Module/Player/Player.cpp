@@ -97,10 +97,11 @@ void Player::removeBuildingResource(I32 globalID){
     for(auto it = buildingResources.begin();it!=buildingResources.end();++it){
         if((*it)->getPlayerRepresent() == globalID){
             buildingResources.erase(it);
+            removeBuildingResource(globalID);
             return;
         }
     }
-    removeBuildingResource(globalID);
+    
 }
 
 void Player::removeMissile(I32 globalID){
