@@ -5,8 +5,10 @@
 #include "Server/core/BaseObject/MoveObject.h"
 #include "Server/core/BaseObject/Resource.h"
 #include "Server/core/BaseObject/BloodHaver.h"
+#include "Server/core/BaseObject/Attacker.h"
 
-class Animal:public MoveObject, public Resource, public BloodHaver
+
+class Animal:public MoveObject, public Resource, public BloodHaver,public Attacker
 {
 protected:
 	I32 friendly;	//友好程度

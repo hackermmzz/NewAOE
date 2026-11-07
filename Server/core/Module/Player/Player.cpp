@@ -3,44 +3,45 @@
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;
     this->teamID = teamID;
-    for(I32 i=0;i<4;i++){
-        ResourceGroup[i] = BasicStartResource[i];
-    }
-    for(auto& feature : FeatureStartResource){
-        if(feature.first == civilization){
-            ResourceGroup[feature.second.first]== feature.second.second;
-        }
-    }
+    ResourceGroup = GameValue::getStartResource(civilization);
 }
 
-Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent){
-    SafePtr<Army> a(new Army(detailPos,type,playerScience,playerRepresent));
+void Player::init(I32 playerID){
+    this->playerID = playerID;
+}
+Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
+    SafePtr<Army> a(new Army(detailPos,type,playerScience));
+    a->setBelong(playerID,teamID);
     armies.emplace_back(a);
     return a.get();
 }
 
-Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type){
-    SafePtr<Farmer> f(new Farmer(detailPos,playerScience,playerRepresent,type));
+Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type){
+    SafePtr<Farmer> f(new Farmer(detailPos,playerScience,type));
     farmers.emplace_back(f);
+    f->setBelong(playerID,teamID);
     return f.get();
 }
 
-Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent, I32 Percent){
-    SafePtr<Building> b(new Building(type,blockPos,playerScience,playerRepresent));
+Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 Percent){
+    SafePtr<Building> b(new Building(type,blockPos,playerScience));
     buildings.emplace_back(b);
+    b->setBelong(playerID,teamID);
     return b.get();
 }
 
-BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent){
-    SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,playerRepresent,Percent));
+BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent){
+    SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,Percent));
     buildingResources.emplace_back(br);
     buildings.emplace_back(br);
+    br->setBelong(playerID,teamID);
     return br.get();
 }
 
 Missile* Player::newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack){
     SafePtr<Missile> m(new Missile(type,attacker,attackee,playerScience,attack));
     missiles.emplace_back(m);
+    m->setBelong(playerID,teamID);
     return m.get();
 }
 
@@ -95,10 +96,11 @@ void Player::removeBuildingResource(I32 globalID){
     for(auto it = buildingResources.begin();it!=buildingResources.end();++it){
         if((*it)->getPlayerRepresent() == globalID){
             buildingResources.erase(it);
+            removeBuildingResource(globalID);
             return;
         }
     }
-    removeBuildingResource(globalID);
+    
 }
 
 void Player::removeMissile(I32 globalID){

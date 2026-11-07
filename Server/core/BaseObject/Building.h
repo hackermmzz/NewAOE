@@ -6,15 +6,18 @@
 #include "Server/core/BaseObject/WeakPointer.hpp"
 #include "Server/core/Public/config/Core.h"
 #include "Server/core/Module/Development/development.h"
+#include "Server/core/Public/var/Building.h"
+#include "Server/core/Public/var/Sort.h"
 
 class Building:public Object,public BloodHaver,public Attacker
 {
 protected:
 	WeakPtr<Development> playerScience;
-	I32 fundation;	//地基类型
-	bool constructed;	//是否建造完成
+	I32 fundation;	        //地基类型
+	bool constructed;	    //是否建造完成
+    I32 Percent;
 public:
-    Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent);
-    bool isConstructed();//判断已建造完成
-    bool isMatchResourceType(int resourceType); //判断是否能收集某个类型的物资
+    Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
+    bool isConstructed();   //判断已建造完成
+    bool isMatchResourceType(int productSort); //判断是否能收集某个类型的物资
  };
