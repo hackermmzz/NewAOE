@@ -13,7 +13,7 @@ public:
 	I32 quantity_GatherOnce;		          //资源采摘速度
 	vector<SafePtr<Human>>humanTransport;	//运输的人	
 public:
-    Farmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type);
+    Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
     I32 getResourceNowHave();           //获取当前持有的资源数量
     I32 getResourceHaveMax();           //获取可以持有的资源最大数量
     I32 getResourceHaveAddition();      //获取额外的资源采集加成

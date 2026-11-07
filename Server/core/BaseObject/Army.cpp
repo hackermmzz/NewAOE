@@ -69,8 +69,8 @@
 
 
 
-Army::Army(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent)
-    : Human(SORT_ARMY, detailPos, playerScience, playerRepresent)
+Army::Army(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience)
+    : Human(SORT_ARMY, detailPos, playerScience)
 {
     this->type = type;
     switch(type){

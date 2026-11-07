@@ -2,7 +2,7 @@
 
 
 
-Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent):Object()
+Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience):Object()
 {
     sort = SORT_BUILDING;
     this->type = type;
@@ -15,7 +15,6 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, 
     }
     this->block_pos = blockPos;
     this->playerScience = playerScience;
-    this->SN = playerRepresent;
     this->constructed = false;
     //设置名称
     string tmp="Building---Type:";

@@ -1,8 +1,8 @@
 #include "Farmer.h"
 #include "Server/core/Public/var/Sort.h"
 
-Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type)
-    : Human(SORT_FARMER, detailPos, playerScience, playerRepresent)
+Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type)
+    : Human(SORT_FARMER, detailPos, playerScience)
 {
     this->resourceSort = type;
     //等待Development处理

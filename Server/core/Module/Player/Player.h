@@ -13,10 +13,10 @@ public:
     Player(I32 civilization, I32 teamID);
     void init(I32 playerID);
     //新建对象
-    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent);
-    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type);
-    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent, I32 Percent);
-    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent);
+    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience);
+    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
+    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
+    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
     Missile*            newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
     //获取对象
     vector<SafePtr<Army>>&              getArmy();

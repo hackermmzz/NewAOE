@@ -9,30 +9,29 @@ Player::Player(I32 civilization, I32 teamID){
 void Player::init(I32 playerID){
     this->playerID = playerID;
 }
-Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent){
-    SafePtr<Army> a(new Army(detailPos,type,playerScience,playerRepresent));
-    //a->setplayer((WeakPtr<Player>)(this));
+Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
+    SafePtr<Army> a(new Army(detailPos,type,playerScience));
     a->setBelong(playerID,teamID);
     armies.emplace_back(a);
     return a.get();
 }
 
-Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type){
-    SafePtr<Farmer> f(new Farmer(detailPos,playerScience,playerRepresent,type));
+Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type){
+    SafePtr<Farmer> f(new Farmer(detailPos,playerScience,type));
     farmers.emplace_back(f);
     f->setBelong(playerID,teamID);
     return f.get();
 }
 
-Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent, I32 Percent){
-    SafePtr<Building> b(new Building(type,blockPos,playerScience,playerRepresent));
+Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 Percent){
+    SafePtr<Building> b(new Building(type,blockPos,playerScience));
     buildings.emplace_back(b);
     b->setBelong(playerID,teamID);
     return b.get();
 }
 
-BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent){
-    SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,playerRepresent,Percent));
+BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent){
+    SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,Percent));
     buildingResources.emplace_back(br);
     buildings.emplace_back(br);
     br->setBelong(playerID,teamID);

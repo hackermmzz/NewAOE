@@ -16,7 +16,7 @@ protected:
 	 WeakPtr<Development> playerScience;	//科技
 	 bool transported;	                    //是否被运输
 public:
-    Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience, I32 playerRepresent);
+    Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
     bool getTransported() const;
     void setTransported(bool value);

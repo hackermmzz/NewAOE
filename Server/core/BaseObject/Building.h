@@ -16,7 +16,7 @@ protected:
 	I32 fundation;	        //地基类型
 	bool constructed;	    //是否建造完成
 public:
-    Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent);
+    Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience);
     bool isConstructed();   //判断已建造完成
     bool isMatchResourceType(int productSort); //判断是否能收集某个类型的物资
  };
