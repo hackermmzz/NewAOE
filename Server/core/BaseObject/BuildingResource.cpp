@@ -1,6 +1,6 @@
 #include "BuildingResource.h"
 
-BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent):Building(type,blockPos,playerScience){
+BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Building(type,blockPos,playerScience,percent){
     sort = SORT_BUILDING_RESOURCE;
     this->type = type;
     this->block_pos = blockPos;

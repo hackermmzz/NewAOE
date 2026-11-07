@@ -2,7 +2,7 @@
 
 
 
-Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent):Object()
+Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Object()
 {
     sort = SORT_BUILDING;
     this->type = type;
