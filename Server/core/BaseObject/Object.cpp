@@ -24,7 +24,7 @@ IVec2 Object::getBlockPos(){
     return block_pos;
 }
 IVec2 Object::getDetailPos(){
-    //return detail_pos;
+    return detail_pos;
 }
 string Object::getName(){
     return name;
@@ -37,6 +37,8 @@ I32 Object::getglobalNum(){
 }
 void Object::setPos(const IVec2&pos){
     detail_pos = pos;
+    block_pos.x=detail_pos.x/BLOCKSIDELENGTH;
+    block_pos.y=detail_pos.y/BLOCKSIDELENGTH;
 }
 
 bool Object::checkCrash(const Object*obj){
