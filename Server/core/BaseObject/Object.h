@@ -40,6 +40,6 @@ public:
 	void setBelong(I32 playerID,I32 teamID);		//设置对象所属玩家和团队（只需要设一个的话，另一个填成负数就行）
 	std::pair<I32,I32> getBelong();					//获取对象所属玩家和团队（first为playerID，second为teamID）
 	virtual bool checkCrash(const Object*obj);
-	virtual void tick();	//每帧处理结束都会调用这个函数
+	virtual void tick();							//每帧处理结束都会调用这个函数
  };
 

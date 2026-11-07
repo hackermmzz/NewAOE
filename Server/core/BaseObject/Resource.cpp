@@ -12,9 +12,9 @@ Double Resource::getCntLeft(){
 Double Resource::getMaxCnt(){
     return maxCnt;
 }
-void Resource::decayResource(){	//腐烂资源
+void Resource::decayResource(){
     resourceSort -= decayRate;
 }
-bool Resource::isSurplus(){	//资源是否还有剩余
+bool Resource::isSurplus(){
     return cntLeft > Double::Zero();
 }

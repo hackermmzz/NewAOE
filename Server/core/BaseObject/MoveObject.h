@@ -13,8 +13,8 @@ protected:
 	IVec2 			targetDetailPos;	//目的地细节坐标
 public:
     void setPath(const stack<IVec2>&path,const IVec2&targetDetailPoint);	//设置寻路路径
-	FORCE_INLINE IVec2 nextPos();				//下一个落脚点,如果路径栈为空，直接返回最终的targetDetailPos就行了。
-	FORCE_INLINE IVec2 getTargetDetailPos();	//获取最终的目标点
-	virtual Double getSpeed();					//获取速度
+	FORCE_INLINE IVec2 	nextPos();				//下一个落脚点,如果路径栈为空，直接返回最终的targetDetailPos就行了。
+	FORCE_INLINE IVec2 	getTargetDetailPos();	//获取最终的目标点
+	virtual Double		getSpeed();				//获取速度
 };
 

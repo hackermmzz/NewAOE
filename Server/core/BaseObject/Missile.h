@@ -11,9 +11,9 @@
 class Missile : public MoveObject,public Attacker
 {
 protected:
-	WeakPtr<Object>attacker;
-	WeakPtr<Object>attackee;
-	WeakPtr<Development> playerScience;
+	WeakPtr<Object>		attacker;
+	WeakPtr<Object>		attackee;
+	WeakPtr<Development>playerScience;
 public:
     Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
 

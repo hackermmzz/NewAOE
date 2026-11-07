@@ -14,7 +14,7 @@ class Human:public MoveObject,public BloodHaver,public Attacker
 {
 protected:
 	 WeakPtr<Development> playerScience;	//科技
-	 bool transported;	//是否被运输
+	 bool transported;	                    //是否被运输
 public:
     Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience, I32 playerRepresent);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }

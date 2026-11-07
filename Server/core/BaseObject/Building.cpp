@@ -17,6 +17,11 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, 
     this->playerScience = playerScience;
     this->SN = playerRepresent;
     this->constructed = false;
+    //设置名称
+    string tmp="Building---Type:";
+    tmp+=std::to_string(type);
+    tmp+="---SN:";
+    name=tmp+std::to_string(SN);
 }
 bool Building::isConstructed(){
     return constructed;
