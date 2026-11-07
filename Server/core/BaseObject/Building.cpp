@@ -2,7 +2,7 @@
 
 
 
-Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience):Object()
+Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent):Object()
 {
     sort = SORT_BUILDING;
     this->type = type;
@@ -21,8 +21,10 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience):
     tmp+=std::to_string(type);
     tmp+="---SN:";
     name=tmp+std::to_string(SN);
+    this->Percent=Percent;
 }
 bool Building::isConstructed(){
+    if(Percent==100)constructed=true;
     return constructed;
 }
 bool Building::isMatchResourceType(int productSort){
