@@ -14,12 +14,12 @@ I32 Object::getSort(){
 I32 Object::getType(){
     return type;
 }
-I32 Object::getPlayerRepresent(){
+/*I32 Object::getPlayerRepresent(){
     return SN;
 }
 void Object::setPlayerRepresent(I32 playerRepresent){
     SN = playerRepresent;
-}
+}*/
 IVec2 Object::getBlockPos(){
     return block_pos;
 }
@@ -33,7 +33,7 @@ I32 Object::getVision(){
     return vision;
 }
 I32 Object::getglobalNum(){
-    return globalSNIndex;
+    return SN;
 }
 void Object::setPos(const IVec2&pos){
     detail_pos = pos;

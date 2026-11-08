@@ -18,6 +18,7 @@ protected:
 public:
     Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
+    WeakPtr<Development> getPlayerScience(){return playerScience;}
     bool getTransported() const;
     void setTransported(bool value);
 };
