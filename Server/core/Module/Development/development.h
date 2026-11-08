@@ -12,9 +12,6 @@ public:
     Development(WeakPtr<Player> player, I32 civilization);
     ~Development() = default;
 
-    // 禁止拷贝，避免 WeakPtr/科技树状态被意外复制
-    Development(const Development&) = delete;
-    Development& operator=(const Development&) = delete;
 
     // ---- 加成查询 ----
     // 返回某个 sort 下具体 type 的速度加成比例
