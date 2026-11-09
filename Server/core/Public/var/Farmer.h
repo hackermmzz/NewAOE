@@ -3,8 +3,8 @@
 /*******************************农民类型包含的种类****************************/
 enum FarmerType {
     FARMERTYPE_FARMER = 0,
-    FARMERTYPE_WOOD_BOAT,
-    FARMERTYPE_SAILING
+    FARMERTYPE_WOOD_BOAT,   //运输船
+    FARMERTYPE_SAILING      //渔船
 };
 
 /*********************************角色为农民时候的子角色**********************/
