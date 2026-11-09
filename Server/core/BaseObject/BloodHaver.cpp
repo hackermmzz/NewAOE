@@ -34,8 +34,8 @@ Double BloodHaver::getDefenceCloseBasic(){
 Double BloodHaver::getDefenceShootBasic(){
     return defenceShoot;
 }
-//防御的科技加成由 update() 直接烘进 defenceClose/defenceShoot，
-//这两个函数保留给"需要单独取加成值"的场景，默认返回 0，避免重复计算
+//默认实现：没有科技的对象（动物）加成恒为 0；
+//Human/Building 会覆盖成"实际值 - 基础值"，供 UI 显示
 Double BloodHaver::getDefenceCloseAddition(){
     return Double::Zero();
 }

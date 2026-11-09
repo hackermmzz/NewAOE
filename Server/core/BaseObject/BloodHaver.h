@@ -19,8 +19,8 @@ public:
 	bool isDie();
 	void beHeal(Double heal);
 	void beAttcked(Double damage);
-	Double getDefenceCloseBasic();
-	Double getDefenceShootBasic();
+	virtual Double getDefenceCloseBasic();	//表里的基础防御（不含科技）
+	virtual Double getDefenceShootBasic();
 	virtual Double getDefenceCloseAddition();	//默认 0，科技加成由 update() 烘进字段
 	virtual Double getDefenceShootAddition();
 	virtual void notifyAttacked();	//当被攻击时调用这个函数

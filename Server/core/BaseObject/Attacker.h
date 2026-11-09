@@ -16,7 +16,7 @@ protected:
 public:
 	Double getAttack();			//获取攻击力（包含附赠伤害)
 	virtual Double getAttackAdditon();	//获取附赠伤害（不包含基础伤害)，默认 0，科技加成由 update() 烘进字段
-	Double getAttackBasic();	//获取基础伤害
+	virtual Double getAttackBasic();	//表里的基础伤害（不含科技），由 Human/Building 覆盖
 	virtual void notifyHit();	//打中了造成了伤害时候调用这个函数
 	I32 getAttackCircle();		//获取多少帧后真正发动攻击,造成伤害
 	I32 getCurrentAttackTick(); //获取当前进行到多少帧了

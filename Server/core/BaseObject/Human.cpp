@@ -1,6 +1,7 @@
 #include "Human.h"
 
 #include <new>
+#include <utility>
 
 Human::Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience){
     this->sort = sort;
@@ -59,7 +60,37 @@ void Human::update(){
 bool Human::getTransported() const{
     return transported;
 }
-
 void Human::setTransported(bool value){
     transported = value;
 }
+
+/* ---------------- 供 UI 显示：基础值与加成值分开 ----------------
+   基础值一律现查表（不含科技），加成值 = 缓存的最终值 - 基础值。
+   内核/战斗直接用 getAttack()、getDefence()，不需要关心这个区分。 */
+
+Double Human::getAttackBasic(){
+    const std::pair<Double,Double> base = GameValue::getBasicAttack(sort,type);
+    return (attackType == ATTACKTYPE_SHOOT) ? base.second : base.first;
+}
+
+Double Human::getAttackAdditon(){
+    const Double actual = (attackType == ATTACKTYPE_SHOOT) ? attackShoot : attackClose;
+    return actual - getAttackBasic();
+}
+
+Double Human::getDefenceCloseBasic(){
+    return GameValue::getBasicDefence(sort,type).first;
+}
+
+Double Human::getDefenceShootBasic(){
+    return GameValue::getBasicDefence(sort,type).second;
+}
+
+Double Human::getDefenceCloseAddition(){
+    return defenceClose - getDefenceCloseBasic();
+}
+
+Double Human::getDefenceShootAddition(){
+    return defenceShoot - getDefenceShootBasic();
+}
+

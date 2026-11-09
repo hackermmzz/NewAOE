@@ -6,8 +6,8 @@ Double Attacker::getAttackBasic()
     return attackType == ATTACKTYPE_SHOOT ? attackShoot : attackClose;
 }
 
-//攻击的科技加成由 update() 直接烘进 attackClose/attackShoot，
-//这里默认返回 0，避免和缓存的最终值重复相加
+//默认实现：没有科技的对象（动物）加成恒为 0；
+//Human/Building 会覆盖成"实际值 - 基础值"，供 UI 显示
 Double Attacker::getAttackAdditon()
 {
     return Double::Zero();

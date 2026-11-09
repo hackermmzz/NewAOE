@@ -23,4 +23,11 @@ public:
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
     WeakPtr<Development> getPlayerScience(){return playerScience;}
     virtual void update();	//重算血量/攻防/射程
+    //下面 6 个把"表里的基础值"和"实际值减基础值"分开，UI 要分别显示
+    Double getAttackBasic() override;
+    Double getAttackAdditon() override;
+    Double getDefenceCloseBasic() override;
+    Double getDefenceShootBasic() override;
+    Double getDefenceCloseAddition() override;
+    Double getDefenceShootAddition() override;
  };

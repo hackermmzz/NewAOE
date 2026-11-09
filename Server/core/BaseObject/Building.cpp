@@ -112,3 +112,32 @@ bool Building::isMatchResourceType(int productSort){
     }
     return false;
 }
+
+/* ---------------- 供 UI 显示：基础值与加成值分开 ----------------
+   基础值一律现查表（不含科技），加成值 = 缓存的最终值 - 基础值。 */
+
+Double Building::getAttackBasic(){
+    const std::pair<Double,Double> base = GameValue::getBasicAttack(sort,type);
+    return (attackType == ATTACKTYPE_SHOOT) ? base.second : base.first;
+}
+
+Double Building::getAttackAdditon(){
+    const Double actual = (attackType == ATTACKTYPE_SHOOT) ? attackShoot : attackClose;
+    return actual - getAttackBasic();
+}
+
+Double Building::getDefenceCloseBasic(){
+    return GameValue::getBasicDefence(sort,type).first;
+}
+
+Double Building::getDefenceShootBasic(){
+    return GameValue::getBasicDefence(sort,type).second;
+}
+
+Double Building::getDefenceCloseAddition(){
+    return defenceClose - getDefenceCloseBasic();
+}
+
+Double Building::getDefenceShootAddition(){
+    return defenceShoot - getDefenceShootBasic();
+}
