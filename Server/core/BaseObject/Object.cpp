@@ -27,7 +27,7 @@ IVec2 Object::getDetailPos(){
     return detail_pos;
 }
 string Object::getName(){
-    return name;
+    return GameValue::getObjectName(playerID,teamID,sort,type,SN);
 }
 I32 Object::getVision(){
     return vision;
@@ -54,8 +54,8 @@ void Object::getplayer(WeakPtr<Player> player){
     player = this->player;
 }*/
 void Object::setBelong(I32 playerID,I32 teamID){
-    this->playerID = playerID;
-    this->teamID = teamID;
+    if(playerID>=0)this->playerID = playerID;
+    if(teamID>=0)this->teamID = teamID;
 }
 std::pair<I32,I32> Object::getBelong(){
     return std::make_pair(playerID,teamID);
