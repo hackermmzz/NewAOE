@@ -150,7 +150,11 @@ bool Player::receiveArmy(SafePtr<Army> army){
     army->setBelong(playerID,teamID);
     armies.push_back(army);
     SafePtr<Development> sci = army->getPlayerScience().lock();//科技锁定在转换这一刻
-    if(sci)ReceivedObjectLockedDevelopment[army->getglobalNum()]=SafePtr<Development>(new Development(*sci));
+    if(sci){
+        SafePtr<Development> locked(new Development(*sci));
+        ReceivedObjectLockedDevelopment[army->getglobalNum()]=locked;
+        army->setPlayerScience(locked);     //对象改用这份副本，之后不再跟随原玩家
+    }
     return true;
 }
 bool Player::receiveBuilding(SafePtr<Building> building){
@@ -159,7 +163,11 @@ bool Player::receiveBuilding(SafePtr<Building> building){
     building->setBelong(playerID,teamID);
     buildings.push_back(building);
     SafePtr<Development> sci = building->getPlayerScience().lock();//科技锁定在转换这一刻
-    if(sci)ReceivedObjectLockedDevelopment[building->getglobalNum()]=SafePtr<Development>(new Development(*sci));
+    if(sci){
+        SafePtr<Development> locked(new Development(*sci));
+        ReceivedObjectLockedDevelopment[building->getglobalNum()]=locked;
+        building->setPlayerScience(locked);
+    }
     return true;
 }
 bool Player::receiveFarmer(SafePtr<Farmer> farmer){
@@ -168,7 +176,11 @@ bool Player::receiveFarmer(SafePtr<Farmer> farmer){
     farmer->setBelong(playerID,teamID);
     farmers.push_back(farmer);
     SafePtr<Development> sci = farmer->getPlayerScience().lock();//科技锁定在转换这一刻
-    if(sci)ReceivedObjectLockedDevelopment[farmer->getglobalNum()]=SafePtr<Development>(new Development(*sci));
+    if(sci){
+        SafePtr<Development> locked(new Development(*sci));
+        ReceivedObjectLockedDevelopment[farmer->getglobalNum()]=locked;
+        farmer->setPlayerScience(locked);
+    }
     return true;
 }
 bool Player::receiveBuildingResource(SafePtr<BuildingResource> buildingResource){
@@ -177,7 +189,11 @@ bool Player::receiveBuildingResource(SafePtr<BuildingResource> buildingResource)
     buildingResource->setBelong(playerID,teamID);
     buildingResources.push_back(buildingResource);//只进 buildingResources，理由见 newBuildingResource
     SafePtr<Development> sci = buildingResource->getPlayerScience().lock();//科技锁定在转换这一刻
-    if(sci)ReceivedObjectLockedDevelopment[buildingResource->getglobalNum()]=SafePtr<Development>(new Development(*sci));
+    if(sci){
+        SafePtr<Development> locked(new Development(*sci));
+        ReceivedObjectLockedDevelopment[buildingResource->getglobalNum()]=locked;
+        buildingResource->setPlayerScience(locked);
+    }
     return true;
 }
 
@@ -222,7 +238,7 @@ void Player::tick(){
         }else ++it;
     }
     for(auto it = buildingResources.begin();it!=buildingResources.end();){
-        if(!(*it) || (*it)->isDie()){
+        if(!(*it) || (*it)->isDie() || !(*it)->isSurplus()){
             if(*it)ReceivedObjectLockedDevelopment.erase((*it)->getglobalNum());
             it = buildingResources.erase(it);
         }else ++it;

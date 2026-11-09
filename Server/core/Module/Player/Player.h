@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <map>
 #include "Server/core/BaseObject/Army.h"
 #include "Server/core/BaseObject/Farmer.h"
 #include "Server/core/BaseObject/BuildingResource.h"

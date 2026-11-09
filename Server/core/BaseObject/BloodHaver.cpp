@@ -27,6 +27,7 @@ void BloodHaver::beAttcked(Double damage){
     if(currentBlood < Double::Zero()){
         currentBlood = Double::Zero();
     }
+    notifyAttacked();   //被打断采集、拉仇恨、动物死亡后变可采集都挂在这个钩子上
 }
 Double BloodHaver::getDefenceCloseBasic(){
     return defenceClose;

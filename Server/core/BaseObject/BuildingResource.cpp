@@ -6,6 +6,7 @@ BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development
     sort = SORT_BUILDING_RESOURCE;
     this->type = type;
     this->playerScience = playerScience;
+    update();   //父类构造时用的是 SORT_BUILDING，这里按资源建筑重新算一遍
 
     //资源建筑不吃"建好之后才完成"的科技：存量在这里算一次就定死
     this->cntLeft = getMaxCnt(playerScience);

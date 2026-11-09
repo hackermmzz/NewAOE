@@ -11,7 +11,8 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     this->type = type;
     this->playerScience = playerScience;
     this->Percent = percent;
-    this->constructed = false;
+    //Percent 已经到 100 的就是建好的（比如地图预放置的建筑），否则要靠建造进度推进
+    this->constructed = (Percent >= 100);
 
     //先把血量和攻防清 0，update() 要靠"旧上限 - 旧血量"算已损失的伤害
     maxBlood = Double::Zero();
