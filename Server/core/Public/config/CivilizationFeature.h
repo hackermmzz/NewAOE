@@ -20,7 +20,7 @@ class GameValue{
         return Double(__GameBasicValue::BasicBlood[sort][type]);
     }
     //对象名字
-    std::string getObjectName(I32 plarerID,I32 teamID,I32 sort,I32 type,U64 SN){
+    std::string getObjectName(I32 playerID,I32 teamID,I32 sort,I32 type,U64 SN){
         //return "Player："+std::to_string(plarerID)+"队伍："+std::to_string(teamID)+"类型"+std::to_string(sort)+"对象："+std::to_string(type)+"SN"+std::to_string(SN);
     }
     //基础采集最大值
