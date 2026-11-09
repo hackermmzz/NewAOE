@@ -34,7 +34,8 @@ public:
 	IVec2 getDetailPos();
 	string getName();
 	I32 getVision();
-  	I32 getglobalNum();
+  	I32 getglobalNum();	//旧接口：只取低 32 位，一局内的编号够用
+  	U64 getSN();		//完整的 64 位编号
   	void setPos(const IVec2&pos);
 	//void setplayer(WeakPtr<Player> player);
 	//void getplayer(WeakPtr<Player> player);

@@ -13,7 +13,7 @@ Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type)
 
     resource = 0;
     resourceSort = -1;          //-1 表示空手
-    quantity_GatherOnce = 1;    //每次采集搬运 1 点，具体速度见 getFarmerBasicCollectSpeed
+    quantity_GatherOnce = Double::Zero();   //由 update() 按基础采集速度和科技算
 
     vision = GameValue::getBasicVision(SORT_FARMER,type);
     attackInteval = GameValue::getAttackInterval(SORT_FARMER,type);
@@ -57,6 +57,10 @@ void Farmer::update(){
     if(resource > resourceMax){
         resource = resourceMax;
     }
+
+    //每帧采集量 = 基础采集速度 × 采集速度科技加成
+    const Double gatherRate = sci ? sci->get_rate_ResourceGather(resourceForCarry) : Double(1);
+    quantity_GatherOnce = GameValue::getFarmerBasicCollectSpeed(sort,type) * gatherRate;
 }
 
 I32 Farmer::getResourceNowHave(){
@@ -76,7 +80,7 @@ I32 Farmer::getResourceSort(){
     return resourceSort;
 }
 
-I32 Farmer::getQuantityGather(){
+Double Farmer::getQuantityGather(){
     return quantity_GatherOnce;
 }
 

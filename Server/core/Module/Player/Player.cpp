@@ -8,6 +8,22 @@ Player::Player(I32 civilization, I32 teamID){
 
 void Player::init(I32 playerID){
     this->playerID = playerID;
+    //回填：init 之前建好的对象也要归属正确（newXxx 里用 -1 调 setBelong 是不生效的）
+    for(auto& a:armies){
+        if(a)a->setBelong(playerID,teamID);
+    }
+    for(auto& f:farmers){
+        if(f)f->setBelong(playerID,teamID);
+    }
+    for(auto& b:buildings){
+        if(b)b->setBelong(playerID,teamID);
+    }
+    for(auto& r:buildingResources){
+        if(r)r->setBelong(playerID,teamID);
+    }
+    for(auto& m:missiles){
+        if(m)m->setBelong(playerID,teamID);
+    }
 }
 Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
     SafePtr<Army> a(new Army(detailPos,type,playerScience));

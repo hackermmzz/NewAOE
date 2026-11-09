@@ -53,6 +53,9 @@ I32 Object::getVision(){
 I32 Object::getglobalNum(){
     return SN;
 }
+U64 Object::getSN(){
+    return SN;
+}
 void Object::setPos(const IVec2&pos){
     detail_pos=pos;
 

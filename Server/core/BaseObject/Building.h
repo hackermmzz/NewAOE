@@ -19,6 +19,8 @@ protected:
 public:
     Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent);
     bool isConstructed();   //判断已建造完成
+    void setPercent(I32 percent);   //推进建造进度，到 100 自动标记完成
+    I32 getPercent();               //当前建造进度 0~100
     bool isMatchResourceType(int productSort); //判断是否能收集某个类型的物资
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
     WeakPtr<Development> getPlayerScience(){return playerScience;}

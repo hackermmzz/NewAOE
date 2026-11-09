@@ -65,3 +65,10 @@ Animal::Animal(I32 type,IVec2 detailPos)
 I32 Animal::getFriendly(){
     return friendly;
 }
+
+//被打死之后尸体才可以采
+void Animal::notifyAttacked(){
+    if(isDie()){
+        gatherAble = true;
+    }
+}

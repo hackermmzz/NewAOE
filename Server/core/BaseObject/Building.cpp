@@ -100,6 +100,24 @@ bool Building::isConstructed(){
     return constructed;
 }
 
+//建造进度由内核/指令模块推进：每帧把 Percent 加上去，到 100 就算建好
+void Building::setPercent(I32 percent){
+    if(percent < 0){
+        percent = 0;
+    }
+    if(percent > 100){
+        percent = 100;
+    }
+    Percent = percent;
+    if(Percent >= 100){
+        constructed = true;
+    }
+}
+
+I32 Building::getPercent(){
+    return Percent;
+}
+
 bool Building::isMatchResourceType(int productSort){
     if(type == BUILDING_CENTER){
         return true;

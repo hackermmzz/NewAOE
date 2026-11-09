@@ -16,4 +16,5 @@ protected:
 public:
 	Animal(I32 type,IVec2 detailPos);
 	I32 getFriendly();	
+	void notifyAttacked() override;	//被打死之后尸体才可采集
 };
