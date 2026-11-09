@@ -1,6 +1,7 @@
 #include "Player.h"
 
 #include <limits>
+#include <set>
 #include <utility>
 
 /*
@@ -316,5 +317,34 @@ void Player::tick()
     // 这里只清理空槽位，不主动判定死亡。
     for (auto it = missiles.begin(); it != missiles.end();) {
         it = (*it) ? it + 1 : missiles.erase(it);
+    }
+
+    // 兜底：科技快照表里的每一项都必须对应一个还活着的对象。
+    // 正常路径（removeXxx / 上面的 collectDead）已经同步删除，但 getXXX() 暴露的是
+    // 可变引用，万一有调用方绕过接口直接从池子里 erase，map 里那份 SafePtr<Development>
+    // 就会永久吊住一个科技表。这里每帧做一次对账，把孤儿项释放掉。
+    if (!ReceivedObjectLockedDevelopment.empty()) {
+        std::set<I32> alive;
+        auto collect = [&alive](auto& pool) {
+            for (auto& p : pool) {
+                if (p) {
+                    alive.insert(p->getglobalNum());
+                }
+            }
+        };
+        collect(armies);
+        collect(farmers);
+        collect(buildings);
+        collect(buildingResources);
+        collect(missiles);
+
+        for (auto it = ReceivedObjectLockedDevelopment.begin();
+             it != ReceivedObjectLockedDevelopment.end();) {
+            if (alive.find(it->first) == alive.end()) {
+                it = ReceivedObjectLockedDevelopment.erase(it);
+            } else {
+                ++it;
+            }
+        }
     }
 }
