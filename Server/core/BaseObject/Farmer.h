@@ -22,4 +22,5 @@ public:
     bool isFullBackpack();              //是否采摘满了
     void addResource(I32 quantity,I32 resourceSort);      //增加手持的资源
     void transportHuman(SafePtr<Human> human);            //运输人员
+    void update() override;	//重算血量/攻防/速度/携带上限
   };

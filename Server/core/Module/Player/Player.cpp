@@ -181,6 +181,25 @@ bool Player::receiveBuildingResource(SafePtr<BuildingResource> buildingResource)
     return true;
 }
 
+//科技变化时由科技模块调用，重算对应池子里所有对象的科技相关数值（相当于刷新缓存）
+void Player::updateArmy(){
+    for(auto& a:armies){
+        if(a)a->update();
+    }
+}
+
+void Player::updateFarmer(){
+    for(auto& f:farmers){
+        if(f)f->update();
+    }
+}
+
+void Player::updateBuilding(){
+    for(auto& b:buildings){
+        if(b)b->update();
+    }
+}
+
 //每次完整运行完一次内核后执行：回收本帧已死亡的对象，并同步释放它们的科技快照
 //注意：池子只应该通过 newXxx / removeXxx 增删，不要绕过接口直接改 getXXX() 返回的引用
 void Player::tick(){

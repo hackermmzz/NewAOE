@@ -6,9 +6,11 @@ Double Attacker::getAttackBasic()
     return attackType == ATTACKTYPE_SHOOT ? attackShoot : attackClose;
 }
 
+//攻击的科技加成由 update() 直接烘进 attackClose/attackShoot，
+//这里默认返回 0，避免和缓存的最终值重复相加
 Double Attacker::getAttackAdditon()
 {
-    //等待Development完成
+    return Double::Zero();
 }
 
 Double Attacker::getAttack()
@@ -34,4 +36,9 @@ I32 Attacker::getAttackInteval()
 void Attacker::resetAttackTick()
 {
     attackCurrentTick = 0;
+}
+
+//命中时由内核调用：派生类要加特效/吸血/溅射就在这里覆盖
+void Attacker::notifyHit()
+{
 }

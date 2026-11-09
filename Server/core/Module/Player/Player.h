@@ -41,6 +41,10 @@ public:
     bool receiveArmy(SafePtr<Army> army);
     bool receiveFarmer(SafePtr<Farmer> farmer);
     bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
+    //科技变化时由科技模块调用，重算对应池子里所有对象的科技相关数值
+    void updateBuilding();
+    void updateFarmer();
+    void updateArmy();
     void tick();
 private:
     //玩家身份状态信息

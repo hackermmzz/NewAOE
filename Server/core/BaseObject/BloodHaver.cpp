@@ -18,9 +18,15 @@ bool BloodHaver::isDie(){
 }
 void BloodHaver::beHeal(Double heal){
     currentBlood += heal;
+    if(currentBlood > maxBlood){
+        currentBlood = maxBlood;
+    }
 }
 void BloodHaver::beAttcked(Double damage){
     currentBlood -= damage;
+    if(currentBlood < Double::Zero()){
+        currentBlood = Double::Zero();
+    }
 }
 Double BloodHaver::getDefenceCloseBasic(){
     return defenceClose;
@@ -28,10 +34,12 @@ Double BloodHaver::getDefenceCloseBasic(){
 Double BloodHaver::getDefenceShootBasic(){
     return defenceShoot;
 }
+//防御的科技加成由 update() 直接烘进 defenceClose/defenceShoot，
+//这两个函数保留给"需要单独取加成值"的场景，默认返回 0，避免重复计算
 Double BloodHaver::getDefenceCloseAddition(){
-    //等待Development完成
+    return Double::Zero();
 }
 Double BloodHaver::getDefenceShootAddition(){
-    //等待Development完成
+    return Double::Zero();
 }
 void BloodHaver::notifyAttacked(){}

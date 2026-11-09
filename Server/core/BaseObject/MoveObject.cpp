@@ -4,7 +4,8 @@ void MoveObject::setPath(const stack<IVec2> &path, const IVec2 &targetDetailPoin
 {
     this->path = path;
     this->targetDetailPos = targetDetailPoint;
-    if(this->path.top() == detail_pos){
+    //路径栈可能为空，直接 top() 会崩
+    if(!this->path.empty() && this->path.top() == detail_pos){
         this->path.pop();
     }
 }

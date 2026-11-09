@@ -50,6 +50,8 @@ constexpr I32 FARMER_CARRY_LIMIT = 10;
 constexpr I32 FARMER_GATHER_MILLI = 20;
 //村民建造速度（每帧推进的进度 ×1000）：旧配置 FARMER_CONSTRUCTSPEED = 0.02
 constexpr I32 FARMER_CONSTRUCT_MILLI = 20;
+//攻击起手帧：从开始挥击到真正命中的帧数，配置表里没有，先给 8 帧（≈0.32 秒）
+constexpr I32 ATTACK_CIRCLE_FRAMES = 8;
 
 //一条基础数值。所有类型共用一张表，用不到的字段填 0。
 struct BasicUnitValue{
@@ -207,3 +209,12 @@ FORCE_INLINE Double milliToDouble(I32 milli){
     constexpr I64 kOne=I64{1}<<32;
     return Double::FromRaw((static_cast<I64>(milli)*kOne)/1000);
 }
+
+//基础值套用科技：最终值 = 基础值 × 倍率 + 附加值
+//倍率 1 表示无加成；附加值是可正可负的整数
+FORCE_INLINE Double applyTech(Double base,Double rate,I32 addition){
+    return base*rate+Double(addition);
+}
+
+//投掷物飞行速度（细节单位/帧）：配置表里没有，先给个经验值，等内核调弹道时再改
+constexpr I32 MISSILE_SPEED_MILLI = 800000;

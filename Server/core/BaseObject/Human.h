@@ -19,6 +19,7 @@ public:
     Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
     WeakPtr<Development> getPlayerScience(){return playerScience;}
+    virtual void update();	//科技变化后重算与科技有关的数值（血量/速度）
     bool getTransported() const;
     void setTransported(bool value);
 };

@@ -21,7 +21,7 @@ public:
 	void beAttcked(Double damage);
 	Double getDefenceCloseBasic();
 	Double getDefenceShootBasic();
-	Double getDefenceCloseAddition();
-	Double getDefenceShootAddition();
+	virtual Double getDefenceCloseAddition();	//默认 0，科技加成由 update() 烘进字段
+	virtual Double getDefenceShootAddition();
 	virtual void notifyAttacked();	//当被攻击时调用这个函数
 };
