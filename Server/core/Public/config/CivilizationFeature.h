@@ -110,39 +110,37 @@ public:
     }
 
     //----------------------------- 名字 -----------------------------
-    //形如 "棍棒兵#12"。playerID/teamID 暂时不用，保留是为了不改调用点。
+    //格式："阵营：1-玩家：3-农民——SN：1234"
+    //单位名称由 sort + type 共同决定（兵种要区分兵营的哪一级，建筑要区分类型）
     static std::string getObjectName(I32 playerID,I32 teamID,I32 sort,I32 type,U64 SN){
-        (void)playerID;
-        (void)teamID;
-
-        const char* name="对象";
-        switch(sort){
-        case SORT_BUILDING:
-        case SORT_BUILDING_RESOURCE:
-            name=typeName(__GameBasicValue::BuildingName,BUILDING_TYPE_MAXNUM,type);
-            break;
-        case SORT_STATICRES:
-            name=typeName(__GameBasicValue::StaticResName,4,type);
-            break;
-        case SORT_FARMER:
-            name=typeName(__GameBasicValue::FarmerName,3,type);
-            break;
-        case SORT_ANIMAL:
-            name=typeName(__GameBasicValue::AnimalName,6,type);
-            break;
-        case SORT_ARMY:
-            name=typeName(__GameBasicValue::ArmyName,AT_ARMY_MAX_NUM,type);
-            break;
-        case SORT_MISSILE:
-            name="投掷物";
-            break;
-        default:
-            break;
-        }
-        return std::string(name)+"#"+std::to_string(SN);
+        return "阵营："+std::to_string(teamID)
+              +"-玩家："+std::to_string(playerID)
+              +"-"+unitName(sort,type)
+              +"——SN："+std::to_string(SN);
     }
 
 private:
+    //由 sort + type 推出单位名称
+    static const char* unitName(I32 sort,I32 type){
+        switch(sort){
+        case SORT_BUILDING:
+        case SORT_BUILDING_RESOURCE:
+            return typeName(__GameBasicValue::BuildingName,BUILDING_TYPE_MAXNUM,type);
+        case SORT_STATICRES:
+            return typeName(__GameBasicValue::StaticResName,4,type);
+        case SORT_FARMER:
+            return typeName(__GameBasicValue::FarmerName,3,type);
+        case SORT_ANIMAL:
+            return typeName(__GameBasicValue::AnimalName,6,type);
+        case SORT_ARMY:
+            return typeName(__GameBasicValue::ArmyName,AT_ARMY_MAX_NUM,type);
+        case SORT_MISSILE:
+            return "投掷物";
+        default:
+            return "对象";
+        }
+    }
+
     //按 (sort,type) 取表项；越界退回第一行
     static const BasicUnitValue& value(I32 sort,I32 type){
         if(sort<0||sort>=7){
