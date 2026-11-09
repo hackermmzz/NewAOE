@@ -16,6 +16,9 @@ class GameValue{
         }
         return tmp;
     }
+    static Double getBasicBlood(I32 sort,I32 type){//这里不做检查，调用者自己检查，防止指针越界访问
+        return Double(__GameBasicValue::BasicBlood[sort][type]);
+    }
 
 
 };
