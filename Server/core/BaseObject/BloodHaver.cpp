@@ -23,10 +23,10 @@ void BloodHaver::beAttcked(Double damage){
     currentBlood -= damage;
 }
 Double BloodHaver::getDefenceCloseBasic(){
-    return defenceShoot;
+    return defenceClose;
 }
 Double BloodHaver::getDefenceShootBasic(){
-    return defenceClose;
+    return defenceShoot;
 }
 Double BloodHaver::getDefenceCloseAddition(){
     //等待Development完成

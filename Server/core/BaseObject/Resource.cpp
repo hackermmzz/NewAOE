@@ -13,7 +13,7 @@ Double Resource::getMaxCnt(){
     return maxCnt;
 }
 void Resource::decayResource(){
-    resourceSort -= decayRate;
+    cntLeft -= decayRate;
 }
 bool Resource::isSurplus(){
     return cntLeft > Double::Zero();
