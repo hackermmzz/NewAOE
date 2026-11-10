@@ -25,12 +25,14 @@ public:
         for(I32 i=0;i<4;i++){
             tmp[i]=__GameBasicValue::BasicStartResource[i];
         }
-        //特色文明的资源替换（按覆盖处理；若原意是"额外加上"，把 = 改成 +=）
-        for(I32 i=0;i<2;i++){
+        //特色文明的资源增量：同一个文明可以有多条（比如迦太基四项各 +50）
+        const I32 featureCount=static_cast<I32>(
+            sizeof(__GameBasicValue::FeatureStartResource)/sizeof(__GameBasicValue::FeatureStartResource[0]));
+        for(I32 i=0;i<featureCount;i++){
             if(__GameBasicValue::FeatureStartResource[i].first==civilization){
                 const std::pair<I32,I32>& feature=__GameBasicValue::FeatureStartResource[i].second;
                 if(feature.first>=0&&feature.first<4){
-                    tmp[feature.first]=feature.second;
+                    tmp[feature.first]+=feature.second;
                 }
             }
         }

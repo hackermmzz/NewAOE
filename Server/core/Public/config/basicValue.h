@@ -19,13 +19,15 @@
 /*
 对象基础数值表（科技加成之前的裸值）。
 
-数据来源：3.0.7h 的 config.json（485 个键），再用旧版 Army.cpp 的 switch(type)
-反解出"枚举 -> 配置键"的对应关系，避免照名字猜错（例如 AT_IMPROVED 实际是
-"改进弓箭手"120 血，不是战斧兵）。
+数据来源（优先级从高到低）：
+  1.《帝国时代1决定版全面数据.xlsx》——决定版官方口径，可信度高。
+     兵种/建筑/资源以它为准；与旧配置冲突的项已按它覆盖，行尾注释保留了旧值备查。
+  2. 3.0.7h 的 config.json（485 个键），配合旧版 Army.cpp 的 switch(type)
+     反解"枚举 -> 配置键"的对应关系，避免照名字猜错。
+  3.《各单位数据【繁体中文】.xls》，可信度一般，只填前两者都没有的项，行尾标 [参考]。
 
-补充来源：《各单位数据【繁体中文】.xls》。这张表（含 Rise of Rome 单位与英雄）
-可信度一般，只用来填 config.json 里没有的项，行尾标了 [参考] 。
-两者都没有的项一律留 0，等有可靠数据再补。
+项目口径差异：本项目的战斗数值不区分"穿刺护甲"，远程防御沿用旧配置，不按 DE 的穿刺护甲改；
+侦察骑兵视野按项目需要取 10（DE 为 13）。
 
 量纲换算：
   旧版 1 块 = 35.77708763999664 细节单位，速度单位是"细节单位/帧"；
@@ -77,10 +79,15 @@ struct __GameBasicValue{
     //木、食、石、金
     static constexpr I32 BasicStartResource[4]={200,200,150,0};
 
-    //特色文明的初始资源替换：{文明, {资源类型, 数量}}
-    static constexpr std::pair<I32,std::pair<I32,I32>> FeatureStartResource[2]={
-        {CIVILIZATION_SHANG,      {RESOURCESORT_FOOD,160}},
-        {CIVILIZATION_PALMYRENEAN,{RESOURCESORT_FOOD,275}},
+    //特色文明的初始资源增量：{文明, {资源类型, 相对标准开局的增减}}
+    //标准开局是 木200 / 食200 / 石150 / 金0
+    static constexpr std::pair<I32,std::pair<I32,I32>> FeatureStartResource[6]={
+        {CIVILIZATION_SHANG,       {RESOURCESORT_FOOD, -40}},   //商：-40 食物（村民便宜）
+        {CIVILIZATION_PALMYRENEAN, {RESOURCESORT_FOOD,  75}},   //帕尔米拉：+75 食物
+        {CIVILIZATION_CARTHAGINIAN,{RESOURCESORT_WOOD,  50}},   //迦太基：四项各 +50
+        {CIVILIZATION_CARTHAGINIAN,{RESOURCESORT_FOOD,  50}},
+        {CIVILIZATION_CARTHAGINIAN,{RESOURCESORT_STONE, 50}},
+        {CIVILIZATION_CARTHAGINIAN,{RESOURCESORT_GOLD,  50}},
     };
 
     //----------------------------- 军队 -----------------------------
@@ -88,14 +95,14 @@ struct __GameBasicValue{
     static constexpr BasicUnitValue ArmyBasic[AT_ARMY_MAX_NUM]={
     //   血  视野 近攻 远攻 近防 远防  射程  间隔   速度   存量 建造 地基 半径
         {   40,  4,   3,   0, 0, 0,     0,  38,  68182,    0,  0, 0, 249 },  // AT_CLUBMAN          棍棒兵
-        {   25,  5,   0,   2, 0, 2,  4000,  38,  68182,    0,  0, 0, 249 },  // AT_SLINGER          投石兵
+        {   25,  6,   0,   2, 0, 2,  4000,  50,  68182,    0,  0, 0, 249 },  // AT_SLINGER          投石兵（DE：间隔2.0s、视野6；穿刺防御不区分）
         {   35,  7,   0,   3, 0, 0,  5000,  35,  68182,    0,  0, 0, 249 },  // AT_BOWMAN           弓箭手
-        {   60,  8,   3,   0, 0, 0,     0,  23, 113636,    0,  0, 0, 249 },  // AT_SCOUT            侦察骑兵
-        {  150,  4,   9,   0, 1, 0,     0,  38,  68182,    0,  0, 0, 249 },  // AT_SWORDSMAN        短剑兵
-        {  120,  8,   0,   8, 0, 0,  6000,  35,  68182,    0,  0, 0, 249 },  // AT_IMPROVED         改进弓箭手
+        {   60, 10,   3,   0, 0, 0,     0,  23, 113636,    0,  0, 0, 249 },  // AT_SCOUT            侦察骑兵（DE 视野13，按项目口径取10）
+        {   60,  4,   7,   0, 1, 0,     0,  38,  68182,    0,  0, 0, 249 },  // AT_SWORDSMAN        短剑兵（DE 60/7，旧配置150/9）
+        {   40,  8,   0,   4, 0, 0,  6000,  35,  68182,    0,  0, 0, 249 },  // AT_IMPROVED         改良弓手（DE 40/4，旧配置120/8）
         {  150,  4,   8,   0, 0, 0,     0,  33, 113636,    0,  0, 0, 249 },  // AT_CAVALRY          骑兵
-        {  300,  4,   0,  20, 0, 0, 10000,  35, 113636,    0,  0, 0, 495 },  // AT_SHIP             战船
-        {   75, 13,   0,  50, 0, 0, 10000, 125,  45455,    0,  0, 0, 249 },  // AT_STONE_THROWER    投石车
+        {  160,  8,   0,   8, 0, 0,  6000,  38, 102273,    0,  0, 0, 495 },  // AT_SHIP             战船（DE War Galley 160/8/射程6/速度1.8）
+        {   75, 12,   0,  50, 0, 0, 10000, 125,  45455,    0,  0, 0, 249 },  // AT_STONE_THROWER    投石机（DE 视野12）
         {  100, 12,   3,   0, 0, 0, 12000,  38,  56818,    0,  0, 0, 249 },  // AT_PRIEST           祭司
         {  120,  4,  17,   0, 5, 1,     0,  38,  51136,    0,  0, 0, 249 },  // AT_HOPLITE          方阵兵
         {  100,  4,   7,   0, 0, 0,     0,  35, 113636,    0,  0, 0, 249 },  // AT_CHARIOT          四马战车
@@ -110,19 +117,19 @@ struct __GameBasicValue{
     //   血  视野 近攻 远攻 近防 远防  射程  间隔   速度   存量 建造 地基 半径
         {   75,  4,   0,   0, 0, 0,     0,   0,      0,    0, 20, FOUNDATION_MIDDLE, 0 },  // BUILDING_HOME        房屋
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 30, FOUNDATION_BIG,    0 },  // BUILDING_GRANARY     谷仓
-        {  600,  4,   0,   0, 0, 0,     0,   0,      0,    0, 60, FOUNDATION_BIG,    0 },  // BUILDING_CENTER      市镇中心
+        {  600,  7,   0,   0, 0, 0,     0,   0,      0,    0, 60, FOUNDATION_BIG,    0 },  // BUILDING_CENTER      市镇中心（DE 视野7）
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 30, FOUNDATION_BIG,    0 },  // BUILDING_STOCK       仓库
         {   50,  4,   0,   0, 0, 0,     0,   0,      0,  250, 30, FOUNDATION_BIG,    0 },  // BUILDING_FARM        农田
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_MARKET      市场
-        {  125, 10,   0,   3, 0, 2,  5000,  38,      0,    0, 80, FOUNDATION_MIDDLE, 0 },  // BUILDING_ARROWTOWER  箭塔
+        {  125,  7,   0,   3, 0, 2,  5000,  38,      0,    0, 80, FOUNDATION_MIDDLE, 0 },  // BUILDING_ARROWTOWER  箭塔（DE 瞭望塔 视野7）
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 30, FOUNDATION_BIG,    0 },  // BUILDING_ARMYCAMP    兵营
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_STABLE      马厩
         {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_RANGE       靶场
-        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_DOCK        船坞
-        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_SIEGE       武器工程厂
-        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 40, FOUNDATION_BIG,    0 },  // BUILDING_COLLAGE     学院
-        {  200,  4,   0,   0, 0, 0,     0,   0,      0,    0,  0, FOUNDATION_BIG,    0 },  // BUILDING_TEMPLE      神庙（未启用，建造时间待定）
-        {  200,  4,   0,   0, 0, 0,     0,   0,      0,    0, 10, FOUNDATION_SMALL,  0 },  // BUILDING_WALL        城墙
+        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 50, FOUNDATION_BIG,    0 },  // BUILDING_DOCK        船坞（DE 建造50s）
+        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 60, FOUNDATION_BIG,    0 },  // BUILDING_SIEGE       攻城工坊（DE 建造60s）
+        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 60, FOUNDATION_BIG,    0 },  // BUILDING_COLLAGE     学院（DE 建造60s）
+        {  350,  4,   0,   0, 0, 0,     0,   0,      0,    0, 60, FOUNDATION_BIG,    0 },  // BUILDING_TEMPLE      神庙（DE 350血/建造60s）
+        {  200,  4,   0,   0, 0, 0,     0,   0,      0,    0,  8, FOUNDATION_SMALL,  0 },  // BUILDING_WALL        城墙（DE 建造8s）
     };
 
     //----------------------------- 村民 -----------------------------
@@ -144,7 +151,7 @@ struct __GameBasicValue{
         {    8,  2,   0,   0, 0, 0,     0,   0,  41667,  150,  0, 0, 249 },  // ANIMAL_GAZELLE        瞪羚
         {   45,  4,  10,   0, 0, 0,     0,   0,  37879,  300,  0, 0, 495 },  // ANIMAL_ELEPHANT       大象
         {   20,  3,   2,   0, 0, 0,     0,   0,  41667,  100,  0, 0, 249 },  // ANIMAL_LION           狮子
-        {   20,  5,   4,   0, 0, 0,  2000, 100,  28409,    0,  0, 0, 249 },  // ANIMAL_ALLIGATOR      鳄鱼 [参考]
+        {   20,  5,   2,   0, 0, 0,  2000, 100,  28409,  100,  0, 0, 249 },  // ANIMAL_ALLIGATOR      鳄鱼（DE 存量100/攻2）
         {  100,  8,  25,   0, 0, 0,     0,  50,  85227,    0,  0, 0, 495 },  // ANIMAL_ALLIGATOR_KING 鳄鱼王 [参考]
     };
 
