@@ -23,44 +23,44 @@ class GameValue{
     std::string getObjectName(I32 playerID,I32 teamID,I32 sort,I32 type,U64 SN){
         //return "Player："+std::to_string(plarerID)+"队伍："+std::to_string(teamID)+"类型"+std::to_string(sort)+"对象："+std::to_string(type)+"SN"+std::to_string(SN);
     }
-    //基础采集最大值
+    //基础资源最大值
     Double getResourceBasicMaxCnt(I32 sort,I32 type){
-        //return Double(__GameBasicValue::BasicMaxCnt[sort][type]);
+        return Double(__GameBasicValue::BasicMaxCnt[sort]);
     }
     //基础腐烂速度
     Double getResourceBasicDecayRate(I32 sort,I32 type){
-        //return Double(__GameBasicValue::BasicRotSpeed[sort][type]);
+        return Double(__GameBasicValue::BasicDecayRate);
     }
     //基础视野
     I32 getBasicVision(I32 sort,I32 type){
-        //return __GameBasicValue::BasicVision[sort][type];
+        return __GameBasicValue::BasicVision[sort][type];
     }
     //基础移动速度
     Double getBasicSpeed(I32 sort,I32 type){
-        //return Double(__GameBasicValue::BasicMoveSpeed[sort][type]);
+        return Double(__GameBasicValue::BasicSpeed[sort][type]);
     }
-    //基础最大收集量
+    //基础采集最大量
     Double getFarmerBasicCollectMax(I32 sort,I32 type){
-        //return Double(__GameBasicValue::BasicMaxCollect[sort][type]);
+        return Double(__GameBasicValue::BasicCollectMax[sort][type]);
     }
     //基础采集速度
     Double getFarmerBasicCollectSpeed(I32 sort,I32 type){
-        //return Double(__GameBasicValue::BasicCollectSpeed[sort][type]);
+        return Double(__GameBasicValue::BasicCollectSpeed[sort]);
     }
     //基础防御力
     std::pair<Double,Double> getBasicDefence(I32 sort,I32 type){
-        //return {Double(__GameBasicValue::BasicDef
+        return {Double(__GameBasicValue::BasicDefenceClose[sort][type]),Double(__GameBasicValue::BasicDefenceShoot[sort][type])};
     }
     //基础攻击力
     std::pair<Double,Double> getBasicAttack(I32 sort,I32 type){
-        //return {Double(__GameBasicValue::BasicAttack[sort][type].first),Double(__GameBasicValue::BasicAttack[sort][type].second)};
+        return {Double(__GameBasicValue::BasicAttackClose[sort][type]),Double(__GameBasicValue::BasicAttackShoot[sort][type])};
     }
     //基础攻击范围
     std::pair<Double,Double> getBasicAttackRange(I32 sort,I32 type){
-        //return {Double(__GameBasicValue::BasicAttackRange[sort][type].first),Double(__GameBasicValue::BasicAttackRange[sort][type].second)};
+        return {Double(__GameBasicValue::BasicAttackRangeClose[sort][type]),Double(__GameBasicValue::BasicAttackRangeShoot[sort][type])};
     }
     //基础攻击间隔
     I32 getAttackInterval(I32 sort,I32 type){
-        //return __GameBasicValue::BasicAttackInterval[sort][type];
+        return __GameBasicValue::BasicAttackInterval[sort][type];
     }
 };

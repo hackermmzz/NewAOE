@@ -40,10 +40,13 @@ struct __GameBasicValue{
     static constexpr const I32* BasicBlood[7]={BuildingBasicBlood,nullptr,FarmerBasicBlood,AnimalBasicBlood,nullptr,BuildingBasicBlood,ArmyBasicBlood};
 
     //基础资源腐烂速度
-    static constexpr Double BasicDecayRate = ;
+    static constexpr Double BasicDecayRate = 0.4;
+
+    //基础资源最大量                            树      谷物     石头    金子 猎物
+    static constexpr Double BasicMaxCnt[5] = {10,       10,     10,     10, 10};
 
     //基础采集最大量
-    static constexpr Double BasicMaxCnt[4] = {};
+    static constexpr Double BasicCollectMax[5][15] = {};
 
     //基础采集速度
     static constexpr Double BasicCollectSpeed[4] = {};
