@@ -211,7 +211,8 @@ FORCE_INLINE Double milliToDouble(I32 milli){
 }
 
 //基础值套用科技：最终值 = 基础值 × 倍率 + 附加值
-//倍率 1 表示无加成；附加值是可正可负的整数
+//倍率是"带本数"的比例，与 Development 的 get_rate_* 约定一致：+30% 传 1.3，无加成传 1
+//（不要在调用处再写 1+rate）
 FORCE_INLINE Double applyTech(Double base,Double rate,I32 addition){
     return base*rate+Double(addition);
 }
