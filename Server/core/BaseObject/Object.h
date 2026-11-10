@@ -3,6 +3,7 @@
 #include <string>
 #include "Public/vec/vec.hpp"
 #include "Server/core/BaseObject/CrashBox.h"
+#include "Server/core/Public/config/CivilizationFeature.h"
 using namespace std;
 
 class Object
