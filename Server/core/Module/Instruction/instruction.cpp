@@ -33,9 +33,10 @@ enum class Kind { Farmer, Soldier, Priest, FishingBoat, TransportBoat, Building,
 struct Object {
  I32 sn=0,player=0; Kind kind=Kind::Farmer;
  bool alive=true,land=true,constructed=true,finished=true,fullHp=false;
+ bool isTree=false; // Map Animal subtype ANIMAL_TREE to this field.
  bool canAttack=false,canPinpoint=false; I32 carried=0,capacity=5;
  I32 resourceType=0,gatherSource=-1; bool backpackEmpty=true;
- virtual ~Object()=default;
+  virtual ~Object()=default;
 };
 struct Instruction {
  U64 insID=0; IVec2 detailPos; I32 coreEvent=Move,workerSN=0,goalSN=0,action=0;
@@ -62,10 +63,12 @@ struct Context {
  virtual BuildingSpec buildingSpec(I32 type) const=0;
  // Includes civilization/stage unlock and resource requirements.
  virtual I32 checkBuild(const Object&,I32 type) const=0;
- // Includes unlock, population (including queued units), resources and stage conditions.
+ // Includes static unlock, population, resources and stage conditions. The kernel owns running research locks and task state.
  virtual I32 checkBuildingAction(const Object&,I32 action) const=0;
  // Includes gather compatibility/surplus, warehouse matching, ownership/team,
  // attack legality, priest conversion, transport distance/capacity, etc.
+ // Gather must check Resource::isGatherAble(), including dead animals.
+ // The kernel owns shore repair, refunds and research locks.
  virtual I32 checkInteraction(const Object&,const Object&,I32 event) const=0;
  virtual void result(U64 insID,I32 code)=0;
 };
@@ -86,16 +89,22 @@ public:
  void tick() noexcept {} // Kernel drains/clears getCoreTask after consumption.
  I32 addRelation(WeakPtr<Object> a,WeakPtr<Object> b,I32 event) {
   auto w=a.lock(); if(!w || !w->alive) return ACTION_INVALID_NULLWORKER;
-  auto g=b.lock(); if(!g || !g->alive) return ACTION_INVALID_NULLGOALOBJECT;
+  auto g=b.lock(); if(!g) return ACTION_INVALID_NULLGOALOBJECT;
+  // A dead animal can still be a gatherable resource. The adapter checks isGatherAble().
+  if(!g->alive && !(event==Gather && g->kind==Kind::Animal)) return ACTION_INVALID_NULLGOALOBJECT;
   if(event!=Attack && event!=Gather && event!=Repair && event!=Transport && event!=Heal) return ACTION_INVALID_ACTION;
   if(w->kind==Kind::Building && !w->constructed) return ACTION_INVALID_BUILDACT_NEEDBUILT;
   if(event==Repair) {
-   if(w->kind!=Kind::Farmer || g->kind!=Kind::Building) return ACTION_INVALID_ACTION;
-   if(g->fullHp && g->constructed) return ACTION_INVALID_HUMANACTION_BUILDNOTNEEDFIX;
+   if(w->kind!=Kind::Farmer || (g->kind!=Kind::Building && g->kind!=Kind::FishingBoat && g->kind!=Kind::TransportBoat && !(g->kind==Kind::Soldier && !g->land))) return ACTION_INVALID_ACTION;
+   // Ship repair shore/resource rules are checked by the kernel.
+   if(g->fullHp && (g->kind!=Kind::Building || g->constructed)) return ACTION_INVALID_HUMANACTION_BUILDNOTNEEDFIX;
   }
+  // Soldiers cannot gather wood, stone, gold or any other resource.
   if(event==Gather && w->kind!=Kind::Farmer && w->kind!=Kind::FishingBoat) return ACTION_INVALID_ACTION;
   if(event==Attack && w->kind==Kind::Priest && w->player==g->player) event=Heal;
   if(event==Heal && (w->kind!=Kind::Priest || w.get()==g.get() || !human(*g) || !g->land || g->fullHp || w->player!=g->player)) return ACTION_INVALID_PRIEST_TARGET_ERROR;
+  if(event==Attack && (w->kind==Kind::FishingBoat || w->kind==Kind::TransportBoat)) return ACTION_INVALID_ACTION;
+  if(event==Attack && (w->kind==Kind::Soldier || w->kind==Kind::Priest) && g->isTree) return ACTION_INVALID_ACTION;
   if(event==Attack && !w->canAttack && w->kind!=Kind::Priest) return ACTION_INVALID_ACTION;
   if(event==Transport) {
    if(!human(*w) || g->kind!=Kind::TransportBoat) return ACTION_INVALID_ACTION;
@@ -112,7 +121,7 @@ public:
   if(event!=Move && event!=Unload && !pinpoint) return ACTION_INVALID_ACTION;
   if(!inside(p)) return pinpoint?ACTION_INVALID_PINPOINT_NOT_FIT:ACTION_INVALID_LOCATION;
   if(w->kind==Kind::Building || w->kind==Kind::Resource || w->kind==Kind::Animal) return ACTION_INVALID_ACTION;
-  if(pinpoint && !w->canPinpoint) return ACTION_INVALID_ACTION;
+  if(pinpoint && (w->kind==Kind::FishingBoat || w->kind==Kind::TransportBoat || !w->canPinpoint)) return ACTION_INVALID_ACTION;
   if(event==Unload && w->kind!=Kind::TransportBoat) return ACTION_INVALID_ACTION;
   if(event==Move && w->kind==Kind::TransportBoat && !ctx.ocean({p.x/ctx.blockSide(),p.y/ctx.blockSide()})) event=Unload;
   CoreTask task{}; task.worker=a; task.detailPos=p; task.coreEvent=event; return push(task);
