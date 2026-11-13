@@ -21,7 +21,7 @@ class GameValue{
     }
     //对象名字
     std::string getObjectName(I32 playerID,I32 teamID,I32 sort,I32 type,U64 SN){
-        //return "Player："+std::to_string(plarerID)+"队伍："+std::to_string(teamID)+"类型"+std::to_string(sort)+"对象："+std::to_string(type)+"SN"+std::to_string(SN);
+        return "Player："+std::to_string(playerID)+"队伍："+std::to_string(teamID)+"类型"+std::to_string(sort)+"对象："+std::to_string(type)+"SN"+std::to_string(SN);
     }
     //基础资源最大值
     Double getResourceBasicMaxCnt(I32 sort,I32 type){
