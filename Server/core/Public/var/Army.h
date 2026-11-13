@@ -57,6 +57,7 @@ enum ARMYTYPE{
     AT_ARMY_MAX_NUM
 };
 
+
 /****************************兵种之间的小类别************************/
 enum BRANCH_TYPE {
     ARMY_INFANTRY=0,        //步兵
