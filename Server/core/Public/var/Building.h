@@ -8,15 +8,22 @@ enum BUILDING_TYPE {
     BUILDING_STOCK,             //仓库
     BUILDING_FARM,              //农场
     BUILDING_MARKET,            //市场
-    BUILDING_ARROWTOWER,        //箭塔
+    BUILDING_WATCH_TOWER,       //瞭望箭塔
+    BUILDING_SENTRY_TOWER,      //警戒箭塔
+    BUILDING_GUARD_TOWER,       //防御箭塔
+    BUILDING_BALLISTA_TOWER,    //防御炮塔
     BUILDING_ARMYCAMP,          //军营
     BUILDING_STABLE,            //马厩
     BUILDING_RANGE,             //靶场
     BUILDING_DOCK,              //船坞
     BUILDING_SIEGE,             //攻城武器厂
     BUILDING_COLLAGE,           //学院
+    BUILDING_GOVERNMENT_CENTER, //政府中心。这个还未增加，本次也不用增加。为枚举保留
+    BUILDING_WONDER,            //世界奇观。这个还未增加，本次也不用增加。为枚举保留
     BUILDING_TEMPLE,            //神庙。这个还未增加，本次也不用增加
-    BUILDING_WALL,              //城墙。这个还未增加，本次也不用增加
+    BUILDING_SMALL_WALL,        //初级城墙。这个还未增加，本次也不用增加
+    BUILDING_MEDIUM_WALL,       //中级城墙。这个还未增加，本次也不用增加。为枚举保留
+    BUILDING_FORTIFIED_WALL,    //高级城墙。这个还未增加，本次也不用增加。为枚举保留
     BUILDING_TYPE_MAXNUM,
 };
 
@@ -81,4 +88,5 @@ enum FOUNDATION {
     FOUNDATION_SMALL = 0,
     FOUNDATION_MIDDLE,
     FOUNDATION_BIG,
+    FOUNDATION_HUGE
 };
