@@ -24,7 +24,7 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     this->Percent=Percent;
 }
 bool Building::isConstructed(){
-    if(Percent==100)constructed=true;
+    if(Percent==100)constructed = true;
     return constructed;
 }
 bool Building::isMatchResourceType(int productSort){

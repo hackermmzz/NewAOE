@@ -10,39 +10,39 @@ void Player::init(I32 playerID){
     this->playerID = playerID;
 }
 Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
-    SafePtr<Army> a(new Army(detailPos,type,playerScience));
-    a->setBelong(playerID,teamID);
-    armies.push_back(a);
-    return a.get();
+    SafePtr<Army> a_temp(new Army(detailPos,type,playerScience));
+    a_temp->setBelong(playerID,teamID);
+    armies.push_back(a_temp);
+    return a_temp.get();
 }
 
 Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type){
-    SafePtr<Farmer> f(new Farmer(detailPos,playerScience,type));
-    farmers.push_back(f);
-    f->setBelong(playerID,teamID);
-    return f.get();
+    SafePtr<Farmer> f_temp(new Farmer(detailPos,playerScience,type));
+    farmers.push_back(f_temp);
+    f_temp->setBelong(playerID,teamID);
+    return f_temp.get();
 }
 
 Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 Percent){
-    SafePtr<Building> b(new Building(type,blockPos,playerScience,Percent));
-    buildings.push_back(b);
-    b->setBelong(playerID,teamID);
-    return b.get();
+    SafePtr<Building> b_temp(new Building(type,blockPos,playerScience,Percent));
+    buildings.push_back(b_temp);
+    b_temp->setBelong(playerID,teamID);
+    return b_temp.get();
 }
 
 BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent){
-    SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,Percent));
-    buildingResources.push_back(br);
-    buildings.push_back(br);
-    br->setBelong(playerID,teamID);
-    return br.get();
+    SafePtr<BuildingResource> br_temp(new BuildingResource(type,blockPos,playerScience,Percent));
+    buildingResources.push_back(br_temp);
+    buildings.push_back(br_temp);
+    br_temp->setBelong(playerID,teamID);
+    return br_temp.get();
 }
 
 Missile* Player::newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack){
-    SafePtr<Missile> m(new Missile(type,attacker,attackee,playerScience,attack));
-    missiles.push_back(m);
-    m->setBelong(playerID,teamID);
-    return m.get();
+    SafePtr<Missile> m_temp(new Missile(type,attacker,attackee,playerScience,attack));
+    missiles.push_back(m_temp);
+    m_temp->setBelong(playerID,teamID);
+    return m_temp.get();
 }
 
 vector<SafePtr<Army>>& Player::getArmy(){
