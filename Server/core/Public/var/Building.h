@@ -31,12 +31,18 @@ enum BUILDING_TYPE {
 /********** 建筑动作 **********/
 enum BuildingAction{
     //市镇中心
-    BUILDING_CENTER_CREATEFARMER=1,
-    BUILDING_CENTER_UPGRADE,
+    BUILDING_CENTER_CREATEFARMER=1,         //生产村民
+    BUILDING_CENTER_UPGRADE_TOOLAGE,        //升级到工具时代
+    BUILDING_CENTER_UPGRADE_BRONZEAGE,      //升级到铜器时代
+    BUILDING_CENTER_UPGRADE_IRONAGE,        //升级到铁器时代
     //谷仓
-    BUILDING_GRANARY_ARROWTOWER,
-    BUILDING_GRANARY_WALL,
-    BUILDING_GRANARY_ARROWTOWE_UPGRADE,
+    BUILDING_GRANARY_WALL,                  //研发初级城墙
+    BUILDING_GRANARY_WALL_UPDATE_1,         //升级为中级城墙
+    BUILDING_GRANARY_WALL_UPDATE_2,         //升级为高级城墙（初级城墙->中级城墙->高级城墙）
+    BUILDING_GRANARY_ARROWTOWER,            //研发瞭望箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_1,  //升级为警戒箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_2,  //升级为防御箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_3,  //升级为防御炮塔（瞭望箭塔->警戒箭塔->防御箭塔->防御炮塔）
     //市场
     BUILDING_MARKET_WOOD_UPGRADE,
     BUILDING_MARKET_STONE_UPGRADE,
