@@ -2,7 +2,7 @@
 
 /*************************动物种类**********************/
 enum ANIMAL {
-    ANIMAL_TREE = 0,
+    ANIMAL_TREE = 0,        // 树
     ANIMAL_GAZELLE,         // 瞪羚
     ANIMAL_ELEPHANT,        // 大象
     ANIMAL_LION,            // 狮子

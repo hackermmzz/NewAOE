@@ -6,7 +6,6 @@
 #include "Server/core/BaseObject/BuildingResource.h"
 #include "Server/core/BaseObject/Missile.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/CivilizationFeature.h"
 
 class Player{
 public:
