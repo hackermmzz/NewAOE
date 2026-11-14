@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <set>
 #include "Server/core/BaseObject/Army.h"
 #include "Server/core/BaseObject/Farmer.h"
 #include "Server/core/BaseObject/BuildingResource.h"
@@ -68,8 +69,15 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
+    //已经完成过的科技/解锁类建筑动作，用来判断新建对象该给到哪一级
+    std::set<I32>                       finishedActions;
     //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
     void rememberPlayerScience(WeakPtr<Development> science);
-    //科技变化后，把本玩家名下所有对象的缓存数值按新科技重算一遍。
+    //科技变化后，把本玩家名下需要跟随科技的对象的缓存数值重算一遍
+    //（只有 Army / Farmer / Building；投掷物和农田按建成时的科技定格）。
     void refreshAllObjectScience();
+    //把场上属于「升级前那一级」的对象整体升到新一级（如棍棒兵→斧兵）
+    void upgradeObjectsForAction(I32 action);
+    //按已完成科技把请求的类型抬到实际可用的最高级别；已经是高级别的不会被降级。
+    I32 resolveCreateType(I32 sort, I32 type) const;
 };

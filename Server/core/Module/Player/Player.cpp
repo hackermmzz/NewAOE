@@ -28,6 +28,55 @@ bool isUnitCreateAction(I32 action){
     }
 }
 
+// 一条升级规则：某个建筑动作完成后，把 fromType 的对象整体变成 toType。
+// fromType 传 -1 表示这个动作只是「解锁」，场上没有需要升级的旧对象（比如研发城墙/箭塔）。
+struct UpgradeRule{
+    I32 action;     //触发升级的建筑动作
+    I32 sort;       //对象大类
+    I32 fromType;   //升级前的具体类型
+    I32 toType;     //升级后的具体类型
+};
+
+// 升级链取自 Public/var 下各枚举里的分组：同一组内相邻两项就是上下级。
+// 目前 BuildingAction 里能触发的升级项就这些，枚举补齐后往这里加即可。
+constexpr UpgradeRule kUpgradeRules[] = {
+    //兵营：棍棒兵 → 斧兵
+    {BUILDING_ARMYCAMP_UPGRADE_CLUBMAN,     SORT_ARMY, AT_CLUBMAN,          AT_AXEMAN},
+    //兵营：短剑兵 → 阔剑兵
+    {BUILDING_ARMYCAMP_UPGRADE_BROADSWORD,  SORT_ARMY, AT_SHORT_SWORDSMAN,  AT_BROAD_SWORDSMAN},
+    //靶场：强弓兵 → 复合弓兵
+    {BUILDING_RANGE_UPGRADE_COMPOSITE_BOW,  SORT_ARMY, AT_IMPROVED_BOWMAN,  AT_COMPOSITE_BOWMAN},
+    //城墙：解锁初级 → 中级 → 高级
+    {BUILDING_GRANARY_WALL,                 SORT_BUILDING, -1,                     BUILDING_SMALL_WALL},
+    {BUILDING_GRANARY_WALL_UPDATE_1,        SORT_BUILDING, BUILDING_SMALL_WALL,    BUILDING_MEDIUM_WALL},
+    {BUILDING_GRANARY_WALL_UPDATE_2,        SORT_BUILDING, BUILDING_MEDIUM_WALL,   BUILDING_FORTIFIED_WALL},
+    //箭塔：解锁瞭望塔 → 警戒 → 防御 → 防御炮塔
+    {BUILDING_GRANARY_ARROWTOWER,           SORT_BUILDING, -1,                     BUILDING_WATCH_TOWER},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1, SORT_BUILDING, BUILDING_WATCH_TOWER,   BUILDING_SENTRY_TOWER},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_2, SORT_BUILDING, BUILDING_SENTRY_TOWER,  BUILDING_GUARD_TOWER},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_3, SORT_BUILDING, BUILDING_GUARD_TOWER,   BUILDING_BALLISTA_TOWER},
+};
+
+//按动作查升级规则，没有就返回 nullptr
+const UpgradeRule* findUpgradeRule(I32 action){
+    for(const UpgradeRule& rule : kUpgradeRules){
+        if(rule.action == action){
+            return &rule;
+        }
+    }
+    return nullptr;
+}
+
+//查「某个大类下，从 fromType 往上一级」的规则
+const UpgradeRule* findUpgradeRuleByFrom(I32 sort,I32 fromType){
+    for(const UpgradeRule& rule : kUpgradeRules){
+        if(rule.sort == sort && rule.fromType == fromType){
+            return &rule;
+        }
+    }
+    return nullptr;
+}
+
 // 把已经被 destroy 掉（SafePtr 取出来是空）的对象从容器里摘干净，
 // 避免容器里长期挂着空槽位。
 template<class T>
@@ -53,6 +102,8 @@ void Player::init(I32 playerID){
 }
 Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
     rememberPlayerScience(playerScience);
+    //内核传的可能是底层兵种，实际按当前科技给到已解锁的最高级别
+    type = resolveCreateType(SORT_ARMY,type);
     SafePtr<Army> a(new Army(detailPos,type,playerScience));
     a->setBelong(playerID,teamID);
     armies.push_back(a);
@@ -61,6 +112,7 @@ Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScien
 
 Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type){
     rememberPlayerScience(playerScience);
+    type = resolveCreateType(SORT_FARMER,type);
     SafePtr<Farmer> f(new Farmer(detailPos,playerScience,type));
     farmers.push_back(f);
     f->setBelong(playerID,teamID);
@@ -69,6 +121,7 @@ Farmer* Player::newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I
 
 Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 Percent){
     rememberPlayerScience(playerScience);
+    type = resolveCreateType(SORT_BUILDING,type);
     SafePtr<Building> b(new Building(type,blockPos,playerScience,Percent));
     buildings.push_back(b);
     b->setBelong(playerID,teamID);
@@ -246,12 +299,70 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     if(isUnitCreateAction(action)){
         return;
     }
-    //其余动作都会改动科技加成（研究、兵种升级、时代升级、建筑/塔墙升级），
-    //已经算好的血量、攻防、射程等缓存值随之失效，统一重算。
+    //记下这个科技/解锁动作：之后新建对象要按它决定实际等级
+    finishedActions.insert(action);
+    //场上已经存在的低级别对象直接升到新级别（棍棒兵→斧兵这种）
+    upgradeObjectsForAction(action);
+    //科技变了，血量/攻防/射程等缓存值重算。
+    //注意内核要先让 Development 更新完科技状态，再调这里。
     refreshAllObjectScience();
 }
 
+void Player::upgradeObjectsForAction(I32 action){
+    const UpgradeRule* rule = findUpgradeRule(action);
+    if(rule == nullptr || rule->fromType < 0){
+        //没配升级链，或者只是单纯解锁（研发城墙/箭塔），场上没有要升级的对象
+        return;
+    }
+    switch(rule->sort){
+    case SORT_ARMY:{
+        for(auto& army : armies){
+            if(!army.IsNull() && army->getType() == rule->fromType){
+                army->setType(rule->toType);
+            }
+        }
+        break;
+    }
+    case SORT_FARMER:{
+        for(auto& farmer : farmers){
+            if(!farmer.IsNull() && farmer->getType() == rule->fromType){
+                farmer->setType(rule->toType);
+            }
+        }
+        break;
+    }
+    case SORT_BUILDING:{
+        for(auto& building : buildings){
+            if(!building.IsNull() && building->getType() == rule->fromType){
+                building->setType(rule->toType);
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+I32 Player::resolveCreateType(I32 sort,I32 type) const{
+    I32 current = type;
+    //沿着升级链一路往上找，直到下一级的解锁动作还没完成为止。
+    //已经是高级别的对象（比如转化来的重骑兵）不会往回退，因为链上找不到比它更高的就先停。
+    for(;;){
+        const UpgradeRule* next = findUpgradeRuleByFrom(sort,current);
+        if(next == nullptr){
+            break;
+        }
+        if(finishedActions.find(next->action) == finishedActions.end()){
+            break;
+        }
+        current = next->toType;
+    }
+    return current;
+}
+
 void Player::refreshAllObjectScience(){
+    //投掷物和资源型建筑按建成时的科技定格，不随之后的研究变化，所以不刷新。
     for(auto& army : armies){
         if(!army.IsNull())army->refreshByScience();
     }
@@ -260,12 +371,6 @@ void Player::refreshAllObjectScience(){
     }
     for(auto& building : buildings){
         if(!building.IsNull())building->refreshByScience();
-    }
-    for(auto& buildingResource : buildingResources){
-        if(!buildingResource.IsNull())buildingResource->refreshByScience();
-    }
-    for(auto& missile : missiles){
-        if(!missile.IsNull())missile->refreshByScience();
     }
 }
 

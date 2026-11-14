@@ -35,6 +35,9 @@ public:
 	I32 getVision();
   	I32 getglobalNum();
   	void setPos(const IVec2&pos);
+	//改变具体类型（兵种/建筑升级用），同时刷新名称、视野、碰撞盒与科技相关数值。
+	//sort 不变，只换 type。
+	void setType(I32 newType);
 	//void setplayer(WeakPtr<Player> player);
 	//void getplayer(WeakPtr<Player> player);
 	void setBelong(I32 playerID,I32 teamID);		//设置对象所属玩家和团队（只需要设一个的话，另一个填成负数就行）

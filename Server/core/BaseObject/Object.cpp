@@ -46,6 +46,19 @@ void Object::setPos(const IVec2&pos){
     block_pos.y=detail_pos.y/BLOCKSIDELENGTH;
 }
 
+void Object::setType(I32 newType){
+    if(type == newType){
+        return;
+    }
+    type = newType;
+    //名称、视野都跟具体类型绑着
+    name = ObjectBaseValue::getObjectName(sort,newType);
+    vision = ObjectBaseValue::getBasicVision(sort,newType);
+    //血量/攻防/速度等按新类型重算，再按新类型重建碰撞盒
+    refreshByScience();
+    rebuildCrashBox();
+}
+
 void Object::rebuildCrashBox(){
     const std::pair<I32,I32> box = ObjectBaseValue::getCrashBox(sort,type);
     if(box.first == static_cast<I32>(BOX_RECT)){
