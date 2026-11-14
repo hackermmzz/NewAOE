@@ -18,6 +18,9 @@ public:
     BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
     Missile*            newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
     //获取对象
+    //注意：资源型建筑（农田等，Sort 为 SORT_BUILDING_RESOURCE）只存在于
+    //buildingResources 中，不会出现在 buildings 里。需要遍历玩家全部建筑时，
+    //必须同时访问 getBuilding() 与 getBuildingResource()。
     vector<SafePtr<Army>>&              getArmy();
     vector<SafePtr<Farmer>>&            getFarmer();
     vector<SafePtr<Building>>&          getBuilding();

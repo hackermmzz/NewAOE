@@ -32,8 +32,9 @@ Building* Player::newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> play
 
 BuildingResource* Player::newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent){
     SafePtr<BuildingResource> br(new BuildingResource(type,blockPos,playerScience,Percent));
+    // 资源型建筑（农田等）只登记在 buildingResources 里，不再同时塞进 buildings，
+    // 否则同一个对象会被两个容器各持有一份 SafePtr，删除时相互脱节。
     buildingResources.push_back(br);
-    buildings.push_back(br);
     br->setBelong(playerID,teamID);
     return br.get();
 }
@@ -99,11 +100,10 @@ void Player::removeBuildingResource(I32 globalID){
     for(auto it = buildingResources.begin();it!=buildingResources.end();++it){
         if((*it)->getglobalNum() == globalID){
             buildingResources.erase(it);
-            removeBuildingResource(globalID);
+            ReceivedObjectLockedDevelopment.erase(globalID);
             return;
         }
     }
-    
 }
 
 void Player::removeMissile(I32 globalID){
@@ -164,9 +164,11 @@ bool Player::receiveFarmer(SafePtr<Farmer> farmer){
     return true;
 }
 bool Player::receiveBuildingResource(SafePtr<BuildingResource> buildingResource){
-    if(receiveBuilding(buildingResource)){
-        buildingResources.push_back(buildingResource);
-        return true;
-    }
-    return false;
+    if(buildingResource == nullptr)return false;
+    if(buildingResource->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
+    // 不能复用 receiveBuilding：资源型建筑不进入 buildings 容器。
+    buildingResource->setBelong(playerID,teamID);
+    buildingResources.push_back(buildingResource);
+    ReceivedObjectLockedDevelopment[buildingResource->getglobalNum()]=SafePtr<Development>(new Development(*buildingResource->getPlayerScience().lock()));
+    return true;
 }
