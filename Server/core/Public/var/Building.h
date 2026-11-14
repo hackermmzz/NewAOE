@@ -86,6 +86,28 @@ enum BuildingAction{
     BUILDING_COLLAGE_CREATE_HOPLITE,
     // 兼容性追加：兵营后勤科技（避免改变已有建筑动作编号）
     BUILDING_ARMYCAMP_RESEARCH_LOGISTICS,
+
+    // ---- 兵种升级动作（一律追加在末尾，保证上面已有动作的编号不变）----
+    //兵营
+    BUILDING_ARMYCAMP_UPGRADE_LONGSWORD,      // 阔剑兵升级为长剑兵
+    BUILDING_ARMYCAMP_UPGRADE_LEGION,         // 长剑兵升级为军团步兵
+    //靶场
+    BUILDING_RANGE_UPGRADE_HORSE_ARCHER,      // 弓骑兵升级为重装弓骑兵
+    //马厩
+    BUILDING_STABLE_UPGRADE_CAVALRY,          // 骑兵升级为重骑兵
+    BUILDING_STABLE_UPGRADE_CATAPHRACT,       // 重骑兵升级为铁甲骑兵
+    BUILDING_STABLE_UPGRADE_CHARIOT,          // 战车升级为刀轮战车
+    BUILDING_STABLE_UPGRADE_ELEPHANT,         // 战象升级为装甲战象
+    //攻城武器厂
+    BUILDING_SIEGE_UPGRADE_CATAPULT,          // 投石车升级为中型投石车
+    BUILDING_SIEGE_UPGRADE_HEAVY_CATAPULT,    // 中型投石车升级为重型投石车
+    BUILDING_SIEGE_UPGRADE_HELEPOLIS,         // 弩炮升级为重型弩炮
+    //船坞
+    BUILDING_DOCK_UPGRADE_WAR_GALLEY,         // 侦察船升级为桨帆船
+    BUILDING_DOCK_UPGRADE_TRIREME,            // 桨帆船升级为三列桨帆船
+    //学院
+    BUILDING_COLLAGE_UPGRADE_PHALANX,         // 方阵兵升级为十夫长
+    BUILDING_COLLAGE_UPGRADE_CENTURION,       // 十夫长升级为百夫长
 };
 
 /*******************************建筑地基****************************/

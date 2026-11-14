@@ -29,32 +29,58 @@ bool isUnitCreateAction(I32 action){
 }
 
 // 一条升级规则：某个建筑动作完成后，把 fromType 的对象整体变成 toType。
-// fromType 传 -1 表示这个动作只是「解锁」，场上没有需要升级的旧对象（比如研发城墙/箭塔）。
+// fromType 传 -1 表示这是一条链的起点（只是解锁，场上没有前一级对象）。
+// upgradeExisting 区分「已有对象跟着升级」（兵种、箭塔）和「只影响以后新建的」
+// （城墙：研究完只解锁更高级城墙，已经砌好的城墙不变）。
 struct UpgradeRule{
-    I32 action;     //触发升级的建筑动作
-    I32 sort;       //对象大类
-    I32 fromType;   //升级前的具体类型
-    I32 toType;     //升级后的具体类型
+    I32  action;            //触发升级的建筑动作
+    I32  sort;              //对象大类
+    I32  fromType;          //升级前的具体类型，-1 表示链首
+    I32  toType;            //升级后的具体类型
+    bool upgradeExisting;   //场上已有的前一级对象是否一起升级
 };
 
-// 升级链取自 Public/var 下各枚举里的分组：同一组内相邻两项就是上下级。
-// 目前 BuildingAction 里能触发的升级项就这些，枚举补齐后往这里加即可。
+// 升级链取自 Public/var 下各枚举与策划给的升级顺序。
 constexpr UpgradeRule kUpgradeRules[] = {
-    //兵营：棍棒兵 → 斧兵
-    {BUILDING_ARMYCAMP_UPGRADE_CLUBMAN,     SORT_ARMY, AT_CLUBMAN,          AT_AXEMAN},
-    //兵营：短剑兵 → 阔剑兵
-    {BUILDING_ARMYCAMP_UPGRADE_BROADSWORD,  SORT_ARMY, AT_SHORT_SWORDSMAN,  AT_BROAD_SWORDSMAN},
-    //靶场：强弓兵 → 复合弓兵
-    {BUILDING_RANGE_UPGRADE_COMPOSITE_BOW,  SORT_ARMY, AT_IMPROVED_BOWMAN,  AT_COMPOSITE_BOWMAN},
-    //城墙：解锁初级 → 中级 → 高级
-    {BUILDING_GRANARY_WALL,                 SORT_BUILDING, -1,                     BUILDING_SMALL_WALL},
-    {BUILDING_GRANARY_WALL_UPDATE_1,        SORT_BUILDING, BUILDING_SMALL_WALL,    BUILDING_MEDIUM_WALL},
-    {BUILDING_GRANARY_WALL_UPDATE_2,        SORT_BUILDING, BUILDING_MEDIUM_WALL,   BUILDING_FORTIFIED_WALL},
-    //箭塔：解锁瞭望塔 → 警戒 → 防御 → 防御炮塔
-    {BUILDING_GRANARY_ARROWTOWER,           SORT_BUILDING, -1,                     BUILDING_WATCH_TOWER},
-    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1, SORT_BUILDING, BUILDING_WATCH_TOWER,   BUILDING_SENTRY_TOWER},
-    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_2, SORT_BUILDING, BUILDING_SENTRY_TOWER,  BUILDING_GUARD_TOWER},
-    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_3, SORT_BUILDING, BUILDING_GUARD_TOWER,   BUILDING_BALLISTA_TOWER},
+    //---- 兵营 ----
+    //棍棒兵 → 刀斧兵
+    {BUILDING_ARMYCAMP_UPGRADE_CLUBMAN,      SORT_ARMY, AT_CLUBMAN,          AT_AXEMAN,          true},
+    //短剑兵 → 阔剑兵 → 长剑兵 → 军团步兵
+    {BUILDING_ARMYCAMP_UPGRADE_BROADSWORD,   SORT_ARMY, AT_SHORT_SWORDSMAN,  AT_BROAD_SWORDSMAN, true},
+    {BUILDING_ARMYCAMP_UPGRADE_LONGSWORD,    SORT_ARMY, AT_BROAD_SWORDSMAN,  AT_LONG_SWORDSMAN,  true},
+    {BUILDING_ARMYCAMP_UPGRADE_LEGION,       SORT_ARMY, AT_LONG_SWORDSMAN,   AT_LEGION,          true},
+    //---- 靶场 ----
+    //强弓兵 → 复合弓兵；弓骑兵 → 重装弓骑兵
+    {BUILDING_RANGE_UPGRADE_COMPOSITE_BOW,   SORT_ARMY, AT_IMPROVED_BOWMAN,  AT_COMPOSITE_BOWMAN,true},
+    {BUILDING_RANGE_UPGRADE_HORSE_ARCHER,    SORT_ARMY, AT_HORSE_ARCHER,     AT_HEAVY_HORSE_ARCHER,true},
+    //---- 马厩 ----
+    //骑兵 → 重骑兵 → 铁甲骑兵；战车 → 刀轮战车；战象 → 装甲战象
+    {BUILDING_STABLE_UPGRADE_CAVALRY,        SORT_ARMY, AT_CAVALRY,          AT_HEAVY_CAVALRY,   true},
+    {BUILDING_STABLE_UPGRADE_CATAPHRACT,     SORT_ARMY, AT_HEAVY_CAVALRY,    AT_CATAPHRACT,      true},
+    {BUILDING_STABLE_UPGRADE_CHARIOT,        SORT_ARMY, AT_CHARIOT,          AT_SCYTHECHARIOT,   true},
+    {BUILDING_STABLE_UPGRADE_ELEPHANT,       SORT_ARMY, AT_WAR_ELEPHANT,     AT_ARMORED_ELEPHANT,true},
+    //---- 攻城武器厂 ----
+    //投石车 → 中型投石车 → 重型投石车；弩炮 → 重型弩炮
+    {BUILDING_SIEGE_UPGRADE_CATAPULT,        SORT_ARMY, AT_STONE_THROWER,    AT_CATAPULT,        true},
+    {BUILDING_SIEGE_UPGRADE_HEAVY_CATAPULT,  SORT_ARMY, AT_CATAPULT,         AT_HEAVY_CATAPULT,  true},
+    {BUILDING_SIEGE_UPGRADE_HELEPOLIS,       SORT_ARMY, AT_BALLISTA,         AT_HELEPOLIS,       true},
+    //---- 船坞 ----
+    //侦察船 → 桨帆船 → 三列桨帆船
+    {BUILDING_DOCK_UPGRADE_WAR_GALLEY,       SORT_ARMY, AT_SCOUT_SHIP,       AT_WAR_GALLEY,      true},
+    {BUILDING_DOCK_UPGRADE_TRIREME,          SORT_ARMY, AT_WAR_GALLEY,       AT_TRIREME,         true},
+    //---- 学院 ----
+    //方阵兵 → 十夫长 → 百夫长
+    {BUILDING_COLLAGE_UPGRADE_PHALANX,       SORT_ARMY, AT_HOPLITE,          AT_PHALANX,         true},
+    {BUILDING_COLLAGE_UPGRADE_CENTURION,     SORT_ARMY, AT_PHALANX,          AT_CENTURION,       true},
+    //---- 城墙：只解锁更高级的城墙，已经砌好的不跟着变 ----
+    {BUILDING_GRANARY_WALL,                  SORT_BUILDING, -1,                  BUILDING_SMALL_WALL,    false},
+    {BUILDING_GRANARY_WALL_UPDATE_1,         SORT_BUILDING, BUILDING_SMALL_WALL, BUILDING_MEDIUM_WALL,   false},
+    {BUILDING_GRANARY_WALL_UPDATE_2,         SORT_BUILDING, BUILDING_MEDIUM_WALL,BUILDING_FORTIFIED_WALL,false},
+    //---- 箭塔：瞭望 → 警戒 → 防御 → 防御炮塔 ----
+    {BUILDING_GRANARY_ARROWTOWER,            SORT_BUILDING, -1,                  BUILDING_WATCH_TOWER,   false},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1,  SORT_BUILDING, BUILDING_WATCH_TOWER,  BUILDING_SENTRY_TOWER,  true},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_2,  SORT_BUILDING, BUILDING_SENTRY_TOWER, BUILDING_GUARD_TOWER,   true},
+    {BUILDING_GRANARY_ARROWTOWER_UPGRADE_3,  SORT_BUILDING, BUILDING_GUARD_TOWER,  BUILDING_BALLISTA_TOWER,true},
 };
 
 //按动作查升级规则，没有就返回 nullptr
@@ -310,8 +336,8 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
 
 void Player::upgradeObjectsForAction(I32 action){
     const UpgradeRule* rule = findUpgradeRule(action);
-    if(rule == nullptr || rule->fromType < 0){
-        //没配升级链，或者只是单纯解锁（研发城墙/箭塔），场上没有要升级的对象
+    if(rule == nullptr || rule->fromType < 0 || !rule->upgradeExisting){
+        //没配升级链 / 是链首（纯解锁）/ 只影响以后新建的（城墙），场上没有要改的对象
         return;
     }
     switch(rule->sort){
