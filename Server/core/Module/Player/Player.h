@@ -39,16 +39,22 @@ public:
     bool changeResource(I32 resourceSort, I32 changeAmount);        //增减一种资源的量
     bool changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount); //增减所有资源的量(时候同时增减多种资源，不需要增减的资源填0即可)
     //接收敌对阵营的对象，并将其编入我方阵营（用于该对象被我方祭司转换的情况）
+    //转化后对象的科技会改为跟随本玩家的 playerScience，不再保留原阵营的科技快照。
     bool receiveBuilding(SafePtr<Building> building);
     bool receiveArmy(SafePtr<Army> army);
     bool receiveFarmer(SafePtr<Farmer> farmer);
     bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
+    //本玩家的科技（由第一次 newXXX 时传入的 Development 记录，只读）
+    WeakPtr<Development> getPlayerScience() const;
     void tick();
 private:
     //玩家身份状态信息
     I32 civilization;
     I32 teamID;
     I32 playerID;
+    //玩家科技。newArmy/newFarmer/... 会传入 Development，第一次拿到时记下来，
+    //供转化敌方单位等场合把对象的科技指向本玩家。
+    WeakPtr<Development> playerScience;
     //玩家资源信息
     array<I32,4> ResourceGroup;                    //玩家所持有的资源量，顺序为木材，粮食，石头，黄金。
     //玩家所持有的各种对象信息
@@ -57,6 +63,6 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
-    //被转化的对象，其科技锁定在被转换的那一刻
-    std::map<I32,SafePtr<Development>>  ReceivedObjectLockedDevelopment;
+    //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
+    void rememberPlayerScience(WeakPtr<Development> science);
 };
