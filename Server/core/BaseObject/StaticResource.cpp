@@ -30,6 +30,7 @@ StaticRes::StaticRes(I32 type,IVec2 detailPos)
     setPos(detailPos);
 
     vision = ObjectBaseValue::getBasicVision(SORT_STATICRES,type);
+    name = ObjectBaseValue::getObjectName(SORT_STATICRES,type);
     //资源相关的数值
     maxCnt = ObjectBaseValue::getResourceBasicMaxCnt(SORT_STATICRES,type);
     cntLeft = maxCnt;

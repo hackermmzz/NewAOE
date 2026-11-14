@@ -34,10 +34,7 @@ Missile::Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,W
     targetDetailPos = (to != nullptr) ? to->getDetailPos() : startPos;
 
     //设置名称
-    string tmp="Missile---Type:";
-    tmp+=std::to_string(type);
-    tmp+="---SN:";
-    name=tmp+std::to_string(SN);
+    name = ObjectBaseValue::getObjectName(SORT_MISSILE,type);
 
     rebuildCrashBox();
 }

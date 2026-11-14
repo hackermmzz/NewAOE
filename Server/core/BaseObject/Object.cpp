@@ -31,7 +31,8 @@ IVec2 Object::getDetailPos(){
     return detail_pos;
 }
 string Object::getName(){
-    return ObjectBaseValue::getObjectName(playerID,teamID,sort,type,SN);
+    //name 在派生类构造函数里由 ObejctBaseValue 的名称表初始化好，这里直接返回缓存值
+    return name;
 }
 I32 Object::getVision(){
     return vision;

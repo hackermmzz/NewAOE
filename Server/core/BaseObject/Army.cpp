@@ -140,8 +140,9 @@ Army::Army(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience)
         default:break;
 
     }
-    //基础视野
+    //基础视野与名称
     vision = ObjectBaseValue::getBasicVision(SORT_ARMY,type);
+    name = ObjectBaseValue::getObjectName(SORT_ARMY,type);
     //构造函数里血量/攻防/速度还是空的，先按当前科技填一遍
     refreshByScience();
     //碰撞盒按基础数值表建立

@@ -37,6 +37,7 @@ Animal::Animal(I32 type,IVec2 detailPos)
     setPos(detailPos);
 
     vision = ObjectBaseValue::getBasicVision(SORT_ANIMAL,type);
+    name = ObjectBaseValue::getObjectName(SORT_ANIMAL,type);
     friendly = AnimalFriendly(type);
 
     maxBlood = ObjectBaseValue::getBasicBlood(SORT_ANIMAL,type);

@@ -32,10 +32,7 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     this->playerScience = playerScience;
     this->constructed = false;
     //设置名称
-    string tmp="Building---Type:";
-    tmp+=std::to_string(type);
-    tmp+="---SN:";
-    name=tmp+std::to_string(SN);
+    name = ObjectBaseValue::getObjectName(sort,type);
     this->Percent=Percent;
     // 内部血量统一按「满血」存放，建造进度只在读取时折算（见 getMaxBlood / getBlood），
     // 这样科技变化时只需要刷新一次满血值，不必关心当前盖到几成。

@@ -15,6 +15,7 @@ Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type)
     this->quantity_GatherOnce = 0;
 
     vision = ObjectBaseValue::getBasicVision(SORT_FARMER,type);
+    name = ObjectBaseValue::getObjectName(SORT_FARMER,type);
     //构造函数里血量/攻防/速度还是空的，先按当前科技填一遍
     refreshByScience();
     rebuildCrashBox();

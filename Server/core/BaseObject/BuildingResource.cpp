@@ -12,6 +12,7 @@ BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development
     gatherAble= true;	                                //可采集
     //sort 改成 SORT_BUILDING_RESOURCE 之后，按正确的 sort 重算一次
     vision = ObjectBaseValue::getBasicVision(sort,type);
+    name = ObjectBaseValue::getObjectName(sort,type);
     this->maxBlood = computeFullBlood();
     this->currentBlood = this->maxBlood;
     rebuildCrashBox();
@@ -28,8 +29,9 @@ Double BuildingResource::getMaxCnt(WeakPtr<Development> playerScience){
 }
 
 bool BuildingResource::isGatherAble(){
-    if(cntLeft>Double::Zero()&&constructed){
-        return true;
+    //没建成之前不能采（结算进度用 Percent，不依赖 isConstructed() 的惰性标志）
+    if(Percent < 100){
+        return false;
     }
-    return false;
+    return cntLeft > Double::Zero();
 }
