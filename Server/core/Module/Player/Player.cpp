@@ -27,6 +27,19 @@ bool isUnitCreateAction(I32 action){
         return false;
     }
 }
+
+// 把已经被 destroy 掉（SafePtr 取出来是空）的对象从容器里摘干净，
+// 避免容器里长期挂着空槽位。
+template<class T>
+void purgeDestroyed(vector<SafePtr<T>>& container){
+    for(auto it = container.begin();it != container.end();){
+        if(it->IsNull()){
+            it = container.erase(it);
+        }else{
+            ++it;
+        }
+    }
+}
 }
 
 Player::Player(I32 civilization, I32 teamID){
@@ -158,6 +171,9 @@ void Player::removeMissile(I32 globalID){
 }
 
 I32 Player::getResource(I32 resourceSort){
+    if(resourceSort < 0 || resourceSort >= static_cast<I32>(ResourceGroup.size())){
+        return 0;
+    }
     return ResourceGroup[resourceSort];
 }
 
@@ -166,6 +182,11 @@ array<I32,4> Player::getResource(){
 }
 
 bool Player::changeResource(I32 resourceSort, I32 changeAmount){
+    //资源种类来自 ResourceSort（木材/食物/石头/黄金），越界一律拒绝，
+    //避免把 ProductSort 之类的枚举误传进来直接越界写。
+    if(resourceSort < 0 || resourceSort >= static_cast<I32>(ResourceGroup.size())){
+        return false;
+    }
     if(ResourceGroup[resourceSort] + changeAmount < 0){
         return false;
     }
@@ -246,4 +267,14 @@ void Player::refreshAllObjectScience(){
     for(auto& missile : missiles){
         if(!missile.IsNull())missile->refreshByScience();
     }
+}
+
+void Player::tick(){
+    //内核跑完一帧后调用。对象的增删由内核通过 newXXX/removeXXX 完成，
+    //这里只做一件兜底的事：把已经被 destroy 掉的对象从容器里摘掉。
+    purgeDestroyed(armies);
+    purgeDestroyed(farmers);
+    purgeDestroyed(buildings);
+    purgeDestroyed(buildingResources);
+    purgeDestroyed(missiles);
 }
