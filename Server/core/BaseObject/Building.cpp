@@ -33,9 +33,9 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     tmp+="---SN:";
     name=tmp+std::to_string(SN);
     this->Percent=Percent;
-    // 出生即按建造进度算好血量：Percent=100 是开局直接建成的建筑，
-    // 正常建造则按完成度折算。
-    maxBlood = computeMaxBlood();
+    // 内部血量统一按「满血」存放，建造进度只在读取时折算（见 getMaxBlood / getBlood），
+    // 这样科技变化时只需要刷新一次满血值，不必关心当前盖到几成。
+    maxBlood = computeFullBlood();
     currentBlood = maxBlood;
 }
 bool Building::isConstructed(){
@@ -54,11 +54,11 @@ bool Building::isMatchResourceType(int productSort){
     }
     return false;
 }
-Double Building::computeMaxBlood(){
+Double Building::computeFullBlood(){
     const I32 objectSort = getSort();
     const I32 objectType = getType();
 
-    //基础血量 × 科技加成 + 科技额外加成
+    //基础血量 × 科技血量加成 + 科技额外加成
     Double result = ObjectBaseValue::getBasicBlood(objectSort,objectType);
     SafePtr<Development> science = playerScience.lock();
     if(science != nullptr){
@@ -66,20 +66,49 @@ Double Building::computeMaxBlood(){
                + Double(science->get_addition_Blood(objectSort,objectType));
     }
 
-    //建成前按建造完成度折算，建成后走正常逻辑
-    if(Percent < 100){
-        result = result * Double(Percent) / Double(100);
-    }
-
-    //Percent 为 0 时算出来是 0，强制给 1 点血，否则建筑一出生就是死的
+    //满血值不允许为 0
     if(result <= Double::Zero()){
         result = Double(1);
     }
     return result;
 }
 
+void Building::build(I32 percent){
+    if(percent > 100){
+        percent = 100;
+    }
+    if(percent < 0){
+        percent = 0;
+    }
+    this->Percent = percent;
+}
+
+Double Building::getMaxBlood(){
+    //建成后走正常逻辑
+    if(Percent >= 100){
+        return maxBlood;
+    }
+    //施工中：满血值 × 建造进度
+    Double scaled = maxBlood * Double(Percent) / Double(100);
+    //进度为 0 时算出来是 0，保底给 1 点，避免建筑一落地就是死的
+    return scaled <= Double::Zero() ? Double(1) : scaled;
+}
+
+Double Building::getBlood(){
+    //建成后走正常逻辑
+    if(Percent >= 100){
+        return currentBlood;
+    }
+    //施工中：当前血量同样按进度折算；已经被打掉的建筑不再保底
+    if(currentBlood <= Double::Zero()){
+        return Double::Zero();
+    }
+    Double scaled = currentBlood * Double(Percent) / Double(100);
+    return scaled <= Double::Zero() ? Double(1) : scaled;
+}
+
 void Building::refreshByScience(){
-    maxBlood = computeMaxBlood();
+    maxBlood = computeFullBlood();
     if(currentBlood > maxBlood){
         currentBlood = maxBlood;
     }

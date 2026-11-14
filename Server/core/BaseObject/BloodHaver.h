@@ -13,8 +13,9 @@ protected:
 	Double defenceClose;//近战防御
 	Double defenceShoot;//远程防御
 public:
-	Double getMaxBlood();
-	Double getBlood();
+	//供外部读取血量。建筑在建成前需要按建造进度实时折算，因此设为虚函数。
+	virtual Double getMaxBlood();
+	virtual Double getBlood();
 	Double getDefence(I32 attackType);
 	bool isDie();
 	void beHeal(Double heal);

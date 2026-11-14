@@ -9,8 +9,8 @@ BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development
     this->cntLeft= getMaxCnt(playerScience);            //构造时为满资源
     decayRate= Double::Zero();	                        //腐烂速度为0。不会腐烂
     gatherAble= true;	                                //可采集
-    //sort 改成 SORT_BUILDING_RESOURCE 之后，按正确的 sort 重算一次血量
-    this->maxBlood = computeMaxBlood();
+    //sort 改成 SORT_BUILDING_RESOURCE 之后，按正确的 sort 重算一次满血值
+    this->maxBlood = computeFullBlood();
     this->currentBlood = this->maxBlood;
 }
 
