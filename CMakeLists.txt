@@ -30,6 +30,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Header-only third-party libraries expose namespaced targets so consumers do
 # not need to know their on-disk layout.
 add_subdirectory(Public/fixed_point)
+add_subdirectory(Public/third-party/xlsx)
 
 # Build the browser integration demo without pulling server, networking,
 # audio or editor UI dependencies into the WebAssembly bundle. Its asset
@@ -241,10 +242,12 @@ endforeach()
 
 if(AOE_BUILD_NORMALIZED STREQUAL "server" OR AOE_BUILD_NORMALIZED STREQUAL "both")
     add_subdirectory(Server)
+    target_link_libraries(Server PRIVATE OpenXLSX::OpenXLSX)
 endif()
 
 if(AOE_BUILD_NORMALIZED STREQUAL "client" OR AOE_BUILD_NORMALIZED STREQUAL "both")
     add_subdirectory(Client)
+    target_link_libraries(Client PRIVATE OpenXLSX::OpenXLSX)
 endif()
 
 if(AOE_BUILD_RENDER_TESTS)
