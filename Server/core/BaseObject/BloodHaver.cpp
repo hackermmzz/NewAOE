@@ -35,8 +35,8 @@ Double BloodHaver::getDefenceCloseBasic(){
 Double BloodHaver::getDefenceShootBasic(){
     return defenceShoot;
 }
-//默认实现：没有科技的对象（动物）加成恒为 0；
-//Human/Building 会覆盖成"实际值 - 基础值"，供 UI 显示
+//默认实现：没有科技加成的对象（动物、投掷物）加成恒为 0。
+//Human / Building 覆写成「基础值取 ObejctBaseValue，加成 = 当前值 - 基础值」。
 Double BloodHaver::getDefenceCloseAddition(){
     return Double::Zero();
 }

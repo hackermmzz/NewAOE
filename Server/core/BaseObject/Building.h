@@ -29,6 +29,13 @@ public:
     Double getBlood() override;
     //按当前科技重算血量/攻防/射程等缓存值
     void refreshByScience() override;
+    //UI 显示用：基础值取 ObejctBaseValue，加成值 = 当前值 - 基础值
+    Double getAttackBasic() override;
+    Double getAttackAdditon() override;
+    Double getDefenceCloseBasic() override;
+    Double getDefenceShootBasic() override;
+    Double getDefenceCloseAddition() override;
+    Double getDefenceShootAddition() override;
 protected:
     //100% 状态下的满血值 = 基础血量 × 血量加成 + 额外血量加成（结果为 0 时保底 1）
     Double computeFullBlood();

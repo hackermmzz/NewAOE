@@ -26,8 +26,8 @@ Double Attacker::getAttackBasic()
 
 Double Attacker::getAttackAdditon()
 {
-    //科技的加成已经在 refreshByScience() 里并进 attackClose / attackShoot 了，
-    //所以 getAttackBasic() 取到的就是最终攻击力，这里不再叠加，返回 0。
+    //默认实现：没有科技加成的对象（动物、投掷物）加成恒为 0。
+    //Human / Building 覆写成「当前攻击力 - ObejctBaseValue 里的基础值」。
     return Double::Zero();
 }
 

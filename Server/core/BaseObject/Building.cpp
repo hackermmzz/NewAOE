@@ -125,3 +125,33 @@ void Building::refreshByScience(){
     //塔的攻击数值还没有进表，直接重算会把塔的攻击清成 0。
     //等建筑的攻击列补进 ObejctBaseValue 之后再一并处理。
 }
+
+//---- UI 用的「基础值 / 加成值」拆分 ----
+//基础值一律取 ObejctBaseValue，加成值 = 当前值（已含科技）- 基础值。
+
+Double Building::getAttackBasic(){
+    const std::pair<Double,Double> base =
+        ObjectBaseValue::getBasicAttack(getSort(),getType());
+    return attackType == ATTACKTYPE_SHOOT ? base.second : base.first;
+}
+
+Double Building::getAttackAdditon(){
+    const Double current = attackType == ATTACKTYPE_SHOOT ? attackShoot : attackClose;
+    return current - getAttackBasic();
+}
+
+Double Building::getDefenceCloseBasic(){
+    return ObjectBaseValue::getBasicDefence(getSort(),getType()).first;
+}
+
+Double Building::getDefenceShootBasic(){
+    return ObjectBaseValue::getBasicDefence(getSort(),getType()).second;
+}
+
+Double Building::getDefenceCloseAddition(){
+    return defenceClose - getDefenceCloseBasic();
+}
+
+Double Building::getDefenceShootAddition(){
+    return defenceShoot - getDefenceShootBasic();
+}

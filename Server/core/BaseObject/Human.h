@@ -26,5 +26,12 @@ public:
     //兵种大类（步兵/弓兵/骑兵/祭司/攻城/船），科技查询攻防加成时要用；
     //非军队单位（农民）没有大类，统一按步兵处理。
     virtual I32 getArmyClass() const;
+    //UI 显示用：基础值取 ObejctBaseValue，加成值 = 当前值 - 基础值
+    Double getAttackBasic() override;
+    Double getAttackAdditon() override;
+    Double getDefenceCloseBasic() override;
+    Double getDefenceShootBasic() override;
+    Double getDefenceCloseAddition() override;
+    Double getDefenceShootAddition() override;
 };
 

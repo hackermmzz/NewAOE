@@ -24,6 +24,36 @@ I32 Human::getArmyClass() const{
     return ARMY_INFANTRY;
 }
 
+//---- UI 用的「基础值 / 加成值」拆分 ----
+//基础值一律取 ObejctBaseValue，加成值 = 当前值（已含科技）- 基础值。
+
+Double Human::getAttackBasic(){
+    const std::pair<Double,Double> base =
+        ObjectBaseValue::getBasicAttack(getSort(),getType());
+    return attackType == ATTACKTYPE_SHOOT ? base.second : base.first;
+}
+
+Double Human::getAttackAdditon(){
+    const Double current = attackType == ATTACKTYPE_SHOOT ? attackShoot : attackClose;
+    return current - getAttackBasic();
+}
+
+Double Human::getDefenceCloseBasic(){
+    return ObjectBaseValue::getBasicDefence(getSort(),getType()).first;
+}
+
+Double Human::getDefenceShootBasic(){
+    return ObjectBaseValue::getBasicDefence(getSort(),getType()).second;
+}
+
+Double Human::getDefenceCloseAddition(){
+    return defenceClose - getDefenceCloseBasic();
+}
+
+Double Human::getDefenceShootAddition(){
+    return defenceShoot - getDefenceShootBasic();
+}
+
 // 构造时写进 BloodHaver / Attacker / MoveObject 的都是「基础值」，
 // 科技一变这些缓存就失效了，这里统一按「基础值 × 比例加成 + 数值加成」重算一遍。
 void Human::refreshByScience(){
