@@ -33,6 +33,10 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     tmp+="---SN:";
     name=tmp+std::to_string(SN);
     this->Percent=Percent;
+    // 出生即按建造进度算好血量：Percent=100 是开局直接建成的建筑，
+    // 正常建造则按完成度折算。
+    maxBlood = computeMaxBlood();
+    currentBlood = maxBlood;
 }
 bool Building::isConstructed(){
     if(Percent==100)constructed=true;
@@ -50,19 +54,32 @@ bool Building::isMatchResourceType(int productSort){
     }
     return false;
 }
-void Building::refreshByScience(){
-    SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr){
-        return;
-    }
-
+Double Building::computeMaxBlood(){
     const I32 objectSort = getSort();
     const I32 objectType = getType();
 
-    //---- 血量：建筑学等科技会改这一项 ----
-    maxBlood = ObjectBaseValue::getBasicBlood(objectSort,objectType)
-             * science->get_rate_Blood(objectSort,objectType)
-             + Double(science->get_addition_Blood(objectSort,objectType));
+    //基础血量 × 科技加成 + 科技额外加成
+    Double result = ObjectBaseValue::getBasicBlood(objectSort,objectType);
+    SafePtr<Development> science = playerScience.lock();
+    if(science != nullptr){
+        result = result * science->get_rate_Blood(objectSort,objectType)
+               + Double(science->get_addition_Blood(objectSort,objectType));
+    }
+
+    //建成前按建造完成度折算，建成后走正常逻辑
+    if(Percent < 100){
+        result = result * Double(Percent) / Double(100);
+    }
+
+    //Percent 为 0 时算出来是 0，强制给 1 点血，否则建筑一出生就是死的
+    if(result <= Double::Zero()){
+        result = Double(1);
+    }
+    return result;
+}
+
+void Building::refreshByScience(){
+    maxBlood = computeMaxBlood();
     if(currentBlood > maxBlood){
         currentBlood = maxBlood;
     }

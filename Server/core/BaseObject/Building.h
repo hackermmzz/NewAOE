@@ -24,4 +24,8 @@ public:
     WeakPtr<Development> getPlayerScience(){return playerScience;}
     //按当前科技重算血量/攻防/射程等缓存值
     void refreshByScience() override;
+protected:
+    //(基础血量 × 血量加成 + 额外血量加成) × 建造完成度；未建成时按 Percent 折算，
+    //建成后不再折算。算出来是 0（Percent 为 0）时强制给 1 点，避免建筑一落地就是死的。
+    Double computeMaxBlood();
  };
