@@ -9,6 +9,7 @@ enum FarmerType {
     FARMERTYPE_BIG_TRADE_BOAT,  //大型商船
     FARMERTYPE_LIGHT_TRANSPORT, //小型运输船
     FARMERTYPE_HEAVY_TRANSPORT, //重型运输船
+    FARMERTYPE_MAXNUM
 };
 
 /*********************************角色为农民时候的子角色**********************/

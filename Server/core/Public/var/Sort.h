@@ -8,7 +8,8 @@ enum ObjectSort {
     SORT_ANIMAL,                    //动物
     SORT_MISSILE,                   //投掷物
     SORT_BUILDING_RESOURCE,         //资源型建筑（农田）
-    SORT_ARMY                       //军事人员
+    SORT_ARMY,                      //军事人员
+    SORT_MAXNUM
 };
 
 

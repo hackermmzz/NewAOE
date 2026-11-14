@@ -7,7 +7,6 @@ enum ANIMAL {
     ANIMAL_ELEPHANT,        // 大象
     ANIMAL_LION,            // 狮子
     ANIMAL_ALLIGATOR,       // 鳄鱼
-    ANIMAL_ALLIGATOR_KING,  // 鳄鱼王
     ANIMLA_TYPE_MANNUM
 };
 
