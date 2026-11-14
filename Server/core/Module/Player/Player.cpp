@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Server/core/Public/config/ObejctBaseValue.h"
 
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;

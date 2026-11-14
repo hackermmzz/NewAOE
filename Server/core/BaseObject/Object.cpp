@@ -1,5 +1,6 @@
 #include "Object.h"
 #include "Server/core/Module/Player/Player.h"
+#include "Server/core/Public/config/ObejctBaseValue.h"
 
 U64 Object::globalSNIndex=1;	//给全局对象分配SN
 
