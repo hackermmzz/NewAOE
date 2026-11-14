@@ -56,6 +56,8 @@ enum ARMYTYPE{
     AT_FIRESAILBOAT,        //火帆船
     //学院生产
     AT_HOPLITE,             // 方阵兵
+    AT_PHALANX,             // 十夫长
+    AT_CENTURION,           // 百夫长
     //神庙生产
     AT_PRIEST,//祭司
     AT_ARMY_MAX_NUM

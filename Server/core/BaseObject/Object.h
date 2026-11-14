@@ -105,3 +105,22 @@ class GameValue{
         return __GameBasicValue::BasicAttackInterval[sort][type];
     }
 };
+
+class __GameBasicValue{
+    public:
+    static constexpr I32 BasicStartResource[4] = {200,200,0,0}; //开局初始资源量
+    static constexpr Double BasicBlood[][] = {0}; //基础血量
+    static constexpr Double BasicMaxCnt[] = {0}; //基础资源最大值
+    static constexpr Double BasicDecayRate = 0; //基础腐烂速度
+    static constexpr I32 BasicVision[][] = {0}; //基础视野
+    static constexpr Double BasicSpeed[][] = {0}; //基础移动速度
+    static constexpr Double BasicCollectMax[][] = {0}; //基础采集最大量
+    static constexpr Double BasicCollectSpeed[] = {0}; //基础采集速度
+    static constexpr Double BasicDefenceClose[][] = {0}; //基础近战防御力
+    static constexpr Double BasicDefenceShoot[][] = {0}; //基础远程防御力
+    static constexpr Double BasicAttackClose[][] = {0}; //基础近战攻击力
+    static constexpr Double BasicAttackShoot[][] = {0}; //基础远程攻击力
+    static constexpr Double BasicAttackRangeClose[][] = {0}; //基础近战攻击范围
+    static constexpr Double BasicAttackRangeShoot[][] = {0}; //基础远程攻击范围
+    static constexpr I32 BasicAttackInterval[][] = {0}; //基础攻击间隔（帧）
+};
