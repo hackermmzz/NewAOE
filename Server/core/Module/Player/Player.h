@@ -46,6 +46,11 @@ public:
     bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
     //本玩家的科技（由第一次 newXXX 时传入的 Development 记录，只读）
     WeakPtr<Development> getPlayerScience() const;
+    //内核通知：某个建筑动作已成功完成。
+    //科技/解锁类动作会让本玩家所有对象的缓存数值（血量、攻防、射程等）失效，
+    //这里统一按新科技重算一遍；与科技无关的动作（比如造人）直接忽略。
+    //注意：内核应先让 Development 更新完科技状态，再调用本函数，否则重算到的还是旧值。
+    void notifyBuildingActionFinish(WeakPtr<Object> object, I32 action);
     void tick();
 private:
     //玩家身份状态信息
@@ -65,4 +70,6 @@ private:
     vector<SafePtr<Missile>>            missiles;
     //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
     void rememberPlayerScience(WeakPtr<Development> science);
+    //科技变化后，把本玩家名下所有对象的缓存数值按新科技重算一遍。
+    void refreshAllObjectScience();
 };

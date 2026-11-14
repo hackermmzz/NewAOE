@@ -41,4 +41,7 @@ public:
 	std::pair<I32,I32> getBelong();					//获取对象所属玩家和团队（first为playerID，second为teamID）
 	virtual bool checkCrash(const Object*obj);
 	virtual void tick();							//每帧处理结束都会调用这个函数
+	//科技变化后按「基础值 × 科技加成」重算缓存数值。默认没有依赖科技的缓存值。
+	//由 Player::notifyBuildingActionFinish 在建筑动作（科技/解锁类）完成时统一触发。
+	virtual void refreshByScience();
  };

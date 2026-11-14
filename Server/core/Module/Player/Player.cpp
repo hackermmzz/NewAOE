@@ -1,6 +1,34 @@
 #include "Player.h"
 #include "Server/core/Public/config/ObejctBaseValue.h"
 
+namespace{
+// 产人类的建筑动作：完成的结果是凭空多出一个单位，跟科技无关。
+// 新单位在创建时已经拿过当时的科技，不需要为了它去重算全场。
+// 其余动作（研究/升级/升时代）都会改动科技的加成，属于需要重算的范畴。
+bool isUnitCreateAction(I32 action){
+    switch(action){
+    case BUILDING_CENTER_CREATEFARMER:
+    case BUILDING_ARMYCAMP_CREATE_CLUBMAN:
+    case BUILDING_ARMYCAMP_CREATE_SLINGER:
+    case BUILDING_ARMYCAMP_CREATE_BROADSWORD:
+    case BUILDING_RANGE_CREATE_BOWMAN:
+    case BUILDING_RANGE_CREATE_CHARIOT_ARCHER:
+    case BUILDING_RANGE_CREATE_COMPOSITE_BOWMAN:
+    case BUILDING_STABLE_CREATE_SCOUT:
+    case BUILDING_STABLE_CREATE_CHARIOT:
+    case BUILDING_STABLE_CREATE_CAVALRY:
+    case BUILDING_DOCK_CREATE_SAILING:
+    case BUILDING_DOCK_CREATE_WOOD_BOAT:
+    case BUILDING_DOCK_CREATE_SHIP:
+    case BUILDING_SIEGE_CREATE_STONE_THROWER:
+    case BUILDING_COLLAGE_CREATE_HOPLITE:
+        return true;
+    default:
+        return false;
+    }
+}
+}
+
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;
     this->teamID = teamID;
@@ -186,4 +214,36 @@ bool Player::receiveBuildingResource(SafePtr<BuildingResource> buildingResource)
     buildingResource->setPlayerScience(playerScience);
     buildingResources.push_back(buildingResource);
     return true;
+}
+
+void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
+    //触发通知的建筑可能在这一帧里已经被拆掉了，对象没了就不用管。
+    if(object.expired()){
+        return;
+    }
+    //造人：结果是新单位，与科技无关，新单位创建时已经带上当前科技。
+    if(isUnitCreateAction(action)){
+        return;
+    }
+    //其余动作都会改动科技加成（研究、兵种升级、时代升级、建筑/塔墙升级），
+    //已经算好的血量、攻防、射程等缓存值随之失效，统一重算。
+    refreshAllObjectScience();
+}
+
+void Player::refreshAllObjectScience(){
+    for(auto& army : armies){
+        if(!army.IsNull())army->refreshByScience();
+    }
+    for(auto& farmer : farmers){
+        if(!farmer.IsNull())farmer->refreshByScience();
+    }
+    for(auto& building : buildings){
+        if(!building.IsNull())building->refreshByScience();
+    }
+    for(auto& buildingResource : buildingResources){
+        if(!buildingResource.IsNull())buildingResource->refreshByScience();
+    }
+    for(auto& missile : missiles){
+        if(!missile.IsNull())missile->refreshByScience();
+    }
 }

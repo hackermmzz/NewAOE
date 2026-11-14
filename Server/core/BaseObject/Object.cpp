@@ -48,6 +48,9 @@ bool Object::checkCrash(const Object*obj){
 void Object::tick(){
     //待完成
 }
+void Object::refreshByScience(){
+    //默认实现：公有资源、投掷物等没有跟随科技的缓存值，重算时什么都不用做。
+}
 /*void Object::setplayer(WeakPtr<Player> player){
     this->player = player;
 }

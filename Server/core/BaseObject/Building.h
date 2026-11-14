@@ -22,4 +22,6 @@ public:
     bool isMatchResourceType(int productSort); //判断是否能收集某个类型的物资
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
     WeakPtr<Development> getPlayerScience(){return playerScience;}
+    //按当前科技重算血量/攻防/射程等缓存值
+    void refreshByScience() override;
  };
