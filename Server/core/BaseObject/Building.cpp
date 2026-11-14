@@ -74,13 +74,14 @@ Double Building::computeFullBlood(){
 }
 
 void Building::build(I32 percent){
-    if(percent > 100){
-        percent = 100;
+    //建造进度是累加的：每次传入本次推进的百分比
+    Percent += percent;
+    if(Percent > 100){
+        Percent = 100;
     }
-    if(percent < 0){
-        percent = 0;
+    if(Percent < 0){
+        Percent = 0;
     }
-    this->Percent = percent;
 }
 
 Double Building::getMaxBlood(){
@@ -108,10 +109,11 @@ Double Building::getBlood(){
 }
 
 void Building::refreshByScience(){
+    //上限涨多少、当前血量跟着涨多少，残血建筑不会被科技直接奶满
+    const Double oldMaxBlood = maxBlood;
+    const Double oldCurrentBlood = currentBlood;
     maxBlood = computeFullBlood();
-    if(currentBlood > maxBlood){
-        currentBlood = maxBlood;
-    }
+    syncBloodAfterMaxChange(oldMaxBlood,oldCurrentBlood);
 
     //攻击/护甲/射程暂不在这里重算：BuildingBase 目前只收了口径明确的视野与占地，
     //塔的攻击数值还没有进表，直接重算会把塔的攻击清成 0。

@@ -37,13 +37,13 @@ void Human::refreshByScience(){
     const I32 armyClass = getArmyClass();
 
     //---- 血量 ----
+    //上限涨多少、当前血量跟着涨多少，残血单位不会被科技直接奶满
+    const Double oldMaxBlood = maxBlood;
+    const Double oldCurrentBlood = currentBlood;
     maxBlood = ObjectBaseValue::getBasicBlood(objectSort,objectType)
              * science->get_rate_Blood(objectSort,objectType)
              + Double(science->get_addition_Blood(objectSort,objectType));
-    //加成被降下来时，当前血量不能超过新的上限
-    if(currentBlood > maxBlood){
-        currentBlood = maxBlood;
-    }
+    syncBloodAfterMaxChange(oldMaxBlood,oldCurrentBlood);
 
     //---- 移动速度 ----
     speed = ObjectBaseValue::getBasicSpeed(objectSort,objectType)
