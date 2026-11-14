@@ -6,19 +6,21 @@
 #include "Server/core/BaseObject/BuildingResource.h"
 #include "Server/core/BaseObject/Missile.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/CivilizationFeature.h"
 
 class Player{
 public:
     Player(I32 civilization, I32 teamID);
     void init(I32 playerID);
     //新建对象
-    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent);
-    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type);
-    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent, I32 Percent);
-    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent);
+    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience);
+    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
+    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
+    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
     Missile*            newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
     //获取对象
+    //注意：资源型建筑（农田等，Sort 为 SORT_BUILDING_RESOURCE）只存在于
+    //buildingResources 中，不会出现在 buildings 里。需要遍历玩家全部建筑时，
+    //必须同时访问 getBuilding() 与 getBuildingResource()。
     vector<SafePtr<Army>>&              getArmy();
     vector<SafePtr<Farmer>>&            getFarmer();
     vector<SafePtr<Building>>&          getBuilding();
@@ -32,10 +34,15 @@ public:
     void removeMissile(I32 globalID);
     //获取玩家资源量
     I32             getResource(I32 resourceSort);          //传入资源种类，返回该资源的数量
-    array<I32,4>    getResource();              //以数组形式返回每种资源的数量，顺序为木材，粮食，石头，黄金。根据下标访问即可。
+    array<I32,4>    getResource();                          //以I32[4]数组形式返回每种资源的数量，顺序为木材，粮食，石头，黄金。根据下标访问即可。
     //改变玩家资源（加资源就用正，减资源就用负，返回是否成功，不成功不会扣除相应资源）
     bool changeResource(I32 resourceSort, I32 changeAmount);        //增减一种资源的量
     bool changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount); //增减所有资源的量(时候同时增减多种资源，不需要增减的资源填0即可)
+    //接收敌对阵营的对象，并将其编入我方阵营（用于该对象被我方祭司转换的情况）
+    bool receiveBuilding(SafePtr<Building> building);
+    bool receiveArmy(SafePtr<Army> army);
+    bool receiveFarmer(SafePtr<Farmer> farmer);
+    bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
     void tick();
 private:
     //玩家身份状态信息
@@ -50,4 +57,6 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
+    //被转化的对象，其科技锁定在被转换的那一刻
+    std::map<I32,SafePtr<Development>>  ReceivedObjectLockedDevelopment;
 };

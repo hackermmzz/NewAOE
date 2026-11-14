@@ -2,21 +2,28 @@
 
 /********** 建筑种类 **********/
 enum BUILDING_TYPE {
-    BUILDING_HOME = 0,
-    BUILDING_GRANARY,
-    BUILDING_CENTER,
-    BUILDING_STOCK,
-    BUILDING_FARM,
-    BUILDING_MARKET,
-    BUILDING_ARROWTOWER,
-    BUILDING_ARMYCAMP,
-    BUILDING_STABLE,
-    BUILDING_RANGE,
-    BUILDING_DOCK,
-    BUILDING_SIEGE,
-    BUILDING_COLLAGE,
-    BUILDING_TEMPLE,//这个还未增加，本次也不用增加
-    BUILDING_WALL,//这个还未增加，本次也不用增加
+    BUILDING_HOME = 0,          //房屋
+    BUILDING_GRANARY,           //谷仓
+    BUILDING_CENTER,            //市镇中心
+    BUILDING_STOCK,             //仓库
+    BUILDING_FARM,              //农场
+    BUILDING_MARKET,            //市场
+    BUILDING_WATCH_TOWER,       //瞭望箭塔
+    BUILDING_SENTRY_TOWER,      //警戒箭塔
+    BUILDING_GUARD_TOWER,       //防御箭塔
+    BUILDING_BALLISTA_TOWER,    //防御炮塔
+    BUILDING_ARMYCAMP,          //军营
+    BUILDING_STABLE,            //马厩
+    BUILDING_RANGE,             //靶场
+    BUILDING_DOCK,              //船坞
+    BUILDING_SIEGE,             //攻城武器厂
+    BUILDING_COLLAGE,           //学院
+    BUILDING_GOVERNMENT_CENTER, //政府中心。这个还未增加，本次也不用增加。为枚举保留
+    BUILDING_WONDER,            //世界奇观。这个还未增加，本次也不用增加。为枚举保留
+    BUILDING_TEMPLE,            //神庙。这个还未增加，本次也不用增加
+    BUILDING_SMALL_WALL,        //初级城墙。这个还未增加，本次也不用增加
+    BUILDING_MEDIUM_WALL,       //中级城墙。这个还未增加，本次也不用增加。为枚举保留
+    BUILDING_FORTIFIED_WALL,    //高级城墙。这个还未增加，本次也不用增加。为枚举保留
     BUILDING_TYPE_MAXNUM,
 };
 
@@ -24,20 +31,26 @@ enum BUILDING_TYPE {
 /********** 建筑动作 **********/
 enum BuildingAction{
     //市镇中心
-    BUILDING_CENTER_CREATEFARMER=1,
-    BUILDING_CENTER_UPGRADE,
+    BUILDING_CENTER_CREATEFARMER=1,         //生产村民
+    BUILDING_CENTER_UPGRADE_TOOLAGE,        //升级到工具时代
+    BUILDING_CENTER_UPGRADE_BRONZEAGE,      //升级到铜器时代
+    BUILDING_CENTER_UPGRADE_IRONAGE,        //升级到铁器时代
     //谷仓
-    BUILDING_GRANARY_ARROWTOWER,
-    BUILDING_GRANARY_WALL,
-    BUILDING_GRANARY_ARROWTOWE_UPGRADE,
+    BUILDING_GRANARY_WALL,                  //研发初级城墙
+    BUILDING_GRANARY_WALL_UPDATE_1,         //升级为中级城墙
+    BUILDING_GRANARY_WALL_UPDATE_2,         //升级为高级城墙（初级城墙->中级城墙->高级城墙）
+    BUILDING_GRANARY_ARROWTOWER,            //研发瞭望箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_1,  //升级为警戒箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_2,  //升级为防御箭塔
+    BUILDING_GRANARY_ARROWTOWER_UPGRADE_3,  //升级为防御炮塔（瞭望箭塔->警戒箭塔->防御箭塔->防御炮塔）
     //市场
     BUILDING_MARKET_WOOD_UPGRADE,
     BUILDING_MARKET_STONE_UPGRADE,
     BUILDING_MARKET_FARM_UPGRADE,
     BUILDING_MARKET_GOLD_UPGRADE,
     BUILDING_MARKET_WHEEL_UPGRADE,
-    BUILDING_MARKET_CRAFT_UPGRADE, // 研发工艺（铜器时代，木材加工升级版）
-    BUILDING_MARKET_PLOW_UPGRADE,  // 研发犁（铜器时代，驯养动物升级版）
+    BUILDING_MARKET_CRAFT_UPGRADE,          // 研发工艺（铜器时代，木材加工升级版）
+    BUILDING_MARKET_PLOW_UPGRADE,           // 研发犁（铜器时代，驯养动物升级版）
 
     //仓库
     BUILDING_STOCK_UPGRADE_USETOOL,
@@ -75,10 +88,10 @@ enum BuildingAction{
     BUILDING_ARMYCAMP_RESEARCH_LOGISTICS,
 };
 
-
 /*******************************建筑地基****************************/
 enum FOUNDATION {
     FOUNDATION_SMALL = 0,
     FOUNDATION_MIDDLE,
     FOUNDATION_BIG,
+    FOUNDATION_HUGE
 };

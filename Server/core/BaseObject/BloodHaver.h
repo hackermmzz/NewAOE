@@ -15,7 +15,7 @@ protected:
 public:
 	Double getMaxBlood();
 	Double getBlood();
-	Double getDefence(Double attackType);
+	Double getDefence(I32 attackType);
 	bool isDie();
 	void beHeal(Double heal);
 	void beAttcked(Double damage);

@@ -2,9 +2,14 @@
 
 /*******************************农民类型包含的种类****************************/
 enum FarmerType {
-    FARMERTYPE_FARMER = 0,
-    FARMERTYPE_WOOD_BOAT,
-    FARMERTYPE_SAILING
+    FARMERTYPE_FARMER = 0,      //普通农民
+    FARMERTYPE_SMALL_SAILING,   //小型渔船
+    FARMERTYPE_BIG_SAILING,     //大型渔船
+    FARMERTYPE_SMALL_TRADE_BOAT,//小型商船
+    FARMERTYPE_BIG_TRADE_BOAT,  //大型商船
+    FARMERTYPE_LIGHT_TRANSPORT, //小型运输船
+    FARMERTYPE_HEAVY_TRANSPORT, //重型运输船
+    FARMERTYPE_MAXNUM
 };
 
 /*********************************角色为农民时候的子角色**********************/
