@@ -28,7 +28,7 @@ IVec2 Object::getDetailPos(){
     return detail_pos;
 }
 string Object::getName(){
-    return GameValue::getObjectName(playerID,teamID,sort,type,SN);
+    return ObjectBaseValue::getObjectName(playerID,teamID,sort,type,SN);
 }
 I32 Object::getVision(){
     return vision;

@@ -4,7 +4,7 @@
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;
     this->teamID = teamID;
-    ResourceGroup = GameValue::getStartResource(civilization);
+    ResourceGroup = ObjectBaseValue::getStartResource(civilization);
 }
 
 void Player::init(I32 playerID){

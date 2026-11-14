@@ -27,11 +27,13 @@ using namespace std;
 //   - 攻击距离 / 范围伤害半径单位为「区块」，与表中的射程列一致。
 //   - 碰撞盒尺寸单位为「细节坐标」。
 //
-// 数据表里标注 “—” 或未给出的项填 0，并在对应位置用 TODO 注明，不做推测填值。
+// 数据表未给出视野的近战单位与船只统一先填 5，后续有实测数据再逐项替换；
+// 其余未给出的项填 0，并在对应位置用 TODO 注明，不做推测填值。
 class ObjectBaseValue{
     private:
-    //开局初始资源
-    constexpr static const I32 BasicStartResource[4]={150,200,150,0};
+    //开局初始资源。顺序为木材、粮食、石头、黄金。
+    //标准开局：食物 200 / 木材 200 / 石料 150 / 黄金 0。
+    constexpr static const I32 BasicStartResource[4]={200,200,150,0};
     //对象基础血量表
     constexpr static const I32 BaseBlood_Building[BUILDING_TYPE_MAXNUM]={
         75,     // 房屋
@@ -90,7 +92,7 @@ class ObjectBaseValue{
         160,    // 桨帆船
         200,    // 三列桨帆船
         135,    // 无敌战船（表中对应「投石三列桨」）
-        0,      // 火帆船：数据表未收录，TODO 待补
+        120,    // 火帆船：数据表未收录，参考桨帆船取值
         120,    // 方阵兵
         120,    // 十夫长
         160,    // 百夫长
@@ -122,16 +124,16 @@ class ObjectBaseValue{
         BaseBlood_Army          // SORT_ARMY
     };
     //对象名
-    static inline const string Name_Building[BUILDING_TYPE_MAXNUM]={"房屋","谷仓","市镇中心","仓库","农场","市场","瞭望箭塔","警戒箭塔","防御箭塔","防御炮塔","军营","马厩","靶场","船坞","攻城武器厂","学院","政府中心","世界奇观","神庙","初级城墙","中级城墙","高级城墙"};
-    static inline const string Name_StaticRes[STATICRES_MAXNUM]={"浆果丛","石矿","金矿","鱼群"};
-    static inline const string Name_Farmer[FARMERTYPE_MAXNUM]={"农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"};
-    static inline const string Name_Animal[ANIMLA_TYPE_MANNUM]={"树","瞪羚","大象","狮子","鳄鱼"};
-    static inline const string Name_Missile[NUMBER_MISSILE]={"矛","箭","圆石","巨石","弩炮"};
-    static inline const string Name_Army[AT_ARMY_MAX_NUM]={"棍棒兵","刀斧兵","短剑兵","阔剑兵","长剑兵","军团步兵",
+    constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={"房屋","谷仓","市镇中心","仓库","农场","市场","瞭望箭塔","警戒箭塔","防御箭塔","防御炮塔","军营","马厩","靶场","船坞","攻城武器厂","学院","政府中心","世界奇观","神庙","初级城墙","中级城墙","高级城墙"};
+    constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={"浆果丛","石矿","金矿","鱼群"};
+    constexpr static const char* const Name_Farmer[FARMERTYPE_MAXNUM]={"农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"};
+    constexpr static const char* const Name_Animal[ANIMLA_TYPE_MANNUM]={"树","瞪羚","大象","狮子","鳄鱼"};
+    constexpr static const char* const Name_Missile[NUMBER_MISSILE]={"矛","箭","圆石","巨石","弩炮"};
+    constexpr static const char* const Name_Army[AT_ARMY_MAX_NUM]={"棍棒兵","刀斧兵","短剑兵","阔剑兵","长剑兵","军团步兵",
         "投石兵","弓兵","强弓兵","复合弓兵","弓骑兵","重装弓骑兵","象弓兵","战车弓兵","侦察骑兵",
         "骑兵","重骑兵","铁甲骑兵","骆驼骑兵","战车","刀轮战车","战象","装甲战象","投石车","中型投石车","重型投石车","弩炮","重型弩炮","侦察船",
         "桨帆船","三列桨帆船","无敌战船","火帆船","方阵兵","十夫长","百夫长","祭司"};
-    static inline const string* const ObjectName[SORT_MAXNUM]={
+    constexpr static const char* const* const ObjectName[SORT_MAXNUM]={
         Name_Building,          // SORT_BUILDING
         Name_StaticRes,         // SORT_STATICRES
         Name_Farmer,            // SORT_FARMER
@@ -156,12 +158,12 @@ class ObjectBaseValue{
     };
     // 下标为 AT_*
     constexpr static const UnitValue ArmyValue[AT_ARMY_MAX_NUM]={
-        /* 棍棒兵      */ { 1200,  0,     3,  0,  0,  0,  1, 0,  38, 150},
-        /* 刀斧兵      */ { 1200,  0,     5,  0,  0,  0,  1, 0,  38, 150},
-        /* 短剑兵      */ { 1200,  0,     7,  0,  1,  0,  1, 0,  38, 150},
-        /* 阔剑兵      */ { 1200,  0,     9,  0,  1,  0,  1, 0,  38, 150},
-        /* 长剑兵      */ { 1200,  0,    11,  0,  2,  0,  1, 0,  38, 150},
-        /* 军团步兵    */ { 1200,  0,    13,  0,  2,  0,  1, 0,  38, 150},
+        /* 棍棒兵      */ { 1200,  5,     3,  0,  0,  0,  1, 0,  38, 150},
+        /* 刀斧兵      */ { 1200,  5,     5,  0,  0,  0,  1, 0,  38, 150},
+        /* 短剑兵      */ { 1200,  5,     7,  0,  1,  0,  1, 0,  38, 150},
+        /* 阔剑兵      */ { 1200,  5,     9,  0,  1,  0,  1, 0,  38, 150},
+        /* 长剑兵      */ { 1200,  5,    11,  0,  2,  0,  1, 0,  38, 150},
+        /* 军团步兵    */ { 1200,  5,    13,  0,  2,  0,  1, 0,  38, 150},
         /* 投石兵      */ { 1200,  6,     0,  2,  0,  3,  4, 0,  50, 150},
         /* 弓兵        */ { 1200,  7,     0,  3,  0,  0,  5, 0,  35, 150},
         /* 强弓兵      */ { 1200,  8,     0,  4,  0,  0,  6, 0,  35, 150},
@@ -171,14 +173,14 @@ class ObjectBaseValue{
         /* 象弓兵      */ {  900,  9,     0,  5,  0,  0,  7, 0,  38, 250},
         /* 战车弓箭手  */ { 2000,  9,     0,  4,  0,  0,  7, 0,  38, 200},
         /* 侦察骑兵    */ { 2000, 13,     3,  0,  0,  0,  1, 0,  23, 180},
-        /* 骑兵        */ { 2000,  0,     8,  0,  0,  0,  1, 0,  33, 180},
-        /* 重骑兵      */ { 2000,  0,    10,  0,  2,  2,  1, 0,  33, 180},
-        /* 铁甲骑兵    */ { 2000,  0,    12,  0,  5,  3,  1, 0,  33, 180},
-        /* 骆驼骑兵    */ { 2000,  0,     6,  0,  0,  0,  1, 0,  33, 180},
-        /* 战车        */ { 2000,  0,     7,  0,  0,  0,  1, 0,  35, 200},
-        /* 刀轮战车    */ { 2000,  0,     9,  0,  1,  1,  1, 0,  35, 200},
-        /* 战象        */ {  900,  0,    15,  0,  0,  0,  1, 1,  25, 250},
-        /* 装甲战象    */ {  900,  0,    18,  0,  2,  1,  1, 1,  25, 250},
+        /* 骑兵        */ { 2000,  5,     8,  0,  0,  0,  1, 0,  33, 180},
+        /* 重骑兵      */ { 2000,  5,    10,  0,  2,  2,  1, 0,  33, 180},
+        /* 铁甲骑兵    */ { 2000,  5,    12,  0,  5,  3,  1, 0,  33, 180},
+        /* 骆驼骑兵    */ { 2000,  5,     6,  0,  0,  0,  1, 0,  33, 180},
+        /* 战车        */ { 2000,  5,     7,  0,  0,  0,  1, 0,  35, 200},
+        /* 刀轮战车    */ { 2000,  5,     9,  0,  1,  1,  1, 0,  35, 200},
+        /* 战象        */ {  900,  5,    15,  0,  0,  0,  1, 1,  25, 250},
+        /* 装甲战象    */ {  900,  5,    18,  0,  2,  1,  1, 1,  25, 250},
         /* 投石车      */ {  800, 12,     0, 50,  0,  0, 10, 0, 125, 200},
         /* 中型投石车  */ {  800, 14,     0, 50,  0,  0, 12, 1, 125, 200},
         /* 重型投石车  */ {  800, 15,     0, 60,  0,  0, 13, 1, 125, 200},
@@ -186,31 +188,31 @@ class ObjectBaseValue{
         /* 重型弩炮    */ {  800, 12,     0, 45,  0,  0, 10, 1,  38, 200},
         /* 侦察船      */ { 1800,  7,     0,  5,  0,  0,  5, 0,  35, 200},
         /* 桨帆船      */ { 1800,  8,     0,  8,  0,  0,  6, 0,  38, 200},
-        /* 三列桨帆船  */ { 1800,  9,     0, 12,  0,  0,  7, 0,  50, 200},
-        /* 无敌战船    */ { 1400, 11,     0, 35,  0,  0,  9, 0, 125, 250},
-        /* 火帆船      */ { 1400,  0,     0,  0,  0,  0,  0, 0,   0, 200},  // TODO 数据表未收录
-        /* 方阵兵      */ {  900,  0,    17,  0,  5,  0,  1, 0,  38, 150},
-        /* 十夫长      */ {  900,  0,    20,  0,  7,  0,  1, 0,  38, 150},
-        /* 百夫长      */ {  900,  0,    30,  0,  8,  0,  1, 0,  38, 150},
+        /* 三列桨帆船  */ { 1400, 12,     0, 35,  0,  0, 10, 0, 125, 250},  // 按「巨弩舰」取值
+        /* 无敌战船    */ { 1400, 11,     0, 35,  0,  0,  9, 0, 125, 250},  // 按「投石三列桨」取值
+        /* 火帆船      */ { 1800,  7,    12,  0,  0,  0,  1, 1,  38, 200},  // 近战范围伤害，数据表未收录，参考同级战船取值
+        /* 方阵兵      */ {  900,  5,    17,  0,  5,  0,  1, 0,  38, 150},
+        /* 十夫长      */ {  900,  5,    20,  0,  7,  0,  1, 0,  38, 150},
+        /* 百夫长      */ {  900,  5,    30,  0,  8,  0,  1, 0,  38, 150},
         /* 祭司        */ {  800, 12,     0,  0,  0,  0, 10, 0,   0, 150}
     };
     // 下标为 FARMERTYPE_*
     constexpr static const UnitValue FarmerValue[FARMERTYPE_MAXNUM]={
         /* 农民        */ { 1100,  4,  3,  0,  0,  0,  1, 0,  38, 150},
-        /* 小型渔船    */ { 1450,  0,  0,  0,  0,  0,  0, 0,   0, 200},
-        /* 大型渔船    */ { 1450,  0,  0,  0,  0,  0,  0, 0,   0, 200},  // TODO 数据表未收录
-        /* 小型商船    */ { 2100,  0,  0,  0,  0,  0,  0, 0,   0, 250},
-        /* 大型商船    */ { 2100,  0,  0,  0,  0,  0,  0, 0,   0, 250},  // TODO 数据表未收录
-        /* 小型运输船  */ { 1450,  0,  0,  0,  0,  0,  0, 0,   0, 250},
-        /* 重型运输船  */ { 1450,  0,  0,  0,  0,  0,  0, 0,   0, 250}   // TODO 数据表未收录
+        /* 小型渔船    */ { 1450,  5,  0,  0,  0,  0,  0, 0,   0, 200},
+        /* 大型渔船    */ { 1450,  5,  0,  0,  0,  0,  0, 0,   0, 200},  // TODO 数据表未收录
+        /* 小型商船    */ { 2100,  5,  0,  0,  0,  0,  0, 0,   0, 250},
+        /* 大型商船    */ { 2100,  5,  0,  0,  0,  0,  0, 0,   0, 250},  // TODO 数据表未收录
+        /* 小型运输船  */ { 1450,  5,  0,  0,  0,  0,  0, 0,   0, 250},
+        /* 重型运输船  */ { 1450,  5,  0,  0,  0,  0,  0, 0,   0, 250}   // TODO 数据表未收录
     };
-    // 下标为 ANIMAL_*
+    // 下标为 ANIMAL_*，移速按「村民移速 × 倍率」换算（村民 1.1 区块/秒）
     constexpr static const UnitValue AnimalValue[ANIMLA_TYPE_MANNUM]={
         /* 树          */ {    0,  0,  0,  0,  0,  0,  0, 0,   0,   0},
-        /* 瞪羚        */ { 1200,  0,  0,  0,  0,  0,  0, 0,   0, 150},  // TODO 数据表未给出动物移速
-        /* 大象        */ {  900,  0, 10,  0,  0,  0,  1, 0,  38, 250},
-        /* 狮子        */ { 1200,  0,  2,  0,  0,  0,  1, 0,  38, 150},
-        /* 鳄鱼        */ { 1200,  0,  2,  0,  0,  0,  1, 0,  38, 150}
+        /* 瞪羚        */ { 1760,  0,  0,  0,  0,  0,  0, 0,   0, 150},  // 村民 ×1.6
+        /* 大象        */ {  770,  0, 10,  0,  0,  0,  1, 0,  38, 250},  // 村民 ×0.7
+        /* 狮子        */ { 1210,  0,  2,  0,  0,  0,  1, 0,  38, 150},  // 村民 ×1.1
+        /* 鳄鱼        */ {  770,  0,  2,  0,  0,  0,  1, 0,  38, 150}   // 村民 ×0.7
     };
 
     // 建筑的非血量数值。
@@ -282,8 +284,8 @@ class ObjectBaseValue{
     static std::array<I32, 4> getStartResource(I32 civilization){
         array<I32, 4> tmp;
         for(I32 i=0;i<4;i++){tmp[i] =BasicStartResource[i];}
-        if(civilization==CIVILIZATION_SHANG)tmp[0]-=40;
-        if(civilization==CIVILIZATION_PALMYRENEAN)tmp[0]+=75;
+        if(civilization==CIVILIZATION_SHANG)tmp[RESOURCESORT_FOOD]-=40;
+        if(civilization==CIVILIZATION_PALMYRENEAN)tmp[RESOURCESORT_FOOD]+=75;
         if(civilization==CIVILIZATION_CARTHAGINIAN){for(int i=0;i<4;i++){tmp[i]+=50;}};
         return tmp;
     }
@@ -299,7 +301,8 @@ class ObjectBaseValue{
         if(!inRange(sort,SORT_MAXNUM))return std::string();
         if(ObjectName[sort]==nullptr)return std::string();
         if(!inRange(type,typeCount(sort)))return std::string();
-        return ObjectName[sort][type];
+        const char* name=ObjectName[sort][type];
+        return name==nullptr ? std::string() : std::string(name);
     }
     //对象名字（带归属信息）。目前公有资源与各玩家的同名对象共用同一张名称表，
     //playerID / teamID / SN 先保留不用，后续需要区分阵营配色或唯一命名时在这里展开。
@@ -329,8 +332,8 @@ class ObjectBaseValue{
         case SORT_STATICRES:{
             switch (type){
             case STATICRES_Bush:return 150;
-            case STATICRES_Stone:return 400;
-            case STATICRES_Gold:return 450;
+            case STATICRES_Stone:return 250;
+            case STATICRES_Gold:return 400;
             case STATICRES_Fish:return 250;
             default:return Double::Zero();
         }
@@ -340,15 +343,15 @@ class ObjectBaseValue{
             case ANIMAL_TREE:return 75;
             case ANIMAL_GAZELLE:return 150;
             case ANIMAL_ELEPHANT:return 300;
-            case ANIMAL_LION:return 150;
-            case ANIMAL_ALLIGATOR:return 150;
+            case ANIMAL_LION:return 100;
+            case ANIMAL_ALLIGATOR:return 100;
             default:return Double::Zero();
             }
         }
         case SORT_BUILDING:
         case SORT_BUILDING_RESOURCE:{
             switch (type){
-            case BUILDING_FARM:return 150;
+            case BUILDING_FARM:return 250;
             default:return Double::Zero();
             }
         }
@@ -490,7 +493,3 @@ class ObjectBaseValue{
         return getCrashBox(sort,type).second;
     }
 };
-
-// 现有调用点（Player / Object / Animal）统一写作 GameValue::，这里提供同名别名，
-// 避免为了类名改动去逐个修改已经写好的调用代码。
-using GameValue = ObjectBaseValue;
