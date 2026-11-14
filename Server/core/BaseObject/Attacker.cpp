@@ -1,5 +1,23 @@
 #include "Attacker.h"
 #include "Server/core/Public/var/Army.h"
+#include "Server/core/Public/config/Core.h"
+
+Attacker::Attacker()
+    : attackClose(Double::Zero())
+    , attackShoot(Double::Zero())
+    , attackType(ATTACKTYPE_CLOSE)
+    , range(false)
+    , rangeEffect(0)
+    , minAttackRange(0)
+    , attackCircle(ATTACK_CIRCLE_FRAMES)
+    , attackCurrentTick(0)
+    , attackInteval(0)
+{
+}
+
+//默认实现什么都不做，需要响应命中的派生类自行覆写
+void Attacker::notifyHit(){
+}
 
 Double Attacker::getAttackBasic()
 {
@@ -8,7 +26,9 @@ Double Attacker::getAttackBasic()
 
 Double Attacker::getAttackAdditon()
 {
-    //等待Development完成
+    //科技的加成已经在 refreshByScience() 里并进 attackClose / attackShoot 了，
+    //所以 getAttackBasic() 取到的就是最终攻击力，这里不再叠加，返回 0。
+    return Double::Zero();
 }
 
 Double Attacker::getAttack()

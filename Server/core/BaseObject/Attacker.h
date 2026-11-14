@@ -13,6 +13,8 @@ protected:
 	I32 attackCircle;			//多少帧后真正发动攻击
 	I32 attackCurrentTick;		//当前进行到多少帧了
 	I32 attackInteval;			//攻击间隔
+	//所有攻击字段先清零，真实数值由派生类按「基础数值表 + 科技」填进来
+	Attacker();
 public:
 	Double getAttack();			//获取攻击力（包含附赠伤害)
 	Double getAttackAdditon();	//获取附赠伤害（不包含基础伤害)

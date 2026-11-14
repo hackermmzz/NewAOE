@@ -69,7 +69,13 @@ void Human::refreshByScience(){
                 * science->get_rate_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT)
                 + Double(science->get_addition_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT));
 
-    //---- 攻击距离 ----
-    minAttackRange = ObjectBaseValue::getBasicAttackRange(objectSort,objectType).second
+    //---- 攻击方式、范围伤害与攻击距离 ----
+    const std::pair<I32,I32> rangeBase =
+        ObjectBaseValue::getBasicAttackRange(objectSort,objectType);
+    //有远程伤害的按远程攻击处理，否则近战
+    attackType = attackBase.second > Double::Zero() ? ATTACKTYPE_SHOOT : ATTACKTYPE_CLOSE;
+    rangeEffect = rangeBase.first;
+    range = rangeBase.first > 0;
+    minAttackRange = rangeBase.second
                    + science->get_addition_DisAttack(objectSort,objectType,armyClass,attackType);
 }

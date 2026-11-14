@@ -3,6 +3,7 @@
 #include "Server/core/Public/var/Animal.h"
 #include "Server/core/Public/var/Sort.h"
 #include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/Core.h"
 
 #include <new>
 
@@ -18,7 +19,7 @@ I32 AnimalProductSort(I32 type){
 //只有狮子、鳄鱼这类会主动攻击的算敌对，其余是中立
 
 I32 AnimalFriendly(I32 type){
-    if(type == ANIMAL_LION || type == ANIMAL_ALLIGATOR || type == ANIMAL_ALLIGATOR_KING){
+    if(type == ANIMAL_LION || type == ANIMAL_ALLIGATOR){
         return FRIENDLY_ENEMY;
     }
     return FRIENDLY_NULL;
@@ -29,7 +30,9 @@ Animal::Animal(I32 type,IVec2 detailPos)
 {
     sort = SORT_ANIMAL;
     this->type = type;
-    //动物是中立单位，playerID/teamID 保持 Object 构造里的 -1
+    //动物不属于任何玩家，明确标成 -1（Object 的构造函数不负责这些字段）
+    playerID = -1;
+    teamID = -1;
 
     setPos(detailPos);
 
@@ -61,7 +64,7 @@ Animal::Animal(I32 type,IVec2 detailPos)
     resourceSort = AnimalProductSort(type);
     gatherAble = false;
 
-    new (&crashBoxCircle) CrashBox_Circle(detailPos,ObjectBaseValue::getBasicRadius(SORT_ANIMAL,type));
+    rebuildCrashBox();
 }
 
 I32 Animal::getFriendly(){

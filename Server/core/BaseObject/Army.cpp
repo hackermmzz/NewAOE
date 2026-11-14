@@ -1,5 +1,6 @@
 #include "Army.h"
 #include "Server/core/Public/var/Army.h"
+#include "Server/core/Public/config/ObejctBaseValue.h"
 
 /*
 	//I32 armyClass;//军队的类别，比如骑兵，近战兵，远战兵
@@ -139,8 +140,12 @@ Army::Army(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience)
         default:break;
 
     }
-    //血量/攻防等数值未在构造函数里写入，等 Development 的加成接口完成后
-    //由 Player::notifyBuildingActionFinish 触发的 refreshByScience() 统一填充。
+    //基础视野
+    vision = ObjectBaseValue::getBasicVision(SORT_ARMY,type);
+    //构造函数里血量/攻防/速度还是空的，先按当前科技填一遍
+    refreshByScience();
+    //碰撞盒按基础数值表建立
+    rebuildCrashBox();
 }
 
 I32 Army::getArmyClass() const{

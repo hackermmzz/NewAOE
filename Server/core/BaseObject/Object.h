@@ -44,4 +44,8 @@ public:
 	//科技变化后按「基础值 × 科技加成」重算缓存数值。默认没有依赖科技的缓存值。
 	//由 Player::notifyBuildingActionFinish 在建筑动作（科技/解锁类）完成时统一触发。
 	virtual void refreshByScience();
+protected:
+	//派生类把 sort / type / detail_pos 设好之后调用，按基础数值表建立碰撞盒。
+	//联合体本身不记录当前存的是圆还是矩形，所以一律以数值表的口径为准。
+	void rebuildCrashBox();
  };

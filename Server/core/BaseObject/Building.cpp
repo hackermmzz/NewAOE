@@ -25,6 +25,10 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
         break;
     }
     this->block_pos = blockPos;
+    //建筑给的是区块坐标，细节坐标按区块边长换算出来
+    this->detail_pos = IVec2(static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.x)),
+                             static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.y)));
+    vision = ObjectBaseValue::getBasicVision(sort,type);
     this->playerScience = playerScience;
     this->constructed = false;
     //设置名称
@@ -37,6 +41,8 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     // 这样科技变化时只需要刷新一次满血值，不必关心当前盖到几成。
     maxBlood = computeFullBlood();
     currentBlood = maxBlood;
+    //碰撞盒按基础数值表建立
+    rebuildCrashBox();
 }
 bool Building::isConstructed(){
     if(Percent==100)constructed=true;
