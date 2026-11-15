@@ -48,7 +48,10 @@ struct CoreProcessTack {
  bool clearBackpack=false; // Applied by the kernel only after accepting the task.
 };
 using CoreTask=CoreProcessTack;
-struct BuildingSpec { I32 width=0,height=0; };
+struct BuildingSpec {
+ I32 width=0,height=0;
+ bool isFarm=false; // Set only for the actual farmland building type.
+};
 // The host must implement all policy checks using its authoritative data.
 // Check methods must be read-only and return the exact ACTION_STATUS_CODE.
 struct Context {
@@ -59,6 +62,8 @@ struct Context {
  virtual bool ocean(IVec2 block) const=0;
  virtual bool explored(I32 player,IVec2 block) const=0;
  virtual I32 height(IVec2 block) const=0;
+ // Read the terrain slope flag/corner heights, including slopes within one block.
+ virtual bool isSlope(IVec2 block) const=0;
  virtual bool blocked(IVec2 block) const=0;
  virtual BuildingSpec buildingSpec(I32 type) const=0;
  // Includes civilization/stage unlock and resource requirements.
@@ -137,7 +142,8 @@ public:
   for(I32 x=p.x;x<std::int64_t(p.x)+spec.width;++x) for(I32 y=p.y;y<std::int64_t(p.y)+spec.height;++y) {
    IVec2 cell{x,y};
    if(!ctx.explored(w->player,cell)) return ACTION_INVALID_HUMANBUILD_UNEXPLORE;
-   if(ctx.height(cell)!=h) return ACTION_INVALID_HUMANBUILD_DIFFERENTHIGH;
+   if(!spec.isFarm && (ctx.isSlope(cell) || ctx.height(cell)!=h))
+    return ACTION_INVALID_HUMANBUILD_DIFFERENTHIGH;
    if(ctx.blocked(cell)) return ACTION_INVALID_HUMANBUILD_OVERLAP;
   }
   CoreTask task{}; task.worker=a; task.coreEvent=event; task.action=type;
