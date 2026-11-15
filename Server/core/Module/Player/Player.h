@@ -80,4 +80,7 @@ private:
     void upgradeObjectsForAction(I32 action);
     //按已完成科技把请求的类型抬到实际可用的最高级别；已经是高级别的不会被降级。
     I32 resolveCreateType(I32 sort, I32 type) const;
+
+    I32 getFinishBuildingCode();
+
 };

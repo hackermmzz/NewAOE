@@ -428,3 +428,10 @@ void Player::tick(){
     purgeDestroyed(buildingResources);
     purgeDestroyed(missiles);
 }
+I32 Player::getFinishBuildingCode(){
+    I32 result=0;
+    for(SafePtr<Building> tmp:buildings){
+        if(tmp->isConstructed())result|=(1<<(tmp->getType()));
+    }
+    return result;
+}
