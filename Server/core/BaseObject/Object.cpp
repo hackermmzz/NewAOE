@@ -1,6 +1,6 @@
 #include "Object.h"
 #include "Server/core/Module/Player/Player.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+
 
 #include <new>
 #include <utility>

@@ -1,7 +1,7 @@
 #include "Missile.h"
 #include "Server/core/Public/var/Army.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 
 Missile::Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack)
 {

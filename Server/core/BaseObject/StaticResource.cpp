@@ -1,5 +1,5 @@
 #include "StaticResource.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 #include "Server/core/Public/var/Sort.h"
 
 namespace{

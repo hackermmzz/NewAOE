@@ -1,5 +1,5 @@
 #include "BuildingResource.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 
 BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Building(type,blockPos,playerScience,percent){
     sort = SORT_BUILDING_RESOURCE;

@@ -1,5 +1,5 @@
 #include "Player.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 
 namespace{
 // 产人类的建筑动作：完成的结果是凭空多出一个单位，跟科技无关。

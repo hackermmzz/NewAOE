@@ -1,6 +1,6 @@
 #include "Army.h"
 #include "Server/core/Public/var/Army.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 
 /*
 	//I32 armyClass;//军队的类别，比如骑兵，近战兵，远战兵

@@ -2,7 +2,7 @@
 #include "Server/core/Public/var/Army.h"
 #include "Server/core/Public/var/Animal.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 #include "Server/core/Public/config/Core.h"
 
 #include <new>

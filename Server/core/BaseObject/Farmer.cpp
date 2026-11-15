@@ -1,6 +1,6 @@
 #include "Farmer.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 
 Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type)
     : Human(SORT_FARMER, detailPos, playerScience)
@@ -65,3 +65,17 @@ void Farmer::transportHuman(SafePtr<Human> human){
     human->setTransported(true);
 }
 
+I32 Farmer::getTransportMax(){
+    if(sort == SORT_FARMER){
+        switch(type){
+            case FARMERTYPE_LIGHT_TRANSPORT:
+                return 5;
+            case FARMERTYPE_HEAVY_TRANSPORT:
+                return 10;
+            default:
+                return 0;
+        }
+    }else{
+        return 0;
+    }
+}

@@ -1,5 +1,5 @@
 #include "Human.h"
-#include "Server/core/Public/config/ObejctBaseValue.h"
+#include "Server/core/Public/config/ObjectBaseValue.h"
 #include "Server/core/Public/var/Army.h"
 
 #include <utility>

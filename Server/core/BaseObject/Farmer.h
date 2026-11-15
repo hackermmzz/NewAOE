@@ -11,7 +11,8 @@ public:
 	I32 resourceMax;	                    //可以持有的资源最大数量
 	I32 resourceSort;	                    //资源类型
 	I32 quantity_GatherOnce;		          //资源采摘速度
-	vector<SafePtr<Human>>humanTransport;	//运输的人	
+	vector<SafePtr<Human>>humanTransport;	//运输的人
+  //I32 TransportMax;	                    //运输的人数上限	
 public:
     Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
     I32 getResourceNowHave();           //获取当前持有的资源数量
@@ -20,6 +21,7 @@ public:
     I32 getResourceSort();              //获取资源类型
     I32 getQuantityGather();            //获取资源采摘速度
     bool isFullBackpack();              //是否采摘满了
+    I32 getTransportMax();              //获取运输的人数上限
     void addResource(I32 quantity,I32 resourceSort);      //增加手持的资源
     void transportHuman(SafePtr<Human> human);            //运输人员
   };
