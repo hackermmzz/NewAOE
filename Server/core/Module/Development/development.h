@@ -123,6 +123,8 @@ enum Technology : I32
     TECH_TEMPLE_ZEALOTRY = BUILDING_TEMPLE_ZEALOTRY,
     TECH_TEMPLE_SACRIFICE = BUILDING_TEMPLE_SACRIFICE,
 
+    // 位图容量：科技编号必须小于它（128 位 = 两个 U64）。
+    // 以后科技超过 128 项时，这个值和 TechnologyBits 的存储要一起扩。
     TECH_MAX_NUM = 128
 };
 
@@ -189,11 +191,14 @@ struct TechnologyBits
 };
 
 // 把科技编号转成「只有这一位」的位图。建表时用 T(TECH_XXX) 写前置科技。
+// 越界（<=0 或 >=128）返回空位图，避免移位溢出。
 constexpr TechnologyBits techBit(I32 technology)
 {
-    return technology < 64
-        ? TechnologyBits(U64(1) << technology, 0)
-        : TechnologyBits(0, U64(1) << (technology - 64));
+    return (technology <= 0 || technology >= TECH_MAX_NUM)
+        ? TechnologyBits()
+        : (technology < 64
+            ? TechnologyBits(U64(1) << technology, 0)
+            : TechnologyBits(0, U64(1) << (technology - 64)));
 }
 
 // 多个前置科技用 | 串起来：T(A) | T(B)
