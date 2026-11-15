@@ -215,9 +215,11 @@ constexpr BuildingRule kBuildings[BUILDING_TYPE_MAXNUM] = {
 /*---------------------------- 文明掩码 ----------------------------
  * 每个文明「不能研究 / 不能建造」的东西。
  * 数据来源：文明加成与开局表里的「缺失科技」「缺失单位」两列。
- * 注意：征兵(Conscription)、城市化(Urbanization)、城防(City Watch)、
- *      神权政治(Theocracy) 在 BuildingAction 枚举里没有对应动作，
- *      所以无法在这里表达，等枚举补齐后再补位。
+ *
+ * 征兵(Conscription)、城市化(Urbanization)、城防(City Watch)、
+ * 神权政治(Theocracy) 这 4 项经讨论确认不纳入实现范围：它们在
+ * BuildingAction 里没有对应动作，本模块也就不需要表达它们。下面各文明的
+ * 注释里即使列了这几项，也不会出现在掩码位里 —— 这不是遗漏。
  *------------------------------------------------------------------*/
 struct CivilizationRule
 {
@@ -701,12 +703,6 @@ I32 Development::get_addition_BuildingResourceMaxCnt(I32 sort, I32 type) const
         if (technology.has(TECH_MARKET_IRRIGATION))   extra += 125;
         return extra;
     }
-    return 0;
-}
-
-I32 Development::get_addition_BuildingVision() const
-{
-    // 城防：全部建筑视野 +3（枚举里暂时没有对应动作，留接口）
     return 0;
 }
 

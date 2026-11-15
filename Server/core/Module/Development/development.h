@@ -263,9 +263,6 @@ public:
     // 资源型建筑额外数量加成
     [[nodiscard]] I32 get_addition_BuildingResourceMaxCnt(I32 sort, I32 type) const;
 
-    // 建筑视野加成（城防：全部建筑视野+3）
-    [[nodiscard]] I32 get_addition_BuildingVision() const;
-
     // ---- 时代 ----
     // 升级时代，自动对时代升级 +1
     void stageChange();
