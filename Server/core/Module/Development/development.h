@@ -6,6 +6,7 @@
 #include "Server/core/Public/var/Civilization.h"
 
 class Player;
+class Object;
 
 /*==========================================================================
  * 科技枚举
@@ -221,6 +222,10 @@ public:
     // 记录一项科技完成。action 是 BuildingAction 的值。
     // 返回 true 表示这是一项新科技；重复记录、非科技动作、被本文明封锁的科技都返回 false。
     bool markTechnologyFinish(I32 action);
+
+    // 内核在某项建筑动作完成后通知，与 Player::notifyBuildingActionFinish 并列调用。
+    // 科技/解锁类动作记入位图（时代推进也在里面），造人动作忽略。
+    void notifyBuildingActionFinish(WeakPtr<Object> object, I32 action);
 
     // 某项科技是否被本文明的科技掩码封锁（该文明没有这项科技）
     [[nodiscard]] bool TechnologyBlocked(I32 technology) const;

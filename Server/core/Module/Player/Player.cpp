@@ -134,6 +134,23 @@ void purgeDestroyed(vector<SafePtr<T>>& container){
         }
     }
 }
+
+//按 globalID 从容器里摘掉一个对象。
+//必须先判 IsNull：对象被 destroy 之后 SafePtr 的 operator-> 返回 nullptr，
+//直接解引用会崩。内核完全可能「先把对象标死、再调 removeXXX」。
+template<class T>
+bool removeByGlobalNum(vector<SafePtr<T>>& container, I32 globalID){
+    for(auto it = container.begin();it!=container.end();++it){
+        if(it->IsNull()){
+            continue;
+        }
+        if((*it)->getglobalNum() == globalID){
+            container.erase(it);
+            return true;
+        }
+    }
+    return false;
+}
 }
 
 Player::Player(I32 civilization, I32 teamID){
@@ -224,48 +241,23 @@ vector<SafePtr<Missile>>& Player::getMissile(){
 }
 
 void Player::removeArmy(I32 globalID){
-    for(auto it = armies.begin();it!=armies.end();++it){
-        if((*it)->getglobalNum() == globalID){
-            armies.erase(it);
-            return;
-        }
-    }
+    removeByGlobalNum(armies, globalID);
 }
 
 void Player::removeFarmer(I32 globalID){
-    for(auto it = farmers.begin();it!=farmers.end();++it){
-        if((*it)->getglobalNum() == globalID){
-            farmers.erase(it);
-            return;
-        }
-    }
+    removeByGlobalNum(farmers, globalID);
 }
 
 void Player::removeBuilding(I32 globalID){
-    for(auto it = buildings.begin();it!=buildings.end();++it){
-        if((*it)->getglobalNum() == globalID){
-            buildings.erase(it);
-            return;
-        }
-    }
+    removeByGlobalNum(buildings, globalID);
 }
 
 void Player::removeBuildingResource(I32 globalID){
-    for(auto it = buildingResources.begin();it!=buildingResources.end();++it){
-        if((*it)->getglobalNum() == globalID){
-            buildingResources.erase(it);
-            return;
-        }
-    }
+    removeByGlobalNum(buildingResources, globalID);
 }
 
 void Player::removeMissile(I32 globalID){
-    for(auto it = missiles.begin();it!=missiles.end();++it){
-        if((*it)->getglobalNum() == globalID){
-            missiles.erase(it);
-            return;
-        }
-    }
+    removeByGlobalNum(missiles, globalID);
 }
 
 I32 Player::getResource(I32 resourceSort){
@@ -304,6 +296,7 @@ bool Player::changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 chan
 }
 
 bool Player::receiveArmy(SafePtr<Army> army){
+    if(army == nullptr)return false;
     if(army->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
     army->setBelong(playerID,teamID);
     // 转化后的单位科技跟随本玩家，不再拷贝一份锁定在原阵营转换时刻的科技。
@@ -312,6 +305,7 @@ bool Player::receiveArmy(SafePtr<Army> army){
     return true;
 }
 bool Player::receiveBuilding(SafePtr<Building> building){
+    if(building == nullptr)return false;
     if(building->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
     building->setBelong(playerID,teamID);
     building->setPlayerScience(playerScience);
@@ -319,6 +313,7 @@ bool Player::receiveBuilding(SafePtr<Building> building){
     return true;
 }
 bool Player::receiveFarmer(SafePtr<Farmer> farmer){
+    if(farmer == nullptr)return false;
     if(farmer->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
     farmer->setBelong(playerID,teamID);
     farmer->setPlayerScience(playerScience);
@@ -346,8 +341,10 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     }
     //记下这个科技/解锁动作：之后新建对象要按它决定实际等级
     finishedActions.insert(action);
-    //让科技模块把这一项记进位图（时代升级的推进也在里面）。
-    //内核如果已经先调过 Development，这里重复一次是无害的：markTechnologyFinish 幂等。
+    //让科技模块把这一项记进位图（时代推进也在里面）。
+    //内核也会直接调用 Development::notifyBuildingActionFinish，这里再转一次是为了
+    //保证「无论内核先通知哪边」，下面 refreshAllObjectScience 用到的都是新科技。
+    //markTechnologyFinish 幂等，重复调用没有副作用。
     SafePtr<Development> science = playerScience.lock();
     if(science != nullptr){
         science->markTechnologyFinish(action);

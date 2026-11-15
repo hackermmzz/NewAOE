@@ -59,6 +59,7 @@ constexpr I32 STAGE_MAX = ST_IRON;
  * food/gold/wood/stone：资源消耗
  * seconds       ：研究 / 训练耗时（秒），运行时 × GAME_TPS 换成帧
  * createSort/createType：造人动作的产出；-1 表示这不是造人动作
+ * building      ：这个动作属于哪个建筑。房子不能研究市场科技，靠它挡住。
  *--------------------------------------------------------------------*/
 struct ActionRule
 {
@@ -73,118 +74,119 @@ struct ActionRule
     I32 seconds;
     I32 createSort;
     I32 createType;
+    I32 building;
 };
 
 constexpr ActionRule kActions[] = {
     // -------------------- 市镇中心 --------------------
-    /*  1 造农民        */ {BUILDING_CENTER_CREATEFARMER,        ST_STONE,  DEV_NONE, -1,  50,    0,    0,    0,  20, SORT_FARMER, FARMERTYPE_FARMER},
-    /*  2 升工具时代    */ {BUILDING_CENTER_UPGRADE_TOOLAGE,     ST_STONE,  DEV_NONE, -1, 500,    0,    0,    0, 120, -1, -1},
-    /*  3 升青铜时代    */ {BUILDING_CENTER_UPGRADE_BRONZEAGE,    ST_TOOL,   DEV_T(TECH_CENTER_UPGRADE_TOOLAGE),    -1, 800,    0,    0,    0, 140, -1, -1},
-    /*  4 升铁器时代    */ {BUILDING_CENTER_UPGRADE_IRONAGE,      ST_BRONZE, DEV_T(TECH_CENTER_UPGRADE_BRONZEAGE),   -1, 1000, 800,    0,    0, 160, -1, -1},
+    /*  1 造农民        */ {BUILDING_CENTER_CREATEFARMER,        ST_STONE,  DEV_NONE, -1,  50,    0,    0,    0,  20, SORT_FARMER, FARMERTYPE_FARMER, BUILDING_CENTER},
+    /*  2 升工具时代    */ {BUILDING_CENTER_UPGRADE_TOOLAGE,     ST_STONE,  DEV_NONE, -1, 500,    0,    0,    0, 120, -1, -1, BUILDING_CENTER},
+    /*  3 升青铜时代    */ {BUILDING_CENTER_UPGRADE_BRONZEAGE,    ST_TOOL,   DEV_T(TECH_CENTER_UPGRADE_TOOLAGE),    -1, 800,    0,    0,    0, 140, -1, -1, BUILDING_CENTER},
+    /*  4 升铁器时代    */ {BUILDING_CENTER_UPGRADE_IRONAGE,      ST_BRONZE, DEV_T(TECH_CENTER_UPGRADE_BRONZEAGE),   -1, 1000, 800,    0,    0, 160, -1, -1, BUILDING_CENTER},
     // -------------------- 粮仓：城墙与箭塔 --------------------
-    /*  5 研发初级城墙  */ {BUILDING_GRANARY_WALL,                ST_TOOL,   DEV_NONE, -1,    0,    0,    0,    0,   0, -1, -1},
-    /*  6 中级城墙      */ {BUILDING_GRANARY_WALL_UPDATE_1,       ST_BRONZE, DEV_T(TECH_GRANARY_WALL),                -1,    0,    0,    0,    0,   0, -1, -1},
-    /*  7 高级城墙      */ {BUILDING_GRANARY_WALL_UPDATE_2,       ST_IRON,   DEV_T(TECH_GRANARY_WALL_UPDATE_1),       -1,    0,    0,    0,    0,   0, -1, -1},
-    /*  8 研发瞭望箭塔  */ {BUILDING_GRANARY_ARROWTOWER,          ST_TOOL,   DEV_NONE, -1,    0,    0,    0,  150,   0, -1, -1},
-    /*  9 警戒箭塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1, ST_BRONZE, DEV_T(TECH_GRANARY_ARROWTOWER),         -1,    0,    0,    0,  150,   0, -1, -1},
-    /* 10 防御箭塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_2, ST_IRON,  DEV_T(TECH_GRANARY_ARROWTOWER_UPGRADE_1), -1,  0,    0,    0,  150,   0, -1, -1},
-    /* 11 防御炮塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_3, ST_IRON,  DEV_T(TECH_GRANARY_ARROWTOWER_UPGRADE_2) | DEV_T(TECH_GOVERNMENT_BALLISTICS), -1, 0, 0, 0, 150, 0, -1, -1},
+    /*  5 研发初级城墙  */ {BUILDING_GRANARY_WALL,                ST_TOOL,   DEV_NONE, -1,    0,    0,    0,    0,   0, -1, -1, BUILDING_GRANARY},
+    /*  6 中级城墙      */ {BUILDING_GRANARY_WALL_UPDATE_1,       ST_BRONZE, DEV_T(TECH_GRANARY_WALL),                -1,    0,    0,    0,    0,   0, -1, -1, BUILDING_GRANARY},
+    /*  7 高级城墙      */ {BUILDING_GRANARY_WALL_UPDATE_2,       ST_IRON,   DEV_T(TECH_GRANARY_WALL_UPDATE_1),       -1,    0,    0,    0,    0,   0, -1, -1, BUILDING_GRANARY},
+    /*  8 研发瞭望箭塔  */ {BUILDING_GRANARY_ARROWTOWER,          ST_TOOL,   DEV_NONE, -1,    0,    0,    0,  150,   0, -1, -1, BUILDING_GRANARY},
+    /*  9 警戒箭塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1, ST_BRONZE, DEV_T(TECH_GRANARY_ARROWTOWER),         -1,    0,    0,    0,  150,   0, -1, -1, BUILDING_GRANARY},
+    /* 10 防御箭塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_2, ST_IRON,  DEV_T(TECH_GRANARY_ARROWTOWER_UPGRADE_1), -1,  0,    0,    0,  150,   0, -1, -1, BUILDING_GRANARY},
+    /* 11 防御炮塔      */ {BUILDING_GRANARY_ARROWTOWER_UPGRADE_3, ST_IRON,  DEV_T(TECH_GRANARY_ARROWTOWER_UPGRADE_2) | DEV_T(TECH_GOVERNMENT_BALLISTICS), -1, 0, 0, 0, 150, 0, -1, -1, BUILDING_GRANARY},
     // -------------------- 市场：经济 --------------------
-    /* 12 木工          */ {BUILDING_MARKET_WOOD_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  120,    0,   75,    0,  60, -1, -1},
-    /* 13 工匠技艺      */ {BUILDING_MARKET_ARTISANSHIP,          ST_BRONZE, DEV_T(TECH_MARKET_WOOD_UPGRADE),         -1,  170,    0,  150,    0,  80, -1, -1},
-    /* 14 工艺          */ {BUILDING_MARKET_CRAFT_UPGRADE,        ST_IRON,   DEV_T(TECH_MARKET_ARTISANSHIP),          -1,  240,    0,  200,    0, 100, -1, -1},
-    /* 15 采石          */ {BUILDING_MARKET_STONE_UPGRADE,        ST_TOOL,   DEV_NONE, -1,  100,    0,    0,   50,  30, -1, -1},
-    /* 16 攻城术        */ {BUILDING_MARKET_SIEGECRAFT,           ST_BRONZE, DEV_T(TECH_MARKET_STONE_UPGRADE),        -1,  190,    0,    0,  100,  60, -1, -1},
-    /* 17 采金          */ {BUILDING_MARKET_GOLD_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  120,    0,  100,    0,  50, -1, -1},
-    /* 18 铸币          */ {BUILDING_MARKET_COINAGE,              ST_TOOL,   DEV_T(TECH_MARKET_GOLD_UPGRADE),         -1,  200,  100,    0,    0,  60, -1, -1},
-    /* 19 驯养          */ {BUILDING_MARKET_FARM_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  150,    0,   50,    0,  40, -1, -1},
-    /* 20 犁            */ {BUILDING_MARKET_PLOW_UPGRADE,         ST_BRONZE, DEV_T(TECH_MARKET_FARM_UPGRADE),         -1,  250,    0,   75,    0,  75, -1, -1},
-    /* 21 灌溉          */ {BUILDING_MARKET_IRRIGATION,           ST_IRON,   DEV_T(TECH_MARKET_PLOW_UPGRADE),         -1,  300,    0,  100,    0, 100, -1, -1},
-    /* 22 车轮          */ {BUILDING_MARKET_WHEEL_UPGRADE,        ST_BRONZE, DEV_T(TECH_CENTER_UPGRADE_TOOLAGE),       -1,  175,    0,   75,    0,  75, -1, -1},
+    /* 12 木工          */ {BUILDING_MARKET_WOOD_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  120,    0,   75,    0,  60, -1, -1, BUILDING_MARKET},
+    /* 13 工匠技艺      */ {BUILDING_MARKET_ARTISANSHIP,          ST_BRONZE, DEV_T(TECH_MARKET_WOOD_UPGRADE),         -1,  170,    0,  150,    0,  80, -1, -1, BUILDING_MARKET},
+    /* 14 工艺          */ {BUILDING_MARKET_CRAFT_UPGRADE,        ST_IRON,   DEV_T(TECH_MARKET_ARTISANSHIP),          -1,  240,    0,  200,    0, 100, -1, -1, BUILDING_MARKET},
+    /* 15 采石          */ {BUILDING_MARKET_STONE_UPGRADE,        ST_TOOL,   DEV_NONE, -1,  100,    0,    0,   50,  30, -1, -1, BUILDING_MARKET},
+    /* 16 攻城术        */ {BUILDING_MARKET_SIEGECRAFT,           ST_BRONZE, DEV_T(TECH_MARKET_STONE_UPGRADE),        -1,  190,    0,    0,  100,  60, -1, -1, BUILDING_MARKET},
+    /* 17 采金          */ {BUILDING_MARKET_GOLD_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  120,    0,  100,    0,  50, -1, -1, BUILDING_MARKET},
+    /* 18 铸币          */ {BUILDING_MARKET_COINAGE,              ST_TOOL,   DEV_T(TECH_MARKET_GOLD_UPGRADE),         -1,  200,  100,    0,    0,  60, -1, -1, BUILDING_MARKET},
+    /* 19 驯养          */ {BUILDING_MARKET_FARM_UPGRADE,         ST_TOOL,   DEV_NONE, -1,  150,    0,   50,    0,  40, -1, -1, BUILDING_MARKET},
+    /* 20 犁            */ {BUILDING_MARKET_PLOW_UPGRADE,         ST_BRONZE, DEV_T(TECH_MARKET_FARM_UPGRADE),         -1,  250,    0,   75,    0,  75, -1, -1, BUILDING_MARKET},
+    /* 21 灌溉          */ {BUILDING_MARKET_IRRIGATION,           ST_IRON,   DEV_T(TECH_MARKET_PLOW_UPGRADE),         -1,  300,    0,  100,    0, 100, -1, -1, BUILDING_MARKET},
+    /* 22 车轮          */ {BUILDING_MARKET_WHEEL_UPGRADE,        ST_BRONZE, DEV_T(TECH_CENTER_UPGRADE_TOOLAGE),       -1,  175,    0,   75,    0,  75, -1, -1, BUILDING_MARKET},
     // -------------------- 仓库：军事 --------------------
-    /* 23 工具锻造      */ {BUILDING_STOCK_UPGRADE_USETOOL,           ST_TOOL,   DEV_NONE, -1,  100,    0,    0,    0,  40, -1, -1},
-    /* 24 金属加工      */ {BUILDING_STOCK_UPGRADE_METALWORKING,      ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_USETOOL),      -1,  200,  120,    0,    0,  75, -1, -1},
-    /* 25 冶金          */ {BUILDING_STOCK_UPGRADE_METALLURGY,        ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_METALWORKING), -1,  300,  180,    0,    0, 100, -1, -1},
-    /* 26 皮革护甲步兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_1, ST_TOOL,  DEV_NONE, -1,   75,    0,    0,    0,  30, -1, -1},
-    /* 27 鳞甲步兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_2, ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_INFANTRY_1), -1, 100, 50, 0, 0, 60, -1, -1},
-    /* 28 锁子甲步兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_3, ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_INFANTRY_2), -1, 125, 100, 0, 0, 75, -1, -1},
-    /* 29 皮革护甲弓兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_1,   ST_TOOL,  DEV_NONE, -1,  100,    0,    0,    0,  30, -1, -1},
-    /* 30 鳞甲弓兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_2,   ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_1), -1, 125, 50, 0, 0, 60, -1, -1},
-    /* 31 锁子甲弓兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_3,   ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_2), -1, 150, 100, 0, 0, 75, -1, -1},
-    /* 32 皮革护甲骑兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_1,    ST_TOOL,  DEV_NONE, -1,  125,    0,    0,    0,  30, -1, -1},
-    /* 33 鳞甲骑兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_2,    ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_RIDER_1), -1, 150, 50, 0, 0, 60, -1, -1},
-    /* 34 锁子甲骑兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_3,    ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_RIDER_2), -1, 175, 100, 0, 0, 75, -1, -1},
-    /* 35 青铜盾        */ {BUILDING_STOCK_UPGRADE_MISSILE_DEFENSE_INFANTRY, ST_BRONZE, DEV_NONE, -1, 150, 180, 0, 0, 50, -1, -1},
-    /* 36 铁盾          */ {BUILDING_STOCK_UPGRADE_IRON_SHIELD,       ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_MISSILE_DEFENSE_INFANTRY), -1, 200, 320, 0, 0, 75, -1, -1},
-    /* 37 塔盾          */ {BUILDING_STOCK_UPGRADE_TOWER_SHIELD,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_IRON_SHIELD),  -1,  250,  400,    0,    0, 100, -1, -1},
+    /* 23 工具锻造      */ {BUILDING_STOCK_UPGRADE_USETOOL,           ST_TOOL,   DEV_NONE, -1,  100,    0,    0,    0,  40, -1, -1, BUILDING_STOCK},
+    /* 24 金属加工      */ {BUILDING_STOCK_UPGRADE_METALWORKING,      ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_USETOOL),      -1,  200,  120,    0,    0,  75, -1, -1, BUILDING_STOCK},
+    /* 25 冶金          */ {BUILDING_STOCK_UPGRADE_METALLURGY,        ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_METALWORKING), -1,  300,  180,    0,    0, 100, -1, -1, BUILDING_STOCK},
+    /* 26 皮革护甲步兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_1, ST_TOOL,  DEV_NONE, -1,   75,    0,    0,    0,  30, -1, -1, BUILDING_STOCK},
+    /* 27 鳞甲步兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_2, ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_INFANTRY_1), -1, 100, 50, 0, 0, 60, -1, -1, BUILDING_STOCK},
+    /* 28 锁子甲步兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_3, ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_INFANTRY_2), -1, 125, 100, 0, 0, 75, -1, -1, BUILDING_STOCK},
+    /* 29 皮革护甲弓兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_1,   ST_TOOL,  DEV_NONE, -1,  100,    0,    0,    0,  30, -1, -1, BUILDING_STOCK},
+    /* 30 鳞甲弓兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_2,   ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_1), -1, 125, 50, 0, 0, 60, -1, -1, BUILDING_STOCK},
+    /* 31 锁子甲弓兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_3,   ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_2), -1, 150, 100, 0, 0, 75, -1, -1, BUILDING_STOCK},
+    /* 32 皮革护甲骑兵  */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_1,    ST_TOOL,  DEV_NONE, -1,  125,    0,    0,    0,  30, -1, -1, BUILDING_STOCK},
+    /* 33 鳞甲骑兵      */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_2,    ST_BRONZE, DEV_T(TECH_STOCK_UPGRADE_DEFENSE_RIDER_1), -1, 150, 50, 0, 0, 60, -1, -1, BUILDING_STOCK},
+    /* 34 锁子甲骑兵    */ {BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_3,    ST_IRON,  DEV_T(TECH_STOCK_UPGRADE_DEFENSE_RIDER_2), -1, 175, 100, 0, 0, 75, -1, -1, BUILDING_STOCK},
+    /* 35 青铜盾        */ {BUILDING_STOCK_UPGRADE_MISSILE_DEFENSE_INFANTRY, ST_BRONZE, DEV_NONE, -1, 150, 180, 0, 0, 50, -1, -1, BUILDING_STOCK},
+    /* 36 铁盾          */ {BUILDING_STOCK_UPGRADE_IRON_SHIELD,       ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_MISSILE_DEFENSE_INFANTRY), -1, 200, 320, 0, 0, 75, -1, -1, BUILDING_STOCK},
+    /* 37 塔盾          */ {BUILDING_STOCK_UPGRADE_TOWER_SHIELD,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_IRON_SHIELD),  -1,  250,  400,    0,    0, 100, -1, -1, BUILDING_STOCK},
     // -------------------- 兵营：步兵 --------------------
-    /* 38 造棍棒兵      */ {BUILDING_ARMYCAMP_CREATE_CLUBMAN,     ST_STONE,  DEV_NONE, -1,  50,    0,    0,    0,  27, SORT_ARMY, AT_CLUBMAN},
-    /* 39 升斧兵        */ {BUILDING_ARMYCAMP_UPGRADE_CLUBMAN,    ST_STONE,  DEV_NONE, -1,  100,   0,    0,    0,   0, -1, -1},
-    /* 40 造短剑兵      */ {BUILDING_ARMYCAMP_CREATE_SHORTSWORD,  ST_BRONZE, DEV_NONE, -1,  35,   15,    0,    0,  27, SORT_ARMY, AT_SHORT_SWORDSMAN},
-    /* 41 升阔剑兵      */ {BUILDING_ARMYCAMP_UPGRADE_BROADSWORD, ST_BRONZE, DEV_T(TECH_ARMYCAMP_UPGRADE_CLUBMAN),   -1,  140,   50,    0,    0,   0, -1, -1},
-    /* 42 升长剑兵      */ {BUILDING_ARMYCAMP_UPGRADE_LONGSWORD,  ST_BRONZE, DEV_T(TECH_ARMYCAMP_UPGRADE_BROADSWORD),-1,  240,  100,    0,    0,   0, -1, -1},
-    /* 43 升军团        */ {BUILDING_ARMYCAMP_UPGRADE_LEGION,     ST_IRON,   DEV_T(TECH_ARMYCAMP_UPGRADE_LONGSWORD) | DEV_T(TECH_TEMPLE_FANATICISM), -1, 1400, 600, 0, 0, 0, -1, -1},
-    /* 44 造投石兵      */ {BUILDING_ARMYCAMP_CREATE_SLINGER,     ST_STONE,  DEV_NONE, -1,  40,    0,    0,   10,  30, SORT_ARMY, AT_SLINGER},
+    /* 38 造棍棒兵      */ {BUILDING_ARMYCAMP_CREATE_CLUBMAN,     ST_STONE,  DEV_NONE, -1,  50,    0,    0,    0,  27, SORT_ARMY, AT_CLUBMAN, BUILDING_ARMYCAMP},
+    /* 39 升斧兵        */ {BUILDING_ARMYCAMP_UPGRADE_CLUBMAN,    ST_STONE,  DEV_NONE, -1,  100,   0,    0,    0,   0, -1, -1, BUILDING_ARMYCAMP},
+    /* 40 造短剑兵      */ {BUILDING_ARMYCAMP_CREATE_SHORTSWORD,  ST_BRONZE, DEV_NONE, -1,  35,   15,    0,    0,  27, SORT_ARMY, AT_SHORT_SWORDSMAN, BUILDING_ARMYCAMP},
+    /* 41 升阔剑兵      */ {BUILDING_ARMYCAMP_UPGRADE_BROADSWORD, ST_BRONZE, DEV_T(TECH_ARMYCAMP_UPGRADE_CLUBMAN),   -1,  140,   50,    0,    0,   0, -1, -1, BUILDING_ARMYCAMP},
+    /* 42 升长剑兵      */ {BUILDING_ARMYCAMP_UPGRADE_LONGSWORD,  ST_BRONZE, DEV_T(TECH_ARMYCAMP_UPGRADE_BROADSWORD),-1,  240,  100,    0,    0,   0, -1, -1, BUILDING_ARMYCAMP},
+    /* 43 升军团        */ {BUILDING_ARMYCAMP_UPGRADE_LEGION,     ST_IRON,   DEV_T(TECH_ARMYCAMP_UPGRADE_LONGSWORD) | DEV_T(TECH_TEMPLE_FANATICISM), -1, 1400, 600, 0, 0, 0, -1, -1, BUILDING_ARMYCAMP},
+    /* 44 造投石兵      */ {BUILDING_ARMYCAMP_CREATE_SLINGER,     ST_STONE,  DEV_NONE, -1,  40,    0,    0,   10,  30, SORT_ARMY, AT_SLINGER, BUILDING_ARMYCAMP},
     // -------------------- 靶场：弓兵 --------------------
-    /* 45 造弓手        */ {BUILDING_RANGE_CREATE_BOWMAN,             ST_TOOL,   DEV_NONE, -1,  40,    0,   20,    0,  30, SORT_ARMY, AT_BOWMAN},
-    /* 46 造强弓手      */ {BUILDING_RANGE_CREATE_COMPOSITE_BOWMAN,   ST_BRONZE, DEV_NONE, -1,  40,   20,    0,    0,  30, SORT_ARMY, AT_IMPROVED_BOWMAN},
-    /* 47 升改良弓手    */ {BUILDING_RANGE_UPGRADE_IMPROVEDBOW,       ST_BRONZE, DEV_NONE, -1,  100,   50,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 48 升复合弓      */ {BUILDING_RANGE_UPGRADE_COMPOSITE_BOW,     ST_BRONZE, DEV_T(TECH_RANGE_UPGRADE_IMPROVEDBOW), -1, 150, 100, 0, 0, 0, -1, -1}, // TODO(估) 费用
-    /* 49 造战车弓手    */ {BUILDING_RANGE_CREATE_CHARIOT_ARCHER,     ST_BRONZE, DEV_T(TECH_MARKET_WHEEL_UPGRADE), -1, 40, 0, 70, 0, 40, SORT_ARMY, AT_CHARIOT_ARCHER},
-    /* 50 造马弓手      */ {BUILDING_RANGE_CREATE_HORSE_ARCHER,       ST_IRON,   DEV_NONE, -1,  50,   70,    0,    0,  40, SORT_ARMY, AT_HORSE_ARCHER},
-    /* 51 升重装马弓手  */ {BUILDING_RANGE_UPGRADE_HORSE_ARCHER,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_3), -1, 200, 150, 0, 0, 0, -1, -1}, // TODO(估) 费用
-    /* 52 造象弓手      */ {BUILDING_RANGE_CREATE_ELEPHANT_ARCHER,    ST_IRON,   DEV_NONE, -1, 180,   60,    0,    0,  50, SORT_ARMY, AT_ELEPHANT_ARCHER},
+    /* 45 造弓手        */ {BUILDING_RANGE_CREATE_BOWMAN,             ST_TOOL,   DEV_NONE, -1,  40,    0,   20,    0,  30, SORT_ARMY, AT_BOWMAN, BUILDING_RANGE},
+    /* 46 造强弓手      */ {BUILDING_RANGE_CREATE_COMPOSITE_BOWMAN,   ST_BRONZE, DEV_NONE, -1,  40,   20,    0,    0,  30, SORT_ARMY, AT_IMPROVED_BOWMAN, BUILDING_RANGE},
+    /* 47 升改良弓手    */ {BUILDING_RANGE_UPGRADE_IMPROVEDBOW,       ST_BRONZE, DEV_NONE, -1,  100,   50,    0,    0,   0, -1, -1, BUILDING_RANGE}, // TODO(估) 费用
+    /* 48 升复合弓      */ {BUILDING_RANGE_UPGRADE_COMPOSITE_BOW,     ST_BRONZE, DEV_T(TECH_RANGE_UPGRADE_IMPROVEDBOW), -1, 150, 100, 0, 0, 0, -1, -1, BUILDING_RANGE}, // TODO(估) 费用
+    /* 49 造战车弓手    */ {BUILDING_RANGE_CREATE_CHARIOT_ARCHER,     ST_BRONZE, DEV_T(TECH_MARKET_WHEEL_UPGRADE), -1, 40, 0, 70, 0, 40, SORT_ARMY, AT_CHARIOT_ARCHER, BUILDING_RANGE},
+    /* 50 造马弓手      */ {BUILDING_RANGE_CREATE_HORSE_ARCHER,       ST_IRON,   DEV_NONE, -1,  50,   70,    0,    0,  40, SORT_ARMY, AT_HORSE_ARCHER, BUILDING_RANGE},
+    /* 51 升重装马弓手  */ {BUILDING_RANGE_UPGRADE_HORSE_ARCHER,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_DEFENSE_ARCHER_3), -1, 200, 150, 0, 0, 0, -1, -1, BUILDING_RANGE}, // TODO(估) 费用
+    /* 52 造象弓手      */ {BUILDING_RANGE_CREATE_ELEPHANT_ARCHER,    ST_IRON,   DEV_NONE, -1, 180,   60,    0,    0,  50, SORT_ARMY, AT_ELEPHANT_ARCHER, BUILDING_RANGE},
     // -------------------- 马厩：骑兵 --------------------
-    /* 53 造侦察骑兵    */ {BUILDING_STABLE_CREATE_SCOUT,          ST_TOOL,   DEV_NONE, -1,   90,    0,    0,    0,  30, SORT_ARMY, AT_SCOUT},
-    /* 54 造骑兵        */ {BUILDING_STABLE_CREATE_CAVALRY,        ST_BRONZE, DEV_NONE, -1,   70,   80,    0,    0,  40, SORT_ARMY, AT_CAVALRY},
-    /* 55 升重骑兵      */ {BUILDING_STABLE_UPGRADE_CAVALRY,       ST_IRON,   DEV_NONE, -1,  250,  150,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 56 升铁甲骑兵    */ {BUILDING_STABLE_UPGRADE_CATAPHRACT,    ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_METALLURGY),     -1, 1600,  600,    0,    0,   0, -1, -1},
-    /* 57 造驷马战车    */ {BUILDING_STABLE_CREATE_CHARIOT,        ST_BRONZE, DEV_T(TECH_MARKET_WHEEL_UPGRADE),        -1,   40,    0,   60,    0,  40, SORT_ARMY, AT_CHARIOT},
-    /* 58 升刀轮战车    */ {BUILDING_STABLE_UPGRADE_CHARIOT,       ST_IRON,   DEV_T(TECH_GOVERNMENT_ARISTOCRACY),      -1,    0, 1000, 1400,    0, 200, -1, -1},
-    /* 59 造战象        */ {BUILDING_STABLE_CREATE_WAR_ELEPHANT,   ST_IRON,   DEV_NONE, -1,  170,   40,    0,    0,  50, SORT_ARMY, AT_WAR_ELEPHANT},
-    /* 60 升装甲战象    */ {BUILDING_STABLE_UPGRADE_ELEPHANT,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_TOWER_SHIELD),   -1,  300,  200,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 61 造骆驼骑兵    */ {BUILDING_STABLE_CREATE_CAMEL,          ST_BRONZE, DEV_NONE, -1,   70,   60,    0,    0,  40, SORT_ARMY, AT_CAMEL_RIDER},
+    /* 53 造侦察骑兵    */ {BUILDING_STABLE_CREATE_SCOUT,          ST_TOOL,   DEV_NONE, -1,   90,    0,    0,    0,  30, SORT_ARMY, AT_SCOUT, BUILDING_STABLE},
+    /* 54 造骑兵        */ {BUILDING_STABLE_CREATE_CAVALRY,        ST_BRONZE, DEV_NONE, -1,   70,   80,    0,    0,  40, SORT_ARMY, AT_CAVALRY, BUILDING_STABLE},
+    /* 55 升重骑兵      */ {BUILDING_STABLE_UPGRADE_CAVALRY,       ST_IRON,   DEV_NONE, -1,  250,  150,    0,    0,   0, -1, -1, BUILDING_STABLE}, // TODO(估) 费用
+    /* 56 升铁甲骑兵    */ {BUILDING_STABLE_UPGRADE_CATAPHRACT,    ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_METALLURGY),     -1, 1600,  600,    0,    0,   0, -1, -1, BUILDING_STABLE},
+    /* 57 造驷马战车    */ {BUILDING_STABLE_CREATE_CHARIOT,        ST_BRONZE, DEV_T(TECH_MARKET_WHEEL_UPGRADE),        -1,   40,    0,   60,    0,  40, SORT_ARMY, AT_CHARIOT, BUILDING_STABLE},
+    /* 58 升刀轮战车    */ {BUILDING_STABLE_UPGRADE_CHARIOT,       ST_IRON,   DEV_T(TECH_GOVERNMENT_ARISTOCRACY),      -1,    0, 1000, 1400,    0, 200, -1, -1, BUILDING_STABLE},
+    /* 59 造战象        */ {BUILDING_STABLE_CREATE_WAR_ELEPHANT,   ST_IRON,   DEV_NONE, -1,  170,   40,    0,    0,  50, SORT_ARMY, AT_WAR_ELEPHANT, BUILDING_STABLE},
+    /* 60 升装甲战象    */ {BUILDING_STABLE_UPGRADE_ELEPHANT,      ST_IRON,   DEV_T(TECH_STOCK_UPGRADE_TOWER_SHIELD),   -1,  300,  200,    0,    0,   0, -1, -1, BUILDING_STABLE}, // TODO(估) 费用
+    /* 61 造骆驼骑兵    */ {BUILDING_STABLE_CREATE_CAMEL,          ST_BRONZE, DEV_NONE, -1,   70,   60,    0,    0,  40, SORT_ARMY, AT_CAMEL_RIDER, BUILDING_STABLE},
     // -------------------- 船坞 --------------------
-    /* 62 造渔船        */ {BUILDING_DOCK_CREATE_SAILING,          ST_STONE,  DEV_NONE, -1,    0,    0,   50,    0,  20, SORT_FARMER, FARMERTYPE_SMALL_SAILING},
-    /* 63 升大型渔船    */ {BUILDING_DOCK_UPGRADE_SAILING,         ST_BRONZE, DEV_NONE, -1,  100,    0,   50,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 64 造商船        */ {BUILDING_DOCK_CREATE_TRADEBOAT,        ST_STONE,  DEV_NONE, -1,    0,    0,  100,    0,  25, SORT_FARMER, FARMERTYPE_SMALL_TRADE_BOAT},
-    /* 65 升大型商船    */ {BUILDING_DOCK_UPGRADE_TRADEBOAT,       ST_BRONZE, DEV_NONE, -1,  150,    0,  100,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 66 造运输船      */ {BUILDING_DOCK_CREATE_TRANSPORT,        ST_TOOL,   DEV_NONE, -1,    0,    0,  150,    0,  38, SORT_FARMER, FARMERTYPE_LIGHT_TRANSPORT},
-    /* 67 升重型运输船  */ {BUILDING_DOCK_UPGRADE_TRANSPORT,       ST_IRON,   DEV_NONE, -1,  200,    0,  150,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 68 造侦察船      */ {BUILDING_DOCK_CREATE_SCOUTSHIP,        ST_TOOL,   DEV_NONE, -1,    0,    0,  135,    0,  30, SORT_ARMY, AT_SCOUT_SHIP},
-    /* 69 升桨帆船      */ {BUILDING_DOCK_UPGRADE_WAR_GALLEY,      ST_BRONZE, DEV_NONE, -1,  200,    0,  100,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 70 升三列桨帆船  */ {BUILDING_DOCK_UPGRADE_TRIREME,         ST_IRON,   DEV_T(TECH_DOCK_UPGRADE_WAR_GALLEY),    -1,  300,    0,  200,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 71 造无敌战船    */ {BUILDING_DOCK_CREATE_CATAPULT_TRIREME, ST_IRON,   DEV_T(TECH_DOCK_UPGRADE_TRIREME),        -1,    0,   75,  135,    0,  45, SORT_ARMY, AT_CATAPULT_TRIREME},
-    /* 72 造火帆船      */ {BUILDING_DOCK_CREATE_FIREGALLEY,       ST_IRON,   DEV_NONE, -1,    0,   50,  100,    0,  45, SORT_ARMY, AT_FIRESAILBOAT}, // TODO(估) 费用
+    /* 62 造渔船        */ {BUILDING_DOCK_CREATE_SAILING,          ST_STONE,  DEV_NONE, -1,    0,    0,   50,    0,  20, SORT_FARMER, FARMERTYPE_SMALL_SAILING, BUILDING_DOCK},
+    /* 63 升大型渔船    */ {BUILDING_DOCK_UPGRADE_SAILING,         ST_BRONZE, DEV_NONE, -1,  100,    0,   50,    0,   0, -1, -1, BUILDING_DOCK}, // TODO(估) 费用
+    /* 64 造商船        */ {BUILDING_DOCK_CREATE_TRADEBOAT,        ST_STONE,  DEV_NONE, -1,    0,    0,  100,    0,  25, SORT_FARMER, FARMERTYPE_SMALL_TRADE_BOAT, BUILDING_DOCK},
+    /* 65 升大型商船    */ {BUILDING_DOCK_UPGRADE_TRADEBOAT,       ST_BRONZE, DEV_NONE, -1,  150,    0,  100,    0,   0, -1, -1, BUILDING_DOCK}, // TODO(估) 费用
+    /* 66 造运输船      */ {BUILDING_DOCK_CREATE_TRANSPORT,        ST_TOOL,   DEV_NONE, -1,    0,    0,  150,    0,  38, SORT_FARMER, FARMERTYPE_LIGHT_TRANSPORT, BUILDING_DOCK},
+    /* 67 升重型运输船  */ {BUILDING_DOCK_UPGRADE_TRANSPORT,       ST_IRON,   DEV_NONE, -1,  200,    0,  150,    0,   0, -1, -1, BUILDING_DOCK}, // TODO(估) 费用
+    /* 68 造侦察船      */ {BUILDING_DOCK_CREATE_SCOUTSHIP,        ST_TOOL,   DEV_NONE, -1,    0,    0,  135,    0,  30, SORT_ARMY, AT_SCOUT_SHIP, BUILDING_DOCK},
+    /* 69 升桨帆船      */ {BUILDING_DOCK_UPGRADE_WAR_GALLEY,      ST_BRONZE, DEV_NONE, -1,  200,    0,  100,    0,   0, -1, -1, BUILDING_DOCK}, // TODO(估) 费用
+    /* 70 升三列桨帆船  */ {BUILDING_DOCK_UPGRADE_TRIREME,         ST_IRON,   DEV_T(TECH_DOCK_UPGRADE_WAR_GALLEY),    -1,  300,    0,  200,    0,   0, -1, -1, BUILDING_DOCK}, // TODO(估) 费用
+    /* 71 造无敌战船    */ {BUILDING_DOCK_CREATE_CATAPULT_TRIREME, ST_IRON,   DEV_T(TECH_DOCK_UPGRADE_TRIREME),        -1,    0,   75,  135,    0,  45, SORT_ARMY, AT_CATAPULT_TRIREME, BUILDING_DOCK},
+    /* 72 造火帆船      */ {BUILDING_DOCK_CREATE_FIREGALLEY,       ST_IRON,   DEV_NONE, -1,    0,   50,  100,    0,  45, SORT_ARMY, AT_FIRESAILBOAT, BUILDING_DOCK}, // TODO(估) 费用
     // -------------------- 攻城工坊 --------------------
-    /* 73 造投石车      */ {BUILDING_SIEGE_CREATE_STONE_THROWER,   ST_BRONZE, DEV_NONE, -1,    0,   80,  180,    0,  60, SORT_ARMY, AT_STONE_THROWER},
-    /* 74 升中型投石车  */ {BUILDING_SIEGE_UPGRADE_CATAPULT,       ST_IRON,   DEV_NONE, -1,  300,  200,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 75 升重型投石车  */ {BUILDING_SIEGE_UPGRADE_HEAVYCATAPULT,  ST_IRON,   DEV_T(TECH_MARKET_SIEGECRAFT),           -1,  400,  300,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 76 造弩炮        */ {BUILDING_SIEGE_CREATE_BALLISTA,        ST_IRON,   DEV_NONE, -1,    0,   80,  100,    0,  50, SORT_ARMY, AT_BALLISTA},
-    /* 77 升重弩炮      */ {BUILDING_SIEGE_UPGRADE_HELEPOLIS,      ST_IRON,   DEV_T(TECH_MARKET_CRAFT_UPGRADE),        -1, 1200,    0, 1000,    0,   0, -1, -1},
+    /* 73 造投石车      */ {BUILDING_SIEGE_CREATE_STONE_THROWER,   ST_BRONZE, DEV_NONE, -1,    0,   80,  180,    0,  60, SORT_ARMY, AT_STONE_THROWER, BUILDING_SIEGE},
+    /* 74 升中型投石车  */ {BUILDING_SIEGE_UPGRADE_CATAPULT,       ST_IRON,   DEV_NONE, -1,  300,  200,    0,    0,   0, -1, -1, BUILDING_SIEGE}, // TODO(估) 费用
+    /* 75 升重型投石车  */ {BUILDING_SIEGE_UPGRADE_HEAVYCATAPULT,  ST_IRON,   DEV_T(TECH_MARKET_SIEGECRAFT),           -1,  400,  300,    0,    0,   0, -1, -1, BUILDING_SIEGE}, // TODO(估) 费用
+    /* 76 造弩炮        */ {BUILDING_SIEGE_CREATE_BALLISTA,        ST_IRON,   DEV_NONE, -1,    0,   80,  100,    0,  50, SORT_ARMY, AT_BALLISTA, BUILDING_SIEGE},
+    /* 77 升重弩炮      */ {BUILDING_SIEGE_UPGRADE_HELEPOLIS,      ST_IRON,   DEV_T(TECH_MARKET_CRAFT_UPGRADE),        -1, 1200,    0, 1000,    0,   0, -1, -1, BUILDING_SIEGE},
     // -------------------- 学院 --------------------
-    /* 78 造方阵兵      */ {BUILDING_COLLAGE_CREATE_HOPLITE,       ST_BRONZE, DEV_NONE, -1,   60,   40,    0,    0,  36, SORT_ARMY, AT_HOPLITE},
-    /* 79 升十夫长      */ {BUILDING_COLLAGE_UPGRADE_PHALANX,      ST_IRON,   DEV_NONE, -1,  300,  200,    0,    0,   0, -1, -1}, // TODO(估) 费用
-    /* 80 升百夫长      */ {BUILDING_COLLAGE_UPGRADE_CENTURION,    ST_IRON,   DEV_T(TECH_GOVERNMENT_ARISTOCRACY),      -1,  400,  300,    0,    0,   0, -1, -1}, // TODO(估) 费用
+    /* 78 造方阵兵      */ {BUILDING_COLLAGE_CREATE_HOPLITE,       ST_BRONZE, DEV_NONE, -1,   60,   40,    0,    0,  36, SORT_ARMY, AT_HOPLITE, BUILDING_COLLAGE},
+    /* 79 升十夫长      */ {BUILDING_COLLAGE_UPGRADE_PHALANX,      ST_IRON,   DEV_NONE, -1,  300,  200,    0,    0,   0, -1, -1, BUILDING_COLLAGE}, // TODO(估) 费用
+    /* 80 升百夫长      */ {BUILDING_COLLAGE_UPGRADE_CENTURION,    ST_IRON,   DEV_T(TECH_GOVERNMENT_ARISTOCRACY),      -1,  400,  300,    0,    0,   0, -1, -1, BUILDING_COLLAGE}, // TODO(估) 费用
     // -------------------- 政治机关 --------------------
-    /* 81 贵族政治      */ {BUILDING_GOVERNMENT_ARISTOCRACY,       ST_IRON,   DEV_NONE, -1,  175,  150,    0,    0,  60, -1, -1},
-    /* 82 贵族          */ {BUILDING_GOVERNMENT_NOBILITY,          ST_IRON,   DEV_NONE, -1,  175,  120,    0,    0,  70, -1, -1},
-    /* 83 工程学        */ {BUILDING_GOVERNMENT_ENGINEERING,       ST_IRON,   DEV_T(TECH_MARKET_SIEGECRAFT),           -1,  200,    0,  100,    0,  70, -1, -1},
-    /* 84 炼金术        */ {BUILDING_GOVERNMENT_ALCHEMY,           ST_IRON,   DEV_NONE, -1,  250,  200,    0,    0, 100, -1, -1},
-    /* 85 弹道学        */ {BUILDING_GOVERNMENT_BALLISTICS,        ST_IRON,   DEV_T(TECH_GOVERNMENT_ENGINEERING),      -1,  200,   50,    0,    0,  60, -1, -1},
-    /* 86 建筑学        */ {BUILDING_GOVERNMENT_ARCHITECTURE,      ST_IRON,   DEV_NONE, -1,  100,    0,    0,    0,  15, -1, -1},
-    /* 87 后勤          */ {BUILDING_GOVERNMENT_LOGISTICS,          ST_IRON,   DEV_NONE, -1,  180,  100,    0,    0,  60, -1, -1},
+    /* 81 贵族政治      */ {BUILDING_GOVERNMENT_ARISTOCRACY,       ST_IRON,   DEV_NONE, -1,  175,  150,    0,    0,  60, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 82 贵族          */ {BUILDING_GOVERNMENT_NOBILITY,          ST_IRON,   DEV_NONE, -1,  175,  120,    0,    0,  70, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 83 工程学        */ {BUILDING_GOVERNMENT_ENGINEERING,       ST_IRON,   DEV_T(TECH_MARKET_SIEGECRAFT),           -1,  200,    0,  100,    0,  70, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 84 炼金术        */ {BUILDING_GOVERNMENT_ALCHEMY,           ST_IRON,   DEV_NONE, -1,  250,  200,    0,    0, 100, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 85 弹道学        */ {BUILDING_GOVERNMENT_BALLISTICS,        ST_IRON,   DEV_T(TECH_GOVERNMENT_ENGINEERING),      -1,  200,   50,    0,    0,  60, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 86 建筑学        */ {BUILDING_GOVERNMENT_ARCHITECTURE,      ST_IRON,   DEV_NONE, -1,  100,    0,    0,    0,  15, -1, -1, BUILDING_GOVERNMENT_CENTER},
+    /* 87 后勤          */ {BUILDING_GOVERNMENT_LOGISTICS,          ST_IRON,   DEV_NONE, -1,  180,  100,    0,    0,  60, -1, -1, BUILDING_GOVERNMENT_CENTER},
     // -------------------- 神殿 --------------------
-    /* 88 造祭司        */ {BUILDING_TEMPLE_CREATE_PRIEST,         ST_BRONZE, DEV_NONE, -1,    0,  125,    0,    0,  50, SORT_ARMY, AT_PRIEST},
-    /* 89 多神教        */ {BUILDING_TEMPLE_POLYTHEISM,            ST_TOOL,   DEV_NONE, -1,    0,  120,    0,    0,  50, -1, -1},
-    /* 90 神秘主义      */ {BUILDING_TEMPLE_MYSTICISM,             ST_BRONZE, DEV_T(TECH_TEMPLE_POLYTHEISM),          -1,    0,  120,    0,    0,  50, -1, -1},
-    /* 91 占星术        */ {BUILDING_TEMPLE_ASTROLOGY,             ST_BRONZE, DEV_NONE, -1,    0,  175,    0,    0,  50, -1, -1},
-    /* 92 医学          */ {BUILDING_TEMPLE_MEDICINE,              ST_BRONZE, DEV_NONE, -1,    0,  150,    0,    0,  50, -1, -1},
-    /* 93 一神教        */ {BUILDING_TEMPLE_MONOTHEISM,            ST_IRON,   DEV_T(TECH_TEMPLE_MYSTICISM),           -1,    0,  350,    0,    0,  75, -1, -1},
-    /* 94 来生          */ {BUILDING_TEMPLE_AFTERLIFE,             ST_IRON,   DEV_T(TECH_TEMPLE_ASTROLOGY),           -1,    0,  275,    0,    0,  75, -1, -1},
-    /* 95 狂热          */ {BUILDING_TEMPLE_FANATICISM,            ST_IRON,   DEV_T(TECH_TEMPLE_MONOTHEISM),           -1,    0,  150,    0,    0,  60, -1, -1},
-    /* 96 狂热献祭      */ {BUILDING_TEMPLE_ZEALOTRY,              ST_IRON,   DEV_T(TECH_TEMPLE_FANATICISM),           -1,    0,  120,    0,    0,  60, -1, -1},
-    /* 97 献祭          */ {BUILDING_TEMPLE_SACRIFICE,             ST_IRON,   DEV_T(TECH_TEMPLE_FANATICISM),           -1,    0,  400,    0,    0, 100, -1, -1},
+    /* 88 造祭司        */ {BUILDING_TEMPLE_CREATE_PRIEST,         ST_BRONZE, DEV_NONE, -1,    0,  125,    0,    0,  50, SORT_ARMY, AT_PRIEST, BUILDING_TEMPLE},
+    /* 89 多神教        */ {BUILDING_TEMPLE_POLYTHEISM,            ST_TOOL,   DEV_NONE, -1,    0,  120,    0,    0,  50, -1, -1, BUILDING_TEMPLE},
+    /* 90 神秘主义      */ {BUILDING_TEMPLE_MYSTICISM,             ST_BRONZE, DEV_T(TECH_TEMPLE_POLYTHEISM),          -1,    0,  120,    0,    0,  50, -1, -1, BUILDING_TEMPLE},
+    /* 91 占星术        */ {BUILDING_TEMPLE_ASTROLOGY,             ST_BRONZE, DEV_NONE, -1,    0,  175,    0,    0,  50, -1, -1, BUILDING_TEMPLE},
+    /* 92 医学          */ {BUILDING_TEMPLE_MEDICINE,              ST_BRONZE, DEV_NONE, -1,    0,  150,    0,    0,  50, -1, -1, BUILDING_TEMPLE},
+    /* 93 一神教        */ {BUILDING_TEMPLE_MONOTHEISM,            ST_IRON,   DEV_T(TECH_TEMPLE_MYSTICISM),           -1,    0,  350,    0,    0,  75, -1, -1, BUILDING_TEMPLE},
+    /* 94 来生          */ {BUILDING_TEMPLE_AFTERLIFE,             ST_IRON,   DEV_T(TECH_TEMPLE_ASTROLOGY),           -1,    0,  275,    0,    0,  75, -1, -1, BUILDING_TEMPLE},
+    /* 95 狂热          */ {BUILDING_TEMPLE_FANATICISM,            ST_IRON,   DEV_T(TECH_TEMPLE_MONOTHEISM),           -1,    0,  150,    0,    0,  60, -1, -1, BUILDING_TEMPLE},
+    /* 96 狂热献祭      */ {BUILDING_TEMPLE_ZEALOTRY,              ST_IRON,   DEV_T(TECH_TEMPLE_FANATICISM),           -1,    0,  120,    0,    0,  60, -1, -1, BUILDING_TEMPLE},
+    /* 97 献祭          */ {BUILDING_TEMPLE_SACRIFICE,             ST_IRON,   DEV_T(TECH_TEMPLE_FANATICISM),           -1,    0,  400,    0,    0, 100, -1, -1, BUILDING_TEMPLE},
 };
 
 constexpr I32 ACTION_COUNT = static_cast<I32>(sizeof(kActions) / sizeof(kActions[0]));
@@ -362,12 +364,6 @@ I32 secondsToTicks(I32 seconds)
     return seconds * GAME_TPS;
 }
 
-// 该 sort 是否算「近战单位」（受近战攻击/护甲科技影响）
-bool isMeleeSort(I32 sort)
-{
-    return sort == SORT_ARMY || sort == SORT_FARMER;
-}
-
 } // namespace
 
 /*==========================================================================
@@ -426,6 +422,17 @@ bool Development::markTechnologyFinish(I32 action)
         stageChange();
     }
     return true;
+}
+
+void Development::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action)
+{
+    //动作所在的建筑可能在这一帧里已经被拆掉了，对象没了就不用管。
+    if (object.expired()) {
+        return;
+    }
+    //科技/解锁类动作记入位图，时代推进在 markTechnologyFinish 里一起完成；
+    //造人动作会被 markTechnologyFinish 直接忽略。
+    markTechnologyFinish(action);
 }
 
 I32 Development::getStage() const
@@ -518,17 +525,20 @@ Double Development::get_rate_Attack(I32 sort, I32 type, I32 armyClass, I32 attac
 I32 Development::get_addition_Attack(I32 sort, I32 type, I32 armyClass, I32 attackType) const
 {
     I32 result = 0;
-    if (!isMeleeSort(sort)) {
+    const bool isUnit = (sort == SORT_ARMY || sort == SORT_FARMER);
+    const bool isBuilding = (sort == SORT_BUILDING);
+    if (!isUnit && !isBuilding) {
         return 0;
     }
 
     if (attackType == ATTACKTYPE_SHOOT) {
-        // 炼金术：远程攻击 +1
+        // 炼金术：远程攻击 +1。作用对象是弓兵 / 弩炮 / 塔 / 战船，
+        // 所以建筑（塔）也要进这个分支，不能在前面把 SORT_BUILDING 挡掉。
         if (technology.has(TECH_GOVERNMENT_ALCHEMY)) {
             result += 1;
         }
         // 采石 / 攻城术：投石兵攻击 +1 各一次
-        if (sort == SORT_ARMY && type == AT_SLINGER) {
+        if (isUnit && type == AT_SLINGER) {
             if (technology.has(TECH_MARKET_STONE_UPGRADE)) {
                 result += 1;
             }
@@ -536,30 +546,33 @@ I32 Development::get_addition_Attack(I32 sort, I32 type, I32 armyClass, I32 atta
                 result += 1;
             }
         }
-        // 炼金术：火焰船攻击 +6（火帆船按近战处理时在下面加）
-        if (sort == SORT_ARMY && type == AT_FIRESAILBOAT
-            && technology.has(TECH_GOVERNMENT_ALCHEMY)) {
-            result += 6;
-        }
         return result;
     }
 
-    // 近战：工具锻造 +2、金属加工 +2、冶金 +3
-    if (sort == SORT_ARMY || sort == SORT_FARMER) {
-        if (technology.has(TECH_STOCK_UPGRADE_USETOOL)) {
-            result += 2;
-        }
-        if (technology.has(TECH_STOCK_UPGRADE_METALWORKING)) {
-            result += 2;
-        }
-        if (technology.has(TECH_STOCK_UPGRADE_METALLURGY)) {
-            result += 3;
-        }
+    // 近战：建筑没有近战攻击，只有单位吃这一套
+    if (!isUnit) {
+        return 0;
+    }
+
+    // 工具锻造 +2、金属加工 +2、冶金 +3
+    if (technology.has(TECH_STOCK_UPGRADE_USETOOL)) {
+        result += 2;
+    }
+    if (technology.has(TECH_STOCK_UPGRADE_METALWORKING)) {
+        result += 2;
+    }
+    if (technology.has(TECH_STOCK_UPGRADE_METALLURGY)) {
+        result += 3;
     }
     // 狂热献祭：村民攻击 +7
     if (sort == SORT_FARMER && type == FARMERTYPE_FARMER
         && technology.has(TECH_TEMPLE_ZEALOTRY)) {
         result += 7;
+    }
+    // 炼金术：火焰船额外 +6。火焰船是近战（范围伤害）单位，
+    // 不吃上面那条「远程 +1」，所以单独加在这里。
+    if (type == AT_FIRESAILBOAT && technology.has(TECH_GOVERNMENT_ALCHEMY)) {
+        result += 6;
     }
     (void)armyClass;
     return result;
@@ -773,30 +786,38 @@ bool Development::buildingActionAble(I32 buildingType, I32 actNum,
         return false;
     }
 
-    // 这个动作是否属于该建筑（表里没写建筑字段，用动作编号分段判断由内核保证；
-    // 这里只校验动作本身的前置条件）
+    // 1. 动作必须属于这座建筑：房子不能研究市场科技，兵营不能升时代。
+    if (rule->building != buildingType) {
+        return false;
+    }
 
-    // 1. 文明封锁
+    // 2. 文明封锁
     if (TechnologyBlocked(actNum)) {
         return false;
     }
 
-    // 2. 时代
+    // 3. 时代
     if (stage < rule->stage) {
         return false;
     }
 
-    // 3. 前置科技：已完成的科技必须包含规则要求的全部位
+    // 4. 前置科技：已完成的科技必须包含规则要求的全部位
     if (!technology.contains(rule->requireTech)) {
         return false;
     }
 
-    // 4. 前置建筑
+    // 5. 已经完成过的科技不能再做一次（否则会重复扣资源、重复升时代）。
+    //    造人动作不受这条限制，兵可以一直造。
+    if (rule->createSort < 0 && technology.has(actNum)) {
+        return false;
+    }
+
+    // 6. 前置建筑
     if (rule->requireBuilding >= 0 && !hasConstructedBuilding(rule->requireBuilding)) {
         return false;
     }
 
-    // 5. 资源
+    // 7. 资源
     if (wood < rule->wood || food < rule->food
         || stone < rule->stone || gold < rule->gold) {
         return false;
