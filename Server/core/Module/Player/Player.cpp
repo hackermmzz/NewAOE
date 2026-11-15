@@ -91,10 +91,10 @@ constexpr UpgradeRule kUpgradeRules[] = {
     //方阵兵 → 十夫长 → 百夫长
     {BUILDING_COLLAGE_UPGRADE_PHALANX,       SORT_ARMY, AT_HOPLITE,          AT_PHALANX,         true},
     {BUILDING_COLLAGE_UPGRADE_CENTURION,     SORT_ARMY, AT_PHALANX,          AT_CENTURION,       true},
-    //---- 城墙：已经砌好的跟着变 ----
+    //---- 城墙：只解锁更高级的城墙，已经砌好的不跟着变 ----
     {BUILDING_GRANARY_WALL,                  SORT_BUILDING, -1,                  BUILDING_SMALL_WALL,    false},
-    {BUILDING_GRANARY_WALL_UPDATE_1,         SORT_BUILDING, BUILDING_SMALL_WALL, BUILDING_MEDIUM_WALL,   true},
-    {BUILDING_GRANARY_WALL_UPDATE_2,         SORT_BUILDING, BUILDING_MEDIUM_WALL,BUILDING_FORTIFIED_WALL,true},
+    {BUILDING_GRANARY_WALL_UPDATE_1,         SORT_BUILDING, BUILDING_SMALL_WALL, BUILDING_MEDIUM_WALL,   false},
+    {BUILDING_GRANARY_WALL_UPDATE_2,         SORT_BUILDING, BUILDING_MEDIUM_WALL,BUILDING_FORTIFIED_WALL,false},
     //---- 箭塔：瞭望 → 警戒 → 防御 → 防御炮塔 ----
     {BUILDING_GRANARY_ARROWTOWER,            SORT_BUILDING, -1,                  BUILDING_WATCH_TOWER,   false},
     {BUILDING_GRANARY_ARROWTOWER_UPGRADE_1,  SORT_BUILDING, BUILDING_WATCH_TOWER,  BUILDING_SENTRY_TOWER,  true},
@@ -346,6 +346,12 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     }
     //记下这个科技/解锁动作：之后新建对象要按它决定实际等级
     finishedActions.insert(action);
+    //让科技模块把这一项记进位图（时代升级的推进也在里面）。
+    //内核如果已经先调过 Development，这里重复一次是无害的：markTechnologyFinish 幂等。
+    SafePtr<Development> science = playerScience.lock();
+    if(science != nullptr){
+        science->markTechnologyFinish(action);
+    }
     //场上已经存在的低级别对象直接升到新级别（棍棒兵→斧兵这种）
     upgradeObjectsForAction(action);
     //科技变了，血量/攻防/射程等缓存值重算。
@@ -427,11 +433,4 @@ void Player::tick(){
     purgeDestroyed(buildings);
     purgeDestroyed(buildingResources);
     purgeDestroyed(missiles);
-}
-I32 Player::getFinishBuildingCode(){
-    I32 result=0;
-    for(SafePtr<Building> tmp:buildings){
-        if(tmp->isConstructed())result|=(1<<(tmp->getType()));
-    }
-    return result;
 }
