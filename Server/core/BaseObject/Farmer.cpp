@@ -9,7 +9,7 @@ Farmer::Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type)
     this->resource = 0;
     //刚出生还没有在采任何资源，等采集指令下来再定
     this->resourceSort = -1;
-    //携带量：基础值 + 科技额外加成（见 getResourceHaveAddition）
+    //基础携带量；实际上限还要加上科技加成，见 getResourceHaveMax()
     this->resourceMax = FARMER_DEFAULT_CARRY;
     //一次能采多少，同样等采集指令下来再定
     this->quantity_GatherOnce = 0;
@@ -26,7 +26,9 @@ I32 Farmer::getResourceNowHave(){
 }
 
 I32 Farmer::getResourceHaveMax(){
-    return resourceMax;
+    //携带上限 = 基础值 + 科技加成（木工 / 采金 / 采石这类科技会加携带量）。
+    //每次都现算，不缓存 —— 科技一变上限就跟着变。
+    return resourceMax + getResourceHaveAddition();
 }
 
 I32 Farmer::getResourceHaveAddition(){
@@ -46,14 +48,18 @@ I32 Farmer::getQuantityGather(){
 }
 
 bool Farmer::isFullBackpack(){
-    return resource >= resourceMax + getResourceHaveAddition();
+    return resource >= getResourceHaveMax();
 }
 
 void Farmer::addResource(I32 quantity,I32 resourceSort){
     if(resourceSort != this->resourceSort){
-        return;
+        //换成采集另一种资源了：手里原来的资源直接丢掉，改采新的。
+        //不能像以前那样直接 return —— 那样农民切了资源类型之后永远采不进去。
+        resource = 0;
+        this->resourceSort = resourceSort;
     }
-    const I32 capacity = resourceMax + getResourceHaveAddition();
+    //上限要按「新的资源类型」算：不同资源的携带加成不一样
+    const I32 capacity = getResourceHaveMax();
     resource += quantity;
     if(resource > capacity){
         resource = capacity;
