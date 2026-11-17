@@ -5,13 +5,17 @@
 #include "Server/core/BaseObject/MoveObject.h"
 #include "Server/core/BaseObject/Resource.h"
 #include "Server/core/BaseObject/BloodHaver.h"
+#include "Server/core/BaseObject/Attacker.h"
 
-class Animal:public MoveObject, public Resource, public BloodHaver
+
+class Animal:public MoveObject, public Resource, public BloodHaver,public Attacker
 {
 protected:
 	I32 friendly;	//友好程度
 
 public:
 	Animal(I32 type,IVec2 detailPos);
-	I32 getFriendly();	
+	I32 getFriendly();
+	//被攻击时调用：被打死之后尸体才可以采集
+	void notifyAttacked() override;
 };

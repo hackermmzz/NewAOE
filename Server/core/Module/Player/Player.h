@@ -1,24 +1,27 @@
 #pragma once
 
 #include <array>
+#include <set>
 #include "Server/core/BaseObject/Army.h"
 #include "Server/core/BaseObject/Farmer.h"
 #include "Server/core/BaseObject/BuildingResource.h"
 #include "Server/core/BaseObject/Missile.h"
 #include "Server/core/Public/var/Sort.h"
-#include "Server/core/Public/config/CivilizationFeature.h"
 
 class Player{
 public:
     Player(I32 civilization, I32 teamID);
     void init(I32 playerID);
     //新建对象
-    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience , I32 playerRepresent);
-    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience , I32 playerRepresent,I32 type);
-    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience, I32 playerRepresent, I32 Percent);
-    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience , I32 playerRepresent ,I32 Percent);
+    Army*               newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience);
+    Farmer*             newFarmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
+    Building*           newBuilding(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
+    BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
     Missile*            newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
     //获取对象
+    //注意：资源型建筑（农田等，Sort 为 SORT_BUILDING_RESOURCE）只存在于
+    //buildingResources 中，不会出现在 buildings 里。需要遍历玩家全部建筑时，
+    //必须同时访问 getBuilding() 与 getBuildingResource()。
     vector<SafePtr<Army>>&              getArmy();
     vector<SafePtr<Farmer>>&            getFarmer();
     vector<SafePtr<Building>>&          getBuilding();
@@ -32,16 +35,32 @@ public:
     void removeMissile(I32 globalID);
     //获取玩家资源量
     I32             getResource(I32 resourceSort);          //传入资源种类，返回该资源的数量
-    array<I32,4>    getResource();              //以数组形式返回每种资源的数量，顺序为木材，粮食，石头，黄金。根据下标访问即可。
+    array<I32,4>    getResource();                          //以I32[4]数组形式返回每种资源的数量，顺序为木材，粮食，石头，黄金。根据下标访问即可。
     //改变玩家资源（加资源就用正，减资源就用负，返回是否成功，不成功不会扣除相应资源）
     bool changeResource(I32 resourceSort, I32 changeAmount);        //增减一种资源的量
     bool changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount); //增减所有资源的量(时候同时增减多种资源，不需要增减的资源填0即可)
+    //接收敌对阵营的对象，并将其编入我方阵营（用于该对象被我方祭司转换的情况）
+    //转化后对象的科技会改为跟随本玩家的 playerScience，不再保留原阵营的科技快照。
+    bool receiveBuilding(SafePtr<Building> building);
+    bool receiveArmy(SafePtr<Army> army);
+    bool receiveFarmer(SafePtr<Farmer> farmer);
+    bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
+    //本玩家的科技（由第一次 newXXX 时传入的 Development 记录，只读）
+    WeakPtr<Development> getPlayerScience() const;
+    //内核通知：某个建筑动作已成功完成。
+    //科技/解锁类动作会让本玩家所有对象的缓存数值（血量、攻防、射程等）失效，
+    //这里统一按新科技重算一遍；与科技无关的动作（比如造人）直接忽略。
+    //注意：内核应先让 Development 更新完科技状态，再调用本函数，否则重算到的还是旧值。
+    void notifyBuildingActionFinish(WeakPtr<Object> object, I32 action);
     void tick();
 private:
     //玩家身份状态信息
     I32 civilization;
     I32 teamID;
     I32 playerID;
+    //玩家科技。newArmy/newFarmer/... 会传入 Development，第一次拿到时记下来，
+    //供转化敌方单位等场合把对象的科技指向本玩家。
+    WeakPtr<Development> playerScience;
     //玩家资源信息
     array<I32,4> ResourceGroup;                    //玩家所持有的资源量，顺序为木材，粮食，石头，黄金。
     //玩家所持有的各种对象信息
@@ -50,4 +69,15 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
+    //已经完成过的科技/解锁类建筑动作，用来判断新建对象该给到哪一级
+    std::set<I32>                       finishedActions;
+    //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
+    void rememberPlayerScience(WeakPtr<Development> science);
+    //科技变化后，把本玩家名下需要跟随科技的对象的缓存数值重算一遍
+    //（只有 Army / Farmer / Building；投掷物和农田按建成时的科技定格）。
+    void refreshAllObjectScience();
+    //把场上属于「升级前那一级」的对象整体升到新一级（如棍棒兵→斧兵）
+    void upgradeObjectsForAction(I32 action);
+    //按已完成科技把请求的类型抬到实际可用的最高级别；已经是高级别的不会被降级。
+    I32 resolveCreateType(I32 sort, I32 type) const;
 };
