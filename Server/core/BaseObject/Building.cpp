@@ -153,8 +153,8 @@ Double Building::getDefenceShootAddition(){
     return defenceShoot - getDefenceShootBasic();
 }
 I32 Building::getAttackCircle(){
-    return playerScience.lock().get_speed_attack(sort,type,-1)[1];
+    return playerScience.lock()->get_speed_attack(sort,type,-1)[1];
 }
 I32 Building::getAttackInteval(){
-    return playerScience.lock().get_speed_attack(sort,type,-1)[0];
+    return playerScience.lock()->get_speed_attack(sort,type,-1)[0];
 }
