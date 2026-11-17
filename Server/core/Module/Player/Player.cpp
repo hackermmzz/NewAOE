@@ -341,14 +341,6 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     }
     //记下这个科技/解锁动作：之后新建对象要按它决定实际等级
     finishedActions.insert(action);
-    //让科技模块把这一项记进位图（时代推进也在里面）。
-    //内核也会直接调用 Development::notifyBuildingActionFinish，这里再转一次是为了
-    //保证「无论内核先通知哪边」，下面 refreshAllObjectScience 用到的都是新科技。
-    //markTechnologyFinish 幂等，重复调用没有副作用。
-    SafePtr<Development> science = playerScience.lock();
-    if(science != nullptr){
-        science->markTechnologyFinish(action);
-    }
     //场上已经存在的低级别对象直接升到新级别（棍棒兵→斧兵这种）
     upgradeObjectsForAction(action);
     //科技变了，血量/攻防/射程等缓存值重算。
