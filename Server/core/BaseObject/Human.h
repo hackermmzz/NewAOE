@@ -15,6 +15,10 @@ class Human:public MoveObject,public BloodHaver,public Attacker
 protected:
 	 WeakPtr<Development> playerScience;	//科技
 	 bool transported;	                    //是否被运输
+
+    //兵种大类（步兵/弓兵/骑兵/祭司/攻城/船），科技查询攻防加成时要用；
+    //非军队单位（农民）没有大类，统一按步兵处理。
+    virtual I32 getArmyClass() const;
 public:
     Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }
@@ -23,9 +27,7 @@ public:
     void setTransported(bool value);
     //按当前科技重算血量/速度/攻防/射程等缓存值
     void refreshByScience() override;
-    //兵种大类（步兵/弓兵/骑兵/祭司/攻城/船），科技查询攻防加成时要用；
-    //非军队单位（农民）没有大类，统一按步兵处理。
-    virtual I32 getArmyClass() const;
+
     //UI 显示用：基础值取 ObejctBaseValue，加成值 = 当前值 - 基础值
     Double getAttackBasic() override;
     Double getAttackAdditon() override;
@@ -33,5 +35,6 @@ public:
     Double getDefenceShootBasic() override;
     Double getDefenceCloseAddition() override;
     Double getDefenceShootAddition() override;
+    I32 getAttackCircle() override;
+    I32 getAttackInteval() override;
 };
-

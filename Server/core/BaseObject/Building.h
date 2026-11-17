@@ -36,6 +36,8 @@ public:
     Double getDefenceShootBasic() override;
     Double getDefenceCloseAddition() override;
     Double getDefenceShootAddition() override;
+    I32 getAttackCircle() override;
+    I32 getAttackInteval() override;
 protected:
     //100% 状态下的满血值 = 基础血量 × 血量加成 + 额外血量加成（结果为 0 时保底 1）
     Double computeFullBlood();

@@ -8,13 +8,13 @@ I32 StaticResourceProductSort(I32 type){
     switch(type){
     case STATICRES_Bush:
     case STATICRES_Fish:
-        return PRODUCTSORT_GRANARYFOOD;   //可以上交谷仓或市镇中心
+        return PRODUCTSORT_STOCKFOOD;   //可以上交谷仓或市镇中心
     case STATICRES_Stone:
         return PRODUCTSORT_STONE;
     case STATICRES_Gold:
         return PRODUCTSORT_GOLD;
     default:
-        return PRODUCTSORT_GRANARYFOOD;
+        return PRODUCTSORT_STOCKFOOD;
     }
 }
 }

@@ -122,3 +122,9 @@ void Human::refreshByScience(){
     minAttackRange = rangeBase.second
                    + science->get_addition_DisAttack(objectSort,objectType,armyClass,attackType);
 }
+I32 Human::getAttackCircle(){
+    return playerScience.lock().get_speed_attack(sort,type,getArmyClass())[1];
+}
+I32 Human::getAttackInteval(){
+    return playerScience.lock().get_speed_attack(sort,type,getArmyClass())[0];
+}

@@ -17,6 +17,7 @@ bool BloodHaver::isDie(){
     return false;
 }
 void BloodHaver::beHeal(Double heal){
+    if(currentBlood<=Double::Zero())return;
     currentBlood += heal;
     if(currentBlood > maxBlood){
         currentBlood = maxBlood;
