@@ -31,6 +31,17 @@ void Resource::decayResource(){
         cntLeft = Double::Zero();
     }
 }
+void Resource::decayResource(Double decayAmount){
+    //按调用方给的数量扣（采集、被破坏这类），同样不把剩余量扣成负数。
+    //非正数直接忽略：传 0 什么也不做，传负数没有意义。
+    if(decayAmount <= Double::Zero()){
+        return;
+    }
+    cntLeft -= decayAmount;
+    if(cntLeft < Double::Zero()){
+        cntLeft = Double::Zero();
+    }
+}
 bool Resource::isSurplus(){
     return cntLeft > Double::Zero();
 }
