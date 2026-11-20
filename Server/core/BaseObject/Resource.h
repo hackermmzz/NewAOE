@@ -19,7 +19,7 @@ public:
 	Double getCntLeft();
 	Double getMaxCnt();
     void decayResource();			//腐烂资源（按自身腐烂速度）
-    void decayResource(Double decayAmount);	//按指定数量减少资源（采集、破坏等），最少减到 0
+    void reduceResource(Double ResourceAmount);	//按指定数量减少资源（采集、破坏等），最少减到 0
 	bool isSurplus();				//资源是否还有剩余
 };
 

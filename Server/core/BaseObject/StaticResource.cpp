@@ -34,9 +34,8 @@ StaticRes::StaticRes(I32 type,IVec2 detailPos)
     //资源相关的数值
     maxCnt = ObjectBaseValue::getResourceBasicMaxCnt(SORT_STATICRES,type);
     cntLeft = maxCnt;
-    decayRate = ObjectBaseValue::getResourceDecayRate(SORT_STATICRES,type);
+    //decayRate =Double::Zero() /*ObjectBaseValue::getResourceDecayRate(SORT_STATICRES,type)*/;//静态资源不腐烂
     resourceSort = StaticResourceProductSort(type);
     gatherAble = true;
-
-    rebuildCrashBox();
+    //rebuildCrashBox();
 }

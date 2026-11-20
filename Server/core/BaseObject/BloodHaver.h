@@ -40,4 +40,7 @@ public:
 	//不会直接把残血单位给满上。调用前请先改好 maxBlood，再把旧值传进来。
 	void syncBloodAfterMaxChange(Double oldMaxBlood, Double oldCurrentBlood);
 	virtual void notifyAttacked();	//当被攻击时调用这个函数
+
+	virtual void refreshBlood();
+	virtual void refreshDefence();
 };
