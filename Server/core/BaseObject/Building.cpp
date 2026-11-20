@@ -143,10 +143,23 @@ void Building::refresh(){
 }
 void Building::refreshBlood(){
     SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr||isDie()){return;}
+    if(science == nullptr){return;}
     Double newmaxBlood=ObjectBaseValue::getBasicBlood(sort,type)*science->get_rate_Blood(sort,type)+science->get_addition_Blood(sort,type);
+    //构造时已经写过满血值；这里只在被清空过（异常路径）时补一次初始化
+    if(maxBlood<=Double::Zero()){
+        maxBlood=newmaxBlood;
+        currentBlood=newmaxBlood;
+        return;
+    }
+    //已经被打掉的不因上限变化而复活
+    if(currentBlood<=Double::Zero()){
+        maxBlood=newmaxBlood;
+        return;
+    }
     currentBlood+=newmaxBlood-maxBlood;
     maxBlood=newmaxBlood;
+    if(currentBlood>maxBlood)currentBlood=maxBlood;
+    if(currentBlood<Double::Zero())currentBlood=Double::Zero();
 }
 void Building::refreshDefence(){
     SafePtr<Development> science = playerScience.lock();

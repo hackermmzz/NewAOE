@@ -73,7 +73,30 @@ private:
     void refreshAllObjectScience();
 protected:
     I32 ObjectCanImprove(I32 sort,I32 type);
-    I32 __OBJECTREALLYTYPE__[15]={FARMERTYPE_SMALL_SAILING,FARMERTYPE_SMALL_TRADE_BOAT,FARMERTYPE_LIGHT_TRANSPORT,AT_CLUBMAN,AT_SHORT_SWORDSMAN,AT_IMPROVED_BOWMAN,AT_CAVALRY,AT_CHARIOT,AT_WAR_ELEPHANT,AT_STONE_THROWER,AT_BALLISTA,AT_SCOUT_SHIP,AT_HOPLITE,BUILDING_WATCH_TOWER,BUILDING_SMALL_WALL};
+    // __OBJECTREALLYTYPE__[code]：某个升级槽位目前已经升到的级别。
+    // 初值必须是该槽位的「底层类型」，redirectObjectType 靠
+    // __OBJECTREALLYTYPE__[code] <= type 判断有没有升过级。
+    // 编号分配：兵种/农民 0~13，箭塔 20，城墙 21（建筑与兵种不共用槽位）。
+    static const I32 __OBJECTREALLYTYPE_SIZE__ = 22;
+    I32 __OBJECTREALLYTYPE__[__OBJECTREALLYTYPE_SIZE__]={
+        FARMERTYPE_SMALL_SAILING,   //0  渔船链
+        FARMERTYPE_SMALL_TRADE_BOAT,//1  商船链
+        FARMERTYPE_LIGHT_TRANSPORT, //2  运输船链
+        AT_CLUBMAN,                 //3  棍棒兵链
+        AT_SHORT_SWORDSMAN,         //4  短剑兵链
+        AT_IMPROVED_BOWMAN,         //5  强弓兵链
+        AT_HORSE_ARCHER,            //6  弓骑兵链
+        AT_CAVALRY,                 //7  骑兵链
+        AT_CHARIOT,                 //8  战车链
+        AT_WAR_ELEPHANT,            //9  战象链
+        AT_STONE_THROWER,           //10 投石车链
+        AT_BALLISTA,                //11 弩炮链
+        AT_SCOUT_SHIP,              //12 战船链
+        AT_HOPLITE,                 //13 方阵兵链
+        0,0,0,0,0,0,                //14~19 预留
+        BUILDING_WATCH_TOWER,       //20 箭塔链
+        BUILDING_SMALL_WALL         //21 城墙链
+    };
     I32 redirectObjectType(I32 sort,I32 type);
     void changeObjectType(I32 sort,I32 code);
 };

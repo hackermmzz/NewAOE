@@ -376,6 +376,8 @@ bool __BuildingActionIsScience(I32 BuildingAction){
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;
     this->teamID = teamID;
+    //init() 之前就 newXXX 会把未初始化的 playerID 写进对象归属，先给个非法值
+    this->playerID = -1;
     ResourceGroup = ObjectBaseValue::getStartResource(civilization);
 }
 
@@ -442,31 +444,51 @@ vector<SafePtr<Missile>>& Player::getMissile(){return missiles;}
 
 void Player::removeArmy(I32 globalID){
     for(auto a = armies.begin();a!=armies.end();++a){
-        if((*a)->getSN()==globalID)armies.erase(a);
+        if(a->IsNull())continue;
+        if((*a)->getSN()==static_cast<U64>(globalID)){
+            armies.erase(a);
+            return;     //erase 之后迭代器失效，不能继续 ++a
+        }
     }
 }
 
 void Player::removeFarmer(I32 globalID){
     for(auto a = farmers.begin();a!=farmers.end();++a){
-        if((*a)->getSN()==globalID)farmers.erase(a);
+        if(a->IsNull())continue;
+        if((*a)->getSN()==static_cast<U64>(globalID)){
+            farmers.erase(a);
+            return;     //erase 之后迭代器失效，不能继续 ++a
+        }
     }
 }
 
 void Player::removeBuilding(I32 globalID){
     for(auto a = buildings.begin();a!=buildings.end();++a){
-        if((*a)->getSN()==globalID)buildings.erase(a);
+        if(a->IsNull())continue;
+        if((*a)->getSN()==static_cast<U64>(globalID)){
+            buildings.erase(a);
+            return;     //erase 之后迭代器失效，不能继续 ++a
+        }
     }
 }
 
 void Player::removeBuildingResource(I32 globalID){
     for(auto a = buildingResources.begin();a!=buildingResources.end();++a){
-        if((*a)->getSN()==globalID)buildingResources.erase(a);
+        if(a->IsNull())continue;
+        if((*a)->getSN()==static_cast<U64>(globalID)){
+            buildingResources.erase(a);
+            return;     //erase 之后迭代器失效，不能继续 ++a
+        }
     }
 }
 
 void Player::removeMissile(I32 globalID){
     for(auto a = missiles.begin();a!=missiles.end();++a){
-        if((*a)->getSN()==globalID)missiles.erase(a);
+        if(a->IsNull())continue;
+        if((*a)->getSN()==static_cast<U64>(globalID)){
+            missiles.erase(a);
+            return;     //erase 之后迭代器失效，不能继续 ++a
+        }
     }
 }
 
@@ -592,102 +614,102 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
 
     case BUILDING_GRANARY_WALL_UPDATE_1:            // 升级为中级城墙（青铜）
     RealType=BUILDING_MEDIUM_WALL;
-    Sort=SORT_BUILDING,Code=14;
+    Sort=SORT_BUILDING,Code=21;
     break;
     case BUILDING_GRANARY_WALL_UPDATE_2:            // 升级为高级城墙（铁器）
     RealType=BUILDING_FORTIFIED_WALL;
-    Sort=SORT_BUILDING,Code=14;
+    Sort=SORT_BUILDING,Code=21;
     break;
     case BUILDING_GRANARY_ARROWTOWER_UPGRADE_1:     // 升级为警戒箭塔（青铜）
-    RealType==BUILDING_SENTRY_TOWER;
-    Sort=SORT_BUILDING,Code=13;
+    RealType=BUILDING_SENTRY_TOWER;
+    Sort=SORT_BUILDING,Code=20;
     break;
     case BUILDING_GRANARY_ARROWTOWER_UPGRADE_2:     // 升级为防御箭塔（铁器）
-    RealType==BUILDING_GUARD_TOWER;
-    Sort=SORT_BUILDING,Code=13;
+    RealType=BUILDING_GUARD_TOWER;
+    Sort=SORT_BUILDING,Code=20;
     break;
     case BUILDING_GRANARY_ARROWTOWER_UPGRADE_3:     // 升级为防御炮塔（铁器，需弹道学）
-    RealType==BUILDING_BALLISTA_TOWER;
-    Sort=SORT_BUILDING,Code=13;
+    RealType=BUILDING_BALLISTA_TOWER;
+    Sort=SORT_BUILDING,Code=20;
     break;
     case BUILDING_ARMYCAMP_UPGRADE_CLUBMAN:         // 升级为斧兵（石器）
-    RealType==BUILDING_BALLISTA_TOWER;
+    RealType=AT_AXEMAN;
     Sort=SORT_ARMY,Code=3;
     break;
     case BUILDING_ARMYCAMP_UPGRADE_BROADSWORD:      // 升级为阔剑兵（青铜）
-    RealType==AT_BROAD_SWORDSMAN;
+    RealType=AT_BROAD_SWORDSMAN;
     Sort=SORT_ARMY,Code=4;
     break;
     case BUILDING_ARMYCAMP_UPGRADE_LONGSWORD:       // 升级为长剑兵（青铜）
-    RealType==AT_LONG_SWORDSMAN;
+    RealType=AT_LONG_SWORDSMAN;
     Sort=SORT_ARMY,Code=4;
     break;
     case BUILDING_ARMYCAMP_UPGRADE_LEGION:          // 升级为军团（铁器，需狂热）
-    RealType==AT_LEGION;
+    RealType=AT_LEGION;
     Sort=SORT_ARMY,Code=4;
     break;
     case BUILDING_RANGE_UPGRADE_COMPOSITE_BOW:      // 升级为复合弓（青铜）
-    RealType==AT_COMPOSITE_BOWMAN;
+    RealType=AT_COMPOSITE_BOWMAN;
     Sort=SORT_ARMY,Code=5;
     break;
     case BUILDING_RANGE_UPGRADE_HORSE_ARCHER:       // 升级为重装马弓手（铁器，需锁子甲弓兵）
-    RealType==AT_HEAVY_HORSE_ARCHER;
+    RealType=AT_HEAVY_HORSE_ARCHER;
     Sort=SORT_ARMY,Code=6;
     break;
     case BUILDING_STABLE_UPGRADE_CAVALRY:           // 升级为重装骑兵（铁器）
-    RealType==AT_HEAVY_CAVALRY;
+    RealType=AT_HEAVY_CAVALRY;
     Sort=SORT_ARMY,Code=7;
     break;
     case BUILDING_STABLE_UPGRADE_CATAPHRACT:        // 升级为铁甲骑兵（铁器，需冶金）
-    RealType==AT_CATAPHRACT;
+    RealType=AT_CATAPHRACT;
     Sort=SORT_ARMY,Code=7;
     break;
     case BUILDING_STABLE_UPGRADE_CHARIOT:           // 升级为刀轮战车（铁器，需贵族）
-    RealType==AT_CHARIOT;
+    RealType=AT_SCYTHECHARIOT;
     Sort=SORT_ARMY,Code=8;
     break;
     case BUILDING_STABLE_UPGRADE_ELEPHANT:          // 升级为装甲战象（铁器，需铁盾）
-    RealType==AT_ARMORED_ELEPHANT;
+    RealType=AT_ARMORED_ELEPHANT;
     Sort=SORT_ARMY,Code=9;
     break;
     case BUILDING_DOCK_UPGRADE_SAILING:             // 升级为大型渔船（船）（青铜）
-    RealType==FARMERTYPE_BIG_SAILING;
+    RealType=FARMERTYPE_BIG_SAILING;
     Sort=SORT_FARMER,Code=0;
     break;
     case BUILDING_DOCK_UPGRADE_TRADEBOAT:           // 升级为大型商船（船）（青铜）
-    RealType==FARMERTYPE_BIG_TRADE_BOAT;
+    RealType=FARMERTYPE_BIG_TRADE_BOAT;
     Sort=SORT_FARMER,Code=1;
     break;
     case BUILDING_DOCK_UPGRADE_TRANSPORT:           // 升级为重型运输船（铁器）
-    FARMERTYPE_HEAVY_TRANSPORT;
+    RealType=FARMERTYPE_HEAVY_TRANSPORT;
     Sort=SORT_FARMER,Code=2;
     break;
     case BUILDING_DOCK_UPGRADE_WAR_GALLEY:          // 升级为桨帆船（青铜）
-    RealType==AT_WAR_GALLEY;
+    RealType=AT_WAR_GALLEY;
     Sort=SORT_ARMY,Code=12;
     break;
     case BUILDING_DOCK_UPGRADE_TRIREME:             // 升级为三列桨帆船（铁器）
-    RealType==AT_TRIREME;
+    RealType=AT_TRIREME;
     Sort=SORT_ARMY,Code=12;
     break;
     case BUILDING_SIEGE_UPGRADE_CATAPULT:           // 升级为中型投石车（铁器）
-    RealType==AT_CATAPULT;
+    RealType=AT_CATAPULT;
     Sort=SORT_ARMY,Code=10;
     break;
     case BUILDING_SIEGE_UPGRADE_HEAVYCATAPULT:      // 升级为重型投石车（铁器，需攻城术）
-    RealType==AT_HEAVY_CATAPULT;
+    RealType=AT_HEAVY_CATAPULT;
     Sort=SORT_ARMY,Code=10;
     break;
     case BUILDING_SIEGE_UPGRADE_HELEPOLIS:          // 升级为重弩炮（铁器，需工艺）
-    RealType==AT_HELEPOLIS;
+    RealType=AT_HELEPOLIS;
     Sort=SORT_ARMY,Code=11;
     break;
     case BUILDING_COLLAGE_UPGRADE_PHALANX:          // 升级为十夫长（铁器）
-    RealType==AT_PHALANX;
+    RealType=AT_PHALANX;
     Sort=SORT_ARMY,Code=13;
     break;
     case BUILDING_COLLAGE_UPGRADE_CENTURION:        // 升级为百夫长（铁器，需贵族政治）
-    RealType==AT_CENTURION;
+    RealType=AT_CENTURION;
     Sort=SORT_ARMY,Code=13;
     break;
     };
@@ -752,10 +774,10 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
         case BUILDING_WATCH_TOWER:
         case BUILDING_SENTRY_TOWER:
         case BUILDING_GUARD_TOWER:
-            return 13;
+            return 20;
         case BUILDING_SMALL_WALL:
         case BUILDING_MEDIUM_WALL:
-            return 14;
+            return 21;
         default:
             return -1;
         }
@@ -834,13 +856,15 @@ void Player::tick(){
 }
 I32 Player::redirectObjectType(I32 sort,I32 type){
         I32 tmp=ObjectCanImprove(sort,type);
-        if(tmp==-1||__OBJECTREALLYTYPE__[tmp]<=type)return type;
+        if(tmp<0||tmp>=__OBJECTREALLYTYPE_SIZE__)return type;
+        if(__OBJECTREALLYTYPE__[tmp]<=type)return type;
         return __OBJECTREALLYTYPE__[tmp];
 }
 void Player::changeObjectType(I32 sort,I32 code){
         switch(sort){
             case SORT_BUILDING:{
                 for(SafePtr<Building>& tmp:buildings){
+                    if(tmp.IsNull())continue;
                     I32 a=ObjectCanImprove(tmp->getSort(),tmp->getType());
                     if(code==a&&code>=0)tmp->changeType(redirectObjectType(tmp->getSort(),tmp->getType()));
                 }
@@ -848,15 +872,19 @@ void Player::changeObjectType(I32 sort,I32 code){
             }
             case SORT_ARMY:{
                 for(SafePtr<Army>& tmp:armies){
+                    if(tmp.IsNull())continue;
                     I32 a=ObjectCanImprove(tmp->getSort(),tmp->getType());
                     if(code==a&&code>=0)tmp->changeType(redirectObjectType(tmp->getSort(),tmp->getType()));
                 }
+                return;
             }
             case SORT_FARMER:{
                 for(SafePtr<Farmer>& tmp:farmers){
+                    if(tmp.IsNull())continue;
                     I32 a=ObjectCanImprove(tmp->getSort(),tmp->getType());
                     if(code==a&&code>=0)tmp->changeType(redirectObjectType(tmp->getSort(),tmp->getType()));
                 }
+                return;
             }
             default:return;
         }
@@ -916,10 +944,10 @@ I32 Player::ObjectCanImprove(I32 sort,I32 type){
         case BUILDING_WATCH_TOWER:
         case BUILDING_SENTRY_TOWER:
         case BUILDING_GUARD_TOWER:
-            return 13;
+            return 20;
         case BUILDING_SMALL_WALL:
         case BUILDING_MEDIUM_WALL:
-            return 14;
+            return 21;
         default:
             return -1;
         }

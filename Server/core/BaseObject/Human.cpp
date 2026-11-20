@@ -93,10 +93,26 @@ void Human::refresh(){
 }
 void Human::refreshBlood(){
     SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr||isDie()){return;}
+    if(science == nullptr){return;}
     Double newmaxBlood=ObjectBaseValue::getBasicBlood(sort,type)*science->get_rate_Blood(sort,type)+science->get_addition_Blood(sort,type);
+    //第一次刷新（构造时 maxBlood/currentBlood 都是 0）直接按满血初始化。
+    //这里不能用 isDie() 拦截：新单位出生时血量就是 0，一拦就永远停在 0，
+    //后面的 refreshDefence/Speed/Attack 也会跟着被拦掉。
+    if(maxBlood<=Double::Zero()){
+        maxBlood=newmaxBlood;
+        currentBlood=newmaxBlood;
+        return;
+    }
+    //已经被打死的对象不因上限变化而复活
+    if(currentBlood<=Double::Zero()){
+        maxBlood=newmaxBlood;
+        return;
+    }
+    //上限涨多少、当前血量跟着涨多少，残血单位不会被科技直接奶满
     currentBlood+=newmaxBlood-maxBlood;
     maxBlood=newmaxBlood;
+    if(currentBlood>maxBlood)currentBlood=maxBlood;
+    if(currentBlood<Double::Zero())currentBlood=Double::Zero();
 }
 void Human::refreshDefence(){
     SafePtr<Development> science = playerScience.lock();

@@ -23,6 +23,6 @@ Double BuildingResource::getMaxCnt(WeakPtr<Development> playerScience){
 
 bool BuildingResource::isGatherAble(){
     //没建成之前不能采（结算进度用 Percent，不依赖 isConstructed() 的惰性标志）
-    if(isConstructed())return false;
+    if(!isConstructed())return false;
     return gatherAble;
 }
