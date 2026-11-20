@@ -11,7 +11,7 @@ Attacker::Attacker()
     , minAttackRange(0)
     , attackCircle(ATTACK_CIRCLE_FRAMES)
     , attackCurrentTick(0)
-    , attackInteval(0)
+    , attackInteval(1)
 {
 }
 

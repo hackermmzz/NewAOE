@@ -66,5 +66,8 @@ Animal::Animal(I32 type,IVec2 detailPos)
 
 I32 Animal::getFriendly(){return friendly;}
 
-//被打死之后尸体才可以采
-void Animal::notifyAttacked(){if(isDie())gatherAble = true;}
+//被打死之后尸体才可以采；已经采空（cntLeft 为 0）的不能再被打开，
+//否则农民会围着一具空尸体反复采集。
+void Animal::notifyAttacked(){
+    if(isDie() && cntLeft > Double::Zero())gatherAble = true;
+}

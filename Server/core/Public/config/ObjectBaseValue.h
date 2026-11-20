@@ -123,6 +123,15 @@ class ObjectBaseValue{
         BaseBlood_Building,     // SORT_BUILDING_RESOURCE
         BaseBlood_Army          // SORT_ARMY
     };
+    //投掷物飞行速度（细节坐标/秒）。数据表没有这一列，按「比弓箭手快一个量级、
+    //越重的弹道越慢」估的：投掷物不改方向，速度只决定飞完这段距离要多久。
+    constexpr static const I32 MissileSpeed[NUMBER_MISSILE]={
+        6000,   // 矛
+        7000,   // 箭
+        4000,   // 圆石
+        3000,   // 巨石
+        5000    // 弩炮
+    };
     //对象名
     constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={"房屋","谷仓","市镇中心","仓库","农场","市场","瞭望箭塔","警戒箭塔","防御箭塔","防御炮塔","军营","马厩","靶场","船坞","攻城武器厂","学院","政府中心","世界奇观","神庙","初级城墙","中级城墙","高级城墙"};
     constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={"浆果丛","石矿","金矿","鱼群"};
@@ -323,6 +332,10 @@ class ObjectBaseValue{
     }
     //基础移动速度，单位：细节坐标/秒
     static Double getBasicSpeed(I32 sort,I32 type){
+        //投掷物没有 UnitValue 表，速度单独一张表（否则恒为 0，箭飞不出去）
+        if(sort==SORT_MISSILE){
+            return inRange(type,NUMBER_MISSILE) ? Double(MissileSpeed[type]) : Double::Zero();
+        }
         const UnitValue* value=findUnitValue(sort,type);
         return value==nullptr ? Double::Zero() : Double(value->speed);
     }

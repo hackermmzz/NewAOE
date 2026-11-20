@@ -28,7 +28,7 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     }
     this->block_pos = blockPos;
     //建筑给的是区块坐标，细节坐标按区块边长换算出来
-    this->detail_pos = IVec2(static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.x)),static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.y)));
+    this->detail_pos = IVec2(blockPos.x * BLOCK_SIDE_DETAIL,blockPos.y * BLOCK_SIDE_DETAIL);
     vision = ObjectBaseValue::getBasicVision(sort,type);
     this->playerScience = playerScience;
     this->constructed = false;
@@ -39,7 +39,9 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     // 内部血量统一按「满血」存放，建造进度只在读取时折算（见 getMaxBlood / getBlood），
     maxBlood = computeFullBlood();
     currentBlood = maxBlood;
-    refreshDefence();
+    //血量/防御/攻击/射程/攻防间隔一次性按当前科技算好。
+    //只刷防御的话，塔的 attackInteval 会停在构造初值，要等下一次科技动作才更新。
+    refresh();
     //碰撞盒按基础数值表建立
     rebuildCrashBox();
 }
@@ -142,9 +144,12 @@ void Building::refresh(){
     refreshAttack();
 }
 void Building::refreshBlood(){
+    //科技为空时按基础值算，和 Human 保持同一口径
+    Double newmaxBlood=ObjectBaseValue::getBasicBlood(sort,type);
     SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr){return;}
-    Double newmaxBlood=ObjectBaseValue::getBasicBlood(sort,type)*science->get_rate_Blood(sort,type)+science->get_addition_Blood(sort,type);
+    if(science != nullptr){
+        newmaxBlood=newmaxBlood*science->get_rate_Blood(sort,type)+science->get_addition_Blood(sort,type);
+    }
     //构造时已经写过满血值；这里只在被清空过（异常路径）时补一次初始化
     if(maxBlood<=Double::Zero()){
         maxBlood=newmaxBlood;
@@ -162,24 +167,31 @@ void Building::refreshBlood(){
     if(currentBlood<Double::Zero())currentBlood=Double::Zero();
 }
 void Building::refreshDefence(){
+    if(isDie()){return;}
+    const std::pair<Double,Double> base=ObjectBaseValue::getBasicDefence(getSort(),getType());
     SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr||isDie()){return;}
-    defenceClose=ObjectBaseValue::getBasicDefence(getSort(),getType()).first*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_CLOSE)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_CLOSE);
-    defenceShoot=ObjectBaseValue::getBasicDefence(getSort(),getType()).second*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_SHOOT)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_SHOOT);
-
+    if(science == nullptr){
+        defenceClose=base.first;
+        defenceShoot=base.second;
+        return;
+    }
+    defenceClose=base.first*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_CLOSE)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_CLOSE);
+    defenceShoot=base.second*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_SHOOT)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_SHOOT);
 }
 void Building::refreshAttack(){
+    if(isDie()){return;}
     SafePtr<Development> science = playerScience.lock();
-    if(science == nullptr||isDie()){return;}
     const std::pair<Double,Double> attackBase =ObjectBaseValue::getBasicAttack(sort,type);
     I32 armyClass=-1;
     if(attackBase.first > Double::Zero()){
-        attackClose = attackBase.first*science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE)+ Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE));
+        attackClose = science==nullptr ? attackBase.first
+                    : attackBase.first*science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE)+ Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE));
     }else{
         attackClose = Double::Zero();
     }
     if(attackBase.second > Double::Zero()){
-        attackShoot = attackBase.second * science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT) + Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT));
+        attackShoot = science==nullptr ? attackBase.second
+                    : attackBase.second * science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT) + Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT));
     }else{
         attackShoot = Double::Zero();
     }
@@ -187,8 +199,14 @@ void Building::refreshAttack(){
     attackType = attackBase.second > Double::Zero() ? ATTACKTYPE_SHOOT : ATTACKTYPE_CLOSE;
     rangeEffect = rangeBase.first;
     range = rangeBase.first > 0;
-    minAttackRange = rangeBase.second+science->get_addition_DisAttack(sort,type,armyClass,attackType);
-    attackCircle=playerScience.lock()->get_speed_attack(sort,type,armyClass)[1];
-    attackInteval=playerScience.lock()->get_speed_attack(sort,type,armyClass)[0];
+    minAttackRange = rangeBase.second;
+    if(science != nullptr){
+        minAttackRange += science->get_addition_DisAttack(sort,type,armyClass,attackType);
+        attackCircle=science->get_speed_attack(sort,type,armyClass)[1];
+        attackInteval=science->get_speed_attack(sort,type,armyClass)[0];
+    }
+    //间隔至少 1 帧，避免内核做取模/除法时除零
+    if(attackInteval<=0){attackInteval=1;}
+    if(attackCircle<0){attackCircle=0;}
 }
 

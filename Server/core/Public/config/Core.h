@@ -15,6 +15,10 @@ constexpr I32 GAME_TPS=25;
 //一块所占的细节坐标长宽
 constexpr Double BLOCKSIDELENGTH=Double(1000);
 
+//同一长度的整数版本。坐标换算（细节 <-> 区块）一律用它做整数乘除：
+//既快，也不受定点数乘除实现的影响。
+constexpr I32 BLOCK_SIDE_DETAIL=1000;
+
 //贴身攻击距离（区块）：攻击范围为 1 时，必须和对方相邻才能打到
 constexpr I32 DISTANCE_ATTACK_CLOSE=1;
 

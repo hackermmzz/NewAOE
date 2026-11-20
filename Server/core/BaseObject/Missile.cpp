@@ -20,7 +20,7 @@ Missile::Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,W
     range = (type == Missile_Boulders);
     rangeEffect = range ? 1 : 0;
     minAttackRange = 0;
-    attackInteval = 0;
+    attackInteval = 1;   //投掷物只结算一次，但别留 0：内核做取模/除法会崩
     attackCurrentTick = 0;
     speed = ObjectBaseValue::getBasicSpeed(SORT_MISSILE,type);
     vision = 0;

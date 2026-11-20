@@ -1,13 +1,11 @@
 #pragma once
 
 #include <array>
-#include <set>
 #include "Server/core/BaseObject/Army.h"
 #include "Server/core/BaseObject/Farmer.h"
 #include "Server/core/BaseObject/BuildingResource.h"
 #include "Server/core/BaseObject/Missile.h"
 #include "Server/core/Public/var/Sort.h"
-#include <map>
 
 class Player{
 public:
@@ -64,8 +62,6 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
-    //已经完成过的科技/解锁类建筑动作，用来判断新建对象该给到哪一级
-    std::set<I32>                       finishedActions;
     //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
     void rememberPlayerScience(WeakPtr<Development> science);
     //科技变化后，把本玩家名下需要跟随科技的对象的缓存数值重算一遍

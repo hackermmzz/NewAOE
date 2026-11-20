@@ -41,8 +41,22 @@ void Farmer::addResource(I32 quantity,I32 resourceSort){
 }
 
 void Farmer::transportHuman(SafePtr<Human> human){
+    if(human.IsNull()){return;}
+    //已经上过船的不重复装
+    if(human->getTransported()){return;}
+    //容量按船型给，农民/渔船/商船为 0（不能载人）
+    if(static_cast<I32>(humanTransport.size()) >= getTransportMax()){return;}
     humanTransport.push_back(human);
     human->setTransported(true);
+}
+
+void Farmer::releasePassengers(){
+    //运输船被击沉或卸载时调用。必须把乘客的 transported 复位，
+    //否则他们会一直认为自己还在船上，再也上不了别的船。
+    for(SafePtr<Human>& human : humanTransport){
+        if(!human.IsNull()){human->setTransported(false);}
+    }
+    humanTransport.clear();
 }
 
 I32 Farmer::getTransportMax(){

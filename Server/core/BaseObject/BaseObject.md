@@ -370,6 +370,10 @@ refreshBlood() → refreshDefence() → refreshSpeed() → refreshAttack()
 新值 = 基础值(数值表) × 比例加成(Development) + 数值加成(Development)
 ```
 
+**科技为空时按基础值算**（比例 1、加成 0），不是直接返回。
+否则 `maxBlood` 停在 0、`isDie()` 恒真，四个刷新会连锁失效 —— 单位一出生就是死的。
+目前 `Human` / `Building` 的四个 refresh 都按这个口径处理。
+
 ### 7.2 攻击 / 防御的「基础 + 加成」拆分
 
 `Human` / `Building` 覆写了 6 个 getter：
@@ -400,7 +404,13 @@ refreshBlood() → refreshDefence() → refreshSpeed() → refreshAttack()
 
 `Resource::reduceResource()` 在采空时关掉 `gatherAble`，采集方据此换目标。
 
-### 7.4 名称 / 视野 / 碰撞盒的统一来源
+### 7.4 投掷物的速度
+
+`Missile` 不走 `UnitValue` 表（那里只有兵种/农民/动物），速度单独来自
+`ObjectBaseValue::MissileSpeed[NUMBER_MISSILE]`（数据表没有这一列，按「越重的弹道越慢」估的）。
+早期漏了这张表，`getBasicSpeed(SORT_MISSILE, …)` 恒返回 0，投掷物会停在发射点。
+
+### 7.5 名称 / 视野 / 碰撞盒的统一来源
 
 三者都来自 `ObjectBaseValue`：
 
@@ -435,13 +445,13 @@ rebuildCrashBox();   // 内部查 getCrashBox(sort, type)
 | # | 问题 | 位置 |
 |---|---|---|
 | 1 | `Development::get_speed_attack` 尚未实现，`Human.cpp` / `Building.cpp` 现在**编译不过**，等科技模块合入 | `Human.cpp:149-150`、`Building.cpp:191-192` |
-| 2 | `Double` 的乘除目前恒为 0（`Fixed<I64,I64,32>` 中间值溢出，库级问题），所有 `基础值 × 比例` 都会算成 0 | `Server/core/type.h` |
+| 2 | `Double` 的乘除目前恒为 0（`Fixed<I64,I64,32>` 中间值溢出，库级问题），所有 `基础值 × 比例` 都会算成 0。坐标换算已改用整数（`BLOCK_SIDE_DETAIL`）绕开，但伤害/血量仍受影响 | `Server/core/type.h` |
 | 3 | `StaticRes` 的 `rebuildCrashBox()` 被注释掉，`crashBox` 未初始化，参与碰撞会读到垃圾 | `StaticResource.cpp` |
 | 4 | `BuildingResource` 构造时 `sort` 还是 `SORT_BUILDING`，防御按建筑表算，改 `sort` 后没有重算 | `BuildingResource.cpp` |
 | 5 | `Human::refresh()` 里保留了一大段注释掉的旧实现（约 60 行），可清理 | `Human.cpp` |
 | 6 | `Object.cpp` include 了 `Player.h` 但没使用 | `Object.cpp` |
 | 7 | `getSN()` 与 `getglobalNum()` 完全重复 | `Object.h` |
-| 8 | `Object` 缺虚析构函数（当前无害） | `Object.h` |
+| 8 | ~~`Object` 缺虚析构~~ —— 已补 `virtual ~Object() = default;` | `Object.h` |
 | 9 | 单位改造/建筑类型的槽位划分见 `Player.md`，本模块只保证 `changeType` 能正确响应 | — |
 | 10 | `Human` 构造里 `setPos` 早于 `type` 赋值，那一次建盒读到未初始化的 `type`（越界 → 空盒，随后被派生类覆盖） | `Human.cpp` |
 

@@ -25,6 +25,8 @@ protected:
 	static U64 globalSNIndex;			//给全局对象分配SN
 public:
 	Object();
+	//SafePtr<Object> 会通过基类指针释放派生对象，必须让析构是虚的
+	virtual ~Object() = default;
 	I32 getSort();
 	I32 getType();
 	IVec2 getBlockPos();

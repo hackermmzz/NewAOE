@@ -22,5 +22,6 @@ public:
     bool isFullBackpack();              //是否采摘满了
     I32 getTransportMax();              //获取运输的人数上限
     void addResource(I32 quantity,I32 resourceSort);      //增加手持的资源
-    void transportHuman(SafePtr<Human> human);            //运输人员
+    void transportHuman(SafePtr<Human> human);            //运输人员（有容量上限）
+    void releasePassengers();                             //卸载全部乘客（船被击沉/手动卸载时调用）
   };

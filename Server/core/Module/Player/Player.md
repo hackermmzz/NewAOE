@@ -148,6 +148,8 @@ bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
 
 - **不拷贝科技快照**。早期实现是把对方的 `Development` 拷一份锁死，现在改成直接指向我方科技，招降来的单位会跟着我方研究一起变强。
 - **不经过 `redirectObjectType`**。所以「我只能造骑兵，但招降了一个重骑兵」，那个重骑兵保持重骑兵，不会因为我的科技低而被降级。
+- **改完科技会立刻 `refresh()`**。否则招降来的单位要等下一次科技动作才按新主人的科技更新，
+  期间数值还是对面玩家的。
 
 ---
 
@@ -274,14 +276,12 @@ notifyBuildingActionFinish(object, action)
 | # | 问题 | 说明 |
 |---|---|---|
 | 1 | 依赖 `Development::get_speed_attack` | `Human` / `Building` 的 `refreshAttack` 用到它，科技模块合入前 `BaseObject` 编译不过 |
-| 2 | `finishedActions` 是死代码 | 只有注释块里的旧实现引用它；现役代码既不写入也不读取，可删 |
-| 3 | `tick()` 为空 | 不再清理空槽位 |
-| 4 | 大段注释掉的旧实现 | `Player.cpp` 里保留了 `UpgradeRule` 表、`upgradeObjectsForAction`、`resolveCreateType`、旧版 `ObjectCanImprove`，约 120 行，可清理 |
-| 5 | `__OBJECTREALLYTYPE__` 用了双下划线前缀 | 双下划线是 C++ 保留标识符；`__BuildingActionIsCreatHuman` 同样问题，且少个 `e`（应为 `Create`） |
-| 6 | `removeXXX(I32)` 与 `SN(U64)` 类型不一致 | 比较时 `I32` 被提升为 `U64`，负数会变成极大值；实际不会传负数，但类型上不严谨 |
-| 7 | `refreshAllObjectScience` 不刷投掷物与农田 | 有意为之：投掷物发射时定值，农田按建成时科技定格 |
-| 8 | 城墙升级会把已有城墙一起换掉 | `BUILDING_GRANARY_WALL_UPDATE_*` 走的是 `changeObjectType`，场上初级墙会直接变成中级墙；帝国时代原作里城墙科技只解锁新建。**需确认是否符合预期** |
-| 9 | `ObjectCanImprove` / `changeObjectType` 命名不统一 | 一个驼峰一个下划线，属风格问题 |
+| 2 | `tick()` 为空 | 不再清理空槽位 |
+| 3 | `__OBJECTREALLYTYPE__` 用了双下划线前缀 | 双下划线是 C++ 保留标识符；`__BuildingActionIsCreatHuman` 同样问题，且少个 `e`（应为 `Create`） |
+| 4 | `removeXXX(I32)` 与 `SN(U64)` 类型不一致 | 比较时 `I32` 被提升为 `U64`，负数会变成极大值；实际不会传负数，但类型上不严谨 |
+| 5 | `refreshAllObjectScience` 不刷投掷物与农田 | 有意为之：投掷物发射时定值，农田按建成时科技定格 |
+| 6 | 城墙升级会把已有城墙一起换掉 | `BUILDING_GRANARY_WALL_UPDATE_*` 走的是 `changeObjectType`，场上初级墙会直接变成中级墙；帝国时代原作里城墙科技只解锁新建。**需确认是否符合预期** |
+| 7 | `ObjectCanImprove` / `changeObjectType` 命名不统一 | 一个驼峰一个下划线，属风格问题 |
 
 ---
 

@@ -2,11 +2,9 @@
 #include "Server/core/Public/config/ObjectBaseValue.h"
 
 BuildingResource::BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Building(type,blockPos,playerScience,percent){
+    //sort 要在 Building 构造之后才改（建筑编号与资源型建筑共用同一张表，
+    //但查询加成时按 sort 区分）。type/block_pos/playerScience 已经由 Building 构造设好。
     sort = SORT_BUILDING_RESOURCE;
-    this->type = type;
-    this->block_pos = blockPos;
-    this->playerScience = playerScience;
-    //this->Percent = Percent;该参数意义不明，先不实现
     this->cntLeft= getMaxCnt(playerScience);            //构造时为满资源
     decayRate= Double::Zero();	                        //腐烂速度为0。不会腐烂
     gatherAble= true;	                                //可采集
