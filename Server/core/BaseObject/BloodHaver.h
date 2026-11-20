@@ -35,12 +35,8 @@ public:
 	virtual Double getDefenceShootBasic();
 	virtual Double getDefenceCloseAddition();   //加成值 = 当前值 - 基础值
 	virtual Double getDefenceShootAddition();
-	//血量上限变化后同步当前血量，保持「缺口」不变：
-	//新当前血量 = 新上限 - (旧上限 - 旧当前血量)，即上限涨多少、当前血量也涨多少，
-	//不会直接把残血单位给满上。调用前请先改好 maxBlood，再把旧值传进来。
-	void syncBloodAfterMaxChange(Double oldMaxBlood, Double oldCurrentBlood);
 	virtual void notifyAttacked();	//当被攻击时调用这个函数
-
 	virtual void refreshBlood();
 	virtual void refreshDefence();
+	virtual void refresh();
 };

@@ -22,14 +22,14 @@ void Object::setPos(const IVec2&pos){
     block_pos.y=detail_pos.y/BLOCKSIDELENGTH;
     rebuildCrashBox();
 }
-void Object::setType(I32 newType){
+void Object::changeType(I32 newType){
     if(type == newType){return;}
     type = newType;
     //名称、视野都跟具体类型绑着
     name = ObjectBaseValue::getObjectName(sort,newType);
     vision = ObjectBaseValue::getBasicVision(sort,newType);
     //血量/攻防/速度等按新类型重算，再按新类型重建碰撞盒
-    refreshByScience();
+    refresh();
     rebuildCrashBox();
 }
 void Object::rebuildCrashBox(){
@@ -51,9 +51,9 @@ bool Object::checkCrash(const Object*obj){
     return otherIsRect ? crashBoxCircle.IsCrash(obj->crashBoxRect) : crashBoxCircle.IsCrash(obj->crashBoxCircle);
 }
 void Object::tick(){/*待完成*/}
-void Object::refreshByScience(){/*默认实现：公有资源、投掷物等没有跟随科技的缓存值，重算时什么都不用做。*/}
 void Object::setBelong(I32 playerID,I32 teamID){
     if(playerID>=0)this->playerID = playerID;
     if(teamID>=0)this->teamID = teamID;
 }
 std::pair<I32,I32> Object::getBelong(){return std::make_pair(playerID,teamID);}
+void Object::refresh(){return;}

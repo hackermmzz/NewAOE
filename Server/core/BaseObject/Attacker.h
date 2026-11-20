@@ -27,4 +27,5 @@ public:
 	I32 getCurrentAttackTick(); //获取当前进行到多少帧了
 	virtual I32 getAttackInteval();		//获取攻击间隔
 	void resetAttackTick(); 	//重置攻击帧数
+	virtual void refreshAttack();
 }; 

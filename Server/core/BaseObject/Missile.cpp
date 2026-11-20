@@ -13,7 +13,6 @@ Missile::Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,W
     this->attacker=attacker;
     this->attackee=attackee;
     this->playerScience=playerScience;
-
     attackType = ATTACKTYPE_SHOOT;
     attackClose = Double::Zero();
     attackShoot = Double(attack);
@@ -25,16 +24,13 @@ Missile::Missile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,W
     attackCurrentTick = 0;
     speed = ObjectBaseValue::getBasicSpeed(SORT_MISSILE,type);
     vision = 0;
-
     //攻击者/目标可能在这一帧里已经被删掉了，取不到位置就退回起点，不能直接解引用
     SafePtr<Object> from = attacker.lock();
     SafePtr<Object> to = attackee.lock();
     const IVec2 startPos = (from != nullptr) ? from->getDetailPos() : IVec2();
     setPos(startPos);
     targetDetailPos = (to != nullptr) ? to->getDetailPos() : startPos;
-
     //设置名称
     name = ObjectBaseValue::getObjectName(SORT_MISSILE,type);
-
     rebuildCrashBox();
 }

@@ -33,18 +33,14 @@ Animal::Animal(I32 type,IVec2 detailPos)
     //动物不属于任何玩家，明确标成 -1（Object 的构造函数不负责这些字段）
     playerID = -1;
     teamID = -1;
-
     setPos(detailPos);
-
     vision = ObjectBaseValue::getBasicVision(SORT_ANIMAL,type);
     name = ObjectBaseValue::getObjectName(SORT_ANIMAL,type);
     friendly = AnimalFriendly(type);
-
     maxBlood = ObjectBaseValue::getBasicBlood(SORT_ANIMAL,type);
     currentBlood = maxBlood;
     defenceClose = Double::Zero();
     defenceShoot = Double::Zero();
-
     attackType = ATTACKTYPE_CLOSE;
     attackClose = ObjectBaseValue::getBasicAttack(SORT_ANIMAL,type).first;
     attackShoot = Double::Zero();
@@ -68,13 +64,7 @@ Animal::Animal(I32 type,IVec2 detailPos)
     rebuildCrashBox();
 }
 
-I32 Animal::getFriendly(){
-    return friendly;
-}
+I32 Animal::getFriendly(){return friendly;}
 
 //被打死之后尸体才可以采
-void Animal::notifyAttacked(){
-    if(isDie()){
-        gatherAble = true;
-    }
-}
+void Animal::notifyAttacked(){if(isDie())gatherAble = true;}

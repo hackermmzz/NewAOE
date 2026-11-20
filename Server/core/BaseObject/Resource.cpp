@@ -27,11 +27,15 @@ void Resource::decayResource(){
 void Resource::reduceResource(Double ResourceAmount){
     if(ResourceAmount <= Double::Zero()){return;}
     cntLeft -=ResourceAmount;
-    if(cntLeft < Double::Zero()){
+    if(cntLeft <=Double::Zero()){
         cntLeft = Double::Zero();
         gatherAble=false;
     }
 }
 bool Resource::isSurplus(){
     return cntLeft > Double::Zero();
+}
+void Resource::clear(){
+    cntLeft=Double::Zero();
+    gatherAble=false;
 }

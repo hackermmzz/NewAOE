@@ -11,7 +11,7 @@ Double BloodHaver::getDefence(I32 attackType){
     return attackType == ATTACKTYPE_SHOOT ? defenceShoot : defenceClose;
 }
 bool BloodHaver::isDie(){
-    if(currentBlood <= Double::Zero()){
+    if(getBlood()<= Double::Zero()){
         return true;
     }
     return false;
@@ -45,24 +45,6 @@ Double BloodHaver::getDefenceShootAddition(){
     return Double::Zero();
 }
 void BloodHaver::notifyAttacked(){}
-
-void BloodHaver::syncBloodAfterMaxChange(Double oldMaxBlood, Double oldCurrentBlood){
-    if(oldMaxBlood <= Double::Zero()){
-        //旧上限无效：说明这个对象构造时还没写过血量，按满血初始化
-        currentBlood = maxBlood;
-        return;
-    }
-    if(oldCurrentBlood <= Double::Zero()){
-        //已经死掉的对象，不因为上限变化而复活
-        currentBlood = Double::Zero();
-        return;
-    }
-    //上限涨多少，当前血量就涨多少，缺口（旧上限-旧血量）保持不变
-    currentBlood = oldCurrentBlood + (maxBlood - oldMaxBlood);
-    if(currentBlood > maxBlood){
-        currentBlood = maxBlood;
-    }
-    if(currentBlood < Double::Zero()){
-        currentBlood = Double::Zero();
-    }
-}
+void BloodHaver::refreshBlood(){return;}
+void BloodHaver::refreshDefence(){return;}
+void BloodHaver::refresh(){refreshBlood();refreshDefence();}

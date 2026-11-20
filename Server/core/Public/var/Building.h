@@ -133,7 +133,7 @@ enum BuildingAction
     BUILDING_DOCK_UPGRADE_SAILING,             // 升级为大型渔船（船）（青铜）
 
     BUILDING_DOCK_CREATE_TRADEBOAT,            // 造商船（石器）
-    BUILDING_DOCK_UPGRADE_TRADEBOAT,           // 升级为商船（船）（青铜）
+    BUILDING_DOCK_UPGRADE_TRADEBOAT,           // 升级为大型商船（船）（青铜）
 
     BUILDING_DOCK_CREATE_TRANSPORT,            // 造运输船（工具）
     BUILDING_DOCK_UPGRADE_TRANSPORT,           // 升级为重型运输船（铁器）
