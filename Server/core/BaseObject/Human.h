@@ -15,7 +15,6 @@ class Human:public MoveObject,public BloodHaver,public Attacker
 protected:
 	WeakPtr<Development> playerScience;	//科技
 	bool transported;	                    //是否被运输
-    virtual I32 getArmyClass() const;
 public:
     Human(I32 sort,IVec2 detailPos,WeakPtr<Development> playerScience);
     void setPlayerScience( WeakPtr<Development> science ){ this->playerScience = science; }

@@ -126,7 +126,7 @@ class ObjectBaseValue{
         BaseBlood_Army          // SORT_ARMY
     };
     //静态资源碰撞盒边长：1×1 区块 = 1000 细节坐标（与 Object::BlockSideDetail 一致）
-    constexpr static const I32 StaticResCrashSide=1000;
+    constexpr static const I32 StaticResCrashSide=BLOCKSIDELENGTH;
     //投掷物飞行速度（细节坐标/秒）。数据表没有这一列，按「比弓箭手快一个量级、
     //越重的弹道越慢」估的：投掷物不改方向，速度只决定飞完这段距离要多久。
     constexpr static const I32 MissileSpeed[NUMBER_MISSILE]={
