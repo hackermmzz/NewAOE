@@ -51,6 +51,10 @@ target_sources(newaoe_core INTERFACE
     "${CMAKE_CURRENT_LIST_DIR}/Module/Development/development.h"
     "${CMAKE_CURRENT_LIST_DIR}/Module/Map/map.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Module/Map/map.h"
+
+    # ---- 配置数据（Excel 解析出的单位/科技数值，ObjectBaseValue 运行时读取） ----
+    "${CMAKE_CURRENT_LIST_DIR}/Public/config/unit_attribute.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Public/config/unit_attribute.h"
 )
 
 target_include_directories(newaoe_core INTERFACE

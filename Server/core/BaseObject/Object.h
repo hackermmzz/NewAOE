@@ -24,6 +24,11 @@ protected:
 	};
 	static U64 globalSNIndex;			//给全局对象分配SN
 public:
+	//一块的边长（细节坐标）。坐标换算（细节 <-> 区块）一律用它做整数乘除：
+	//既快，也不受定点数乘除实现的影响。
+	//（Core.h 由主程序员维护、不允许改动，所以这个常量放在 Object 里。）
+	static constexpr I32 BlockSideDetail=1000;
+
 	Object();
 	//SafePtr<Object> 会通过基类指针释放派生对象，必须让析构是虚的
 	virtual ~Object() = default;

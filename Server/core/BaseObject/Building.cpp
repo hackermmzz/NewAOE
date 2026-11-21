@@ -28,7 +28,7 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     }
     this->block_pos = blockPos;
     //建筑给的是区块坐标，细节坐标按区块边长换算出来
-    this->detail_pos = IVec2(blockPos.x * BLOCK_SIDE_DETAIL,blockPos.y * BLOCK_SIDE_DETAIL);
+    this->detail_pos = IVec2(blockPos.x * Object::BlockSideDetail,blockPos.y * Object::BlockSideDetail);
     vision = ObjectBaseValue::getBasicVision(sort,type);
     this->playerScience = playerScience;
     //建造进度夹到 [0,100]：外部传负值会让血量折算成负数、传超过 100 没有意义

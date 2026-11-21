@@ -19,8 +19,8 @@ U64 Object::getSN(){return SN;}
 void Object::setPos(const IVec2&pos){
     detail_pos = pos;
     //坐标换算用整数除法：不经过定点数，精度与性能都更稳
-    block_pos.x=detail_pos.x/BLOCK_SIDE_DETAIL;
-    block_pos.y=detail_pos.y/BLOCK_SIDE_DETAIL;
+    block_pos.x=detail_pos.x/BlockSideDetail;
+    block_pos.y=detail_pos.y/BlockSideDetail;
     rebuildCrashBox();
 }
 void Object::changeType(I32 newType){

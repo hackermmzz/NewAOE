@@ -419,7 +419,25 @@ refreshBlood() → refreshDefence() → refreshSpeed() → refreshAttack()
 `ObjectBaseValue::MissileSpeed[NUMBER_MISSILE]`（数据表没有这一列，按「越重的弹道越慢」估的）。
 早期漏了这张表，`getBasicSpeed(SORT_MISSILE, …)` 恒返回 0，投掷物会停在发射点。
 
-### 7.5 名称 / 视野 / 碰撞盒的统一来源
+### 7.5 数值来源：默认表 + unit_attribute
+
+`ObjectBaseValue` 里的 `constexpr` 表只是**默认值**。首次查询时会复制一份到
+`RuntimeTables`，再用 `Public/config/unit_attribute.h` 里由 Excel 解析出来的变量覆盖
+（`CLUBMAN_HP`、`CLUBMAN_SPEED`、`WATCH_TOWER_ATTACK` …）。
+
+几个约定：
+
+- **没有解析就退回默认表**：`unit_attribute` 的变量默认全是 0，`fillFromUnitAttribute`
+  用 `CLUBMAN_HP <= 0` 判断「Excel 还没解析」并直接跳过，不会出现全 0 数值。
+- **解析晚于首次查询也能生效**：`rtMutable()` 记了一个哨兵，`CLUBMAN_HP` 变化时自动重建表，
+  所以不强制「先 Parse 再建对象」。
+- **单位换算**：Excel 的速度是「区块/秒」，表里存「细节坐标/秒」，用
+  `DetailPerSecond()` 做 `×1000`；攻击间隔是「秒」，表里存帧，用 `TicksFromSeconds()` 做 `×GAME_TPS`。
+  两者都用整数移位实现，绕开当前 `Double` 乘法溢出（否则会算成 0）。
+- **覆盖范围**：37 个兵种 + 村民 + 6 种船 + 4 座塔 + 城镇中心/房屋/兵营的血量。
+  其余（动物、投掷物、静态资源、其他建筑、碰撞盒尺寸）Excel 里没有，继续用默认表。
+
+### 7.6 名称 / 视野 / 碰撞盒的统一来源
 
 三者都来自 `ObjectBaseValue`：
 
