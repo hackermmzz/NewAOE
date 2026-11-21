@@ -36,7 +36,12 @@ public:
     bool changeResource(I32 resourceSort, I32 changeAmount);        //增减一种资源的量
     bool changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount); //增减所有资源的量(时候同时增减多种资源，不需要增减的资源填0即可)
     //接收敌对阵营的对象，并将其编入我方阵营（用于该对象被我方祭司转换的情况）
-    //转化后对象的科技会改为跟随本玩家的 playerScience
+    //转化后对象的科技会改为跟随本玩家的 playerScience，并立即按我方科技重算数值。
+    //
+    //【调用约定】调用方必须先调原玩家的 removeXXX 把对象摘掉，再调这里的 receiveXXX。
+    //Player 之间互不可见，无法自己从对方容器里删除；不先摘除会让同一对象同时挂在
+    //两个玩家的容器里，双方都会刷新它，删除时也各删各的。
+    //注意：资源型建筑（农田）只能走 receiveBuildingResource，传给 receiveBuilding 会被拒绝。
     bool receiveBuilding(SafePtr<Building> building);
     bool receiveArmy(SafePtr<Army> army);
     bool receiveFarmer(SafePtr<Farmer> farmer);

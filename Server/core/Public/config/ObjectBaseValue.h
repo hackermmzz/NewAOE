@@ -123,6 +123,8 @@ class ObjectBaseValue{
         BaseBlood_Building,     // SORT_BUILDING_RESOURCE
         BaseBlood_Army          // SORT_ARMY
     };
+    //静态资源碰撞盒边长：1×1 区块 = 1000 细节坐标（与 Core.h 的 BLOCK_SIDE_DETAIL 一致）
+    constexpr static const I32 StaticResCrashSide=1000;
     //投掷物飞行速度（细节坐标/秒）。数据表没有这一列，按「比弓箭手快一个量级、
     //越重的弹道越慢」估的：投掷物不改方向，速度只决定飞完这段距离要多久。
     constexpr static const I32 MissileSpeed[NUMBER_MISSILE]={
@@ -542,6 +544,11 @@ class ObjectBaseValue{
     }
     //碰撞盒 first=碰撞盒类型(CrashBoxType),second=碰撞盒尺寸（圆形为半径，矩形为边长，单位：细节坐标）
     static pair<I32,I32> getCrashBox(I32 sort,I32 type){
+        //静态资源占 1×1 区块，按矩形碰撞盒处理（detail_pos 当作左上角）。
+        //不这样做的话会落到下面的「圆形半径 0」，等于资源完全不挡路。
+        if(sort==SORT_STATICRES){
+            return std::make_pair(static_cast<I32>(BOX_RECT),StaticResCrashSide);
+        }
         if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
             const BuildingValue* value=findBuildingValue(type);
             if(value==nullptr)return std::make_pair(static_cast<I32>(BOX_RECT),0);

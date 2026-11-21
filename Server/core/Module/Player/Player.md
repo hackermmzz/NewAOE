@@ -149,6 +149,14 @@ bool receiveBuildingResource(SafePtr<BuildingResource> buildingResource);
 - **改完科技会立刻 `refresh()`**。否则招降来的单位要等下一次科技动作才按新主人的科技更新，
   期间数值还是对面玩家的。
 
+**调用约定（内核必须遵守）**：先调原玩家的 `removeXXX` 把对象摘掉，再调这里的 `receiveXXX`。
+`Player` 之间互不可见，没法自己从对方容器里删除；不先摘除的话，同一个对象会同时挂在
+两个玩家的容器里 —— 双方都会刷新它，删除时各删各的，`getBelong()` 也只反映最后一次写入。
+
+**资源型建筑只能走 `receiveBuildingResource`**：`SafePtr` 只支持向上转型，
+`receiveBuilding` 拿到 `SORT_BUILDING_RESOURCE` 会直接返回 `false`（否则农田会被塞进
+`buildings`，之后 `removeBuildingResource` 找不到它）。
+
 ---
 
 ## 6. 升级机制（本模块的核心）

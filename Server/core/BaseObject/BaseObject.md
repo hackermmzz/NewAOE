@@ -299,6 +299,7 @@ void Object::changeType(I32 newType);   // sort 不变，只换 type
   - `getMaxBlood()`：建成返回 `maxBlood`；施工中返回 `maxBlood × Percent / 100`，且**保底 1 点**（进度 0 的建筑不能一落地就死）。
   - `getBlood()`：建成返回 `currentBlood`；施工中返回 `getMaxBlood() - (maxBlood - currentBlood)`，即保持「已损失量」不变。
 - `build(percent)` 是**累加**的（传本次推进量），上限截到 100 并把 `constructed` 置真。
+- 构造时传入的 `Percent` 会被夹到 `[0,100]`：负值按 0 处理（血量保底 1 点），超过 100 视为建成。
 - 因为内部一直是满血，`build(100)` 之后读数自动变满血 —— 完工即满血，不需要额外处理。
 
 **注意：** `isConstructed()` 用 `Percent >= 100` 判定，`constructed` 只是缓存。
@@ -336,6 +337,9 @@ void Object::changeType(I32 newType);   // sort 不变，只换 type
 
 - 中立，恒可采（`gatherAble = true`），不腐烂。
 - `resourceSort` 按类型映射到 `PRODUCTSORT_STOCKFOOD / STONE / GOLD`。
+- 碰撞盒：`getCrashBox(SORT_STATICRES, …)` 返回 **1×1 区块的矩形**（边长 `StaticResCrashSide = 1000`），
+  即浆果丛/矿会挡路。**前提是构造时传的 `detail_pos` 是矩形的左上角**（和建筑一致），
+  如果内核传的是中心点，矩形会向右下偏半格。
 
 ---
 
@@ -451,7 +455,7 @@ rebuildCrashBox();   // 内部查 getCrashBox(sort, type)
 |---|---|---|
 | 1 | `Development::get_speed_attack` 尚未实现，`Human.cpp` / `Building.cpp` 现在**编译不过**，等科技模块合入 | `Human.cpp:149-150`、`Building.cpp:191-192` |
 | 2 | `Double` 的乘除目前恒为 0（`Fixed<I64,I64,32>` 中间值溢出，库级问题），所有 `基础值 × 比例` 都会算成 0。坐标换算已改用整数（`BLOCK_SIDE_DETAIL`）绕开，但伤害/血量仍受影响 | `Server/core/type.h` |
-| 3 | `StaticRes` 的 `rebuildCrashBox()` 被注释掉，`crashBox` 未初始化，参与碰撞会读到垃圾 | `StaticResource.cpp` |
+| 3 | ~~`StaticRes` 碰撞盒未初始化~~ —— 实际由构造里的 `setPos()` 建好（形状/尺寸已改为 1×1 区块矩形）；`StaticResource.cpp` 里那行注释掉的 `rebuildCrashBox()` 只是冗余 | `StaticResource.cpp` |
 | 4 | `BuildingResource` 构造时 `sort` 还是 `SORT_BUILDING`，防御按建筑表算，改 `sort` 后没有重算 | `BuildingResource.cpp` |
 | 5 | `Human::refresh()` 里保留了一大段注释掉的旧实现（约 60 行），可清理 | `Human.cpp` |
 | 6 | `Object.cpp` include 了 `Player.h` 但没使用 | `Object.cpp` |

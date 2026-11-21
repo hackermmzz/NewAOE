@@ -185,6 +185,10 @@ bool Player::changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 chan
     return true;
 }
 
+//---- 转化（祭司招降）----
+//约定：调用方必须先把对象从原玩家那里摘掉（removeXXX），再调这里的 receiveXXX。
+//Player 之间互不可见，无法自己把对象从对方容器里删除；不先摘除的话，
+//同一个对象会同时挂在两个玩家的容器里，双方都会刷新它、删除时各删各的。
 bool Player::receiveArmy(SafePtr<Army> army){
     if(army == nullptr)return false;
     if(army->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
@@ -199,6 +203,10 @@ bool Player::receiveArmy(SafePtr<Army> army){
 }
 bool Player::receiveBuilding(SafePtr<Building> building){
     if(building == nullptr)return false;
+    //资源型建筑（农田）必须走 receiveBuildingResource：它要进 buildingResources 容器，
+    //否则 removeBuildingResource、采集判定都找不到它。SafePtr 只支持向上转型，
+    //这里没法替调用方转成 SafePtr<BuildingResource>，直接拒绝并让调用方改走对应接口。
+    if(building->getSort()==SORT_BUILDING_RESOURCE)return false;
     if(building->getBelong().second==this->teamID)return false;//同阵营对象禁止转换
     building->setBelong(playerID,teamID);
     building->setPlayerScience(playerScience);
@@ -382,6 +390,9 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     break;
     };
     if(Sort<0)return;
+    //前提：Development 保证同一条升级链上的完成通知按「低 -> 高」到达。
+    //这里直接覆盖槽位，如果低级别的通知晚于高级别到达，会把槽位写低，
+    //导致之后新建的对象只能升到较低级别（科技模块负责保证顺序）。
     __OBJECTREALLYTYPE__[Code]=RealType;
     changeObjectType(Sort,Code);
 }

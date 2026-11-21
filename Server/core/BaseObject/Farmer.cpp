@@ -30,10 +30,15 @@ I32 Farmer::getQuantityGather(){return quantity_GatherOnce;}
 bool Farmer::isFullBackpack(){return resource >= getResourceHaveMax();}
 
 void Farmer::addResource(I32 quantity,I32 resourceSort){
+    //注意 quantity 同时充当「一次采集量」：采集指令不必单独设 quantity_GatherOnce。
+    //resourceSort 用的是 RESOURCESORT_*（木材/食物/石头/黄金），
+    //和 Resource 基类里的 PRODUCTSORT_*（采集物能上交到哪里）不是同一套枚举，不要混用。
     if(resourceSort != this->resourceSort){//换成采集另一种资源了：手里原来的资源直接丢掉，改采新的。
         resource = 0;
         this->resourceSort = resourceSort;
     }
+    //一次采多少由本次传入的数量决定（切换资源类型时通常传 0，不会把已记录的量清零）
+    if(quantity > 0){quantity_GatherOnce = quantity;}
     //上限要按「新的资源类型」算：不同资源的携带加成不一样
     const I32 capacity = getResourceHaveMax();
     resource += quantity;

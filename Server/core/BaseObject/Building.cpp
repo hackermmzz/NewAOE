@@ -31,11 +31,13 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     this->detail_pos = IVec2(blockPos.x * BLOCK_SIDE_DETAIL,blockPos.y * BLOCK_SIDE_DETAIL);
     vision = ObjectBaseValue::getBasicVision(sort,type);
     this->playerScience = playerScience;
-    this->constructed = false;
-    if(percent>=100)this->constructed = true;
+    //建造进度夹到 [0,100]：外部传负值会让血量折算成负数、传超过 100 没有意义
+    this->Percent=percent;
+    if(this->Percent<0)this->Percent=0;
+    if(this->Percent>100)this->Percent=100;
+    this->constructed = (this->Percent>=100);
     //设置名称
     name = ObjectBaseValue::getObjectName(sort,type);
-    this->Percent=percent;
     // 内部血量统一按「满血」存放，建造进度只在读取时折算（见 getMaxBlood / getBlood），
     maxBlood = computeFullBlood();
     currentBlood = maxBlood;
