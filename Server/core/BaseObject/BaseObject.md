@@ -306,6 +306,11 @@ void Object::changeType(I32 newType);   // sort 不变，只换 type
 
 `isMatchResourceType(productSort)`：市镇中心接受一切，谷仓只收食物，仓库收食物/木/石/金。
 
+**建筑攻击**：只有箭塔/炮塔有攻击，数值在 `ObjectBaseValue::BuildingAttack[]` 里，
+按对应弓兵取值（瞭望塔=弓兵 3、警戒塔=强弓兵 4、防御塔=复合弓兵 5、防御炮塔=弩炮 40），
+溅射一律为 0。`getBasicAttack` / `getBasicAttackRange` / `getAttackInterval`
+对 `SORT_BUILDING` 走这张表。
+
 ### `BuildingResource`（农田）
 
 - 构造时先把 `sort` 改成 `SORT_BUILDING_RESOURCE`。

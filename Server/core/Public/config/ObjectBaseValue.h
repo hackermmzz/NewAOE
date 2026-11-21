@@ -254,6 +254,40 @@ class ObjectBaseValue{
         /* 中级城墙    */ { 0, 1000},
         /* 高级城墙    */ { 0, 1000}
     };
+    //建筑的攻击数值。目前只有箭塔/炮塔有攻击，数值按对应弓兵取值：
+    //  瞭望箭塔 = 弓兵、警戒箭塔 = 强弓兵、防御箭塔 = 复合弓兵、防御炮塔 = 弩炮。
+    //溅射一律为 0：塔打的是单体，不继承弩炮的范围伤害。
+    struct BuildingAttackValue{
+        I32 attackShoot;    // 远程攻击
+        I32 attackRange;    // 攻击距离：区块
+        I32 splash;         // 范围伤害半径：区块，0 表示无溅射
+        I32 attackTicks;    // 攻击间隔：帧
+    };
+    // 下标为 BUILDING_*
+    constexpr static const BuildingAttackValue BuildingAttack[BUILDING_TYPE_MAXNUM]={
+        /* 房屋        */ {  0, 0, 0,  0},
+        /* 谷仓        */ {  0, 0, 0,  0},
+        /* 市镇中心    */ {  0, 0, 0,  0},
+        /* 仓库        */ {  0, 0, 0,  0},
+        /* 农场        */ {  0, 0, 0,  0},
+        /* 市场        */ {  0, 0, 0,  0},
+        /* 瞭望箭塔    */ {  3, 5, 0, 35},
+        /* 警戒箭塔    */ {  4, 6, 0, 35},
+        /* 防御箭塔    */ {  5, 7, 0, 35},
+        /* 防御炮塔    */ { 40, 9, 0, 75},
+        /* 军营        */ {  0, 0, 0,  0},
+        /* 马厩        */ {  0, 0, 0,  0},
+        /* 靶场        */ {  0, 0, 0,  0},
+        /* 船坞        */ {  0, 0, 0,  0},
+        /* 攻城武器厂  */ {  0, 0, 0,  0},
+        /* 学院        */ {  0, 0, 0,  0},
+        /* 政府中心    */ {  0, 0, 0,  0},
+        /* 世界奇观    */ {  0, 0, 0,  0},
+        /* 神庙        */ {  0, 0, 0,  0},
+        /* 初级城墙    */ {  0, 0, 0,  0},
+        /* 中级城墙    */ {  0, 0, 0,  0},
+        /* 高级城墙    */ {  0, 0, 0,  0}
+    };
 
     // 枚举越界保护：所有查表都先过一遍，避免下标写错时读到别的对象的数据。
     static bool inRange(I32 value,I32 count){
@@ -274,6 +308,9 @@ class ObjectBaseValue{
     }
     static const BuildingValue* findBuildingValue(I32 type){
         return inRange(type,BUILDING_TYPE_MAXNUM) ? &BuildingBase[type] : nullptr;
+    }
+    static const BuildingAttackValue* findBuildingAttackValue(I32 type){
+        return inRange(type,BUILDING_TYPE_MAXNUM) ? &BuildingAttack[type] : nullptr;
     }
     static const UnitValue* findUnitValue(I32 sort,I32 type){
         switch(sort){
@@ -475,18 +512,31 @@ class ObjectBaseValue{
     }
     //基础攻击力 first=近战,second=远程
     static std::pair<Double,Double> getBasicAttack(I32 sort,I32 type){
+        //建筑只有远程攻击（目前只有箭塔/炮塔有值）
+        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return std::make_pair(Double::Zero(),value==nullptr?Double::Zero():Double(value->attackShoot));
+        }
         const UnitValue* value=findUnitValue(sort,type);
         if(value==nullptr)return std::make_pair(Double::Zero(),Double::Zero());
         return std::make_pair(Double(value->attackClose),Double(value->attackShoot));
     }
     //基础攻击范围 first=范围伤害影响的范围,second=攻击范围（单位：区块）
     static std::pair<I32,I32> getBasicAttackRange(I32 sort,I32 type){
+        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return value==nullptr ? std::make_pair(0,0) : std::make_pair(value->splash,value->attackRange);
+        }
         const UnitValue* value=findUnitValue(sort,type);
         if(value==nullptr)return std::make_pair(0,0);
         return std::make_pair(value->splash,value->attackRange);
     }
     //基础攻击间隔（单位：帧）
     static I32 getAttackInterval(I32 sort,I32 type){
+        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return value==nullptr ? 0 : value->attackTicks;
+        }
         const UnitValue* value=findUnitValue(sort,type);
         return value==nullptr ? 0 : value->attackTicks;
     }

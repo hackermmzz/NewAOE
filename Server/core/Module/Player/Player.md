@@ -46,8 +46,6 @@ vector<SafePtr<Building>>         buildings;
 vector<SafePtr<BuildingResource>> buildingResources;   // 农田，与 buildings 分开存
 vector<SafePtr<Missile>>          missiles;
 
-std::set<I32> finishedActions;     // 【当前未使用】见 §8
-
 I32 __OBJECTREALLYTYPE__[22];      // 升级槽位：code -> 已升到的级别
 ```
 
@@ -208,6 +206,9 @@ return __OBJECTREALLYTYPE__[tmp];            // 抬到槽位当前级别
 
 `__OBJECTREALLYTYPE__` 是**每个玩家一份**（非 static），因为升级进度是玩家自己的状态。
 
+城墙和兵种一样，属于「升级后场上已有的同类对象一起换掉」：研究中级城墙后，
+已有的初级城墙会直接变成中级城墙（已确认，不是漏了开关）。
+
 ### 6.4 时序
 
 ```text
@@ -280,7 +281,6 @@ notifyBuildingActionFinish(object, action)
 | 3 | `__OBJECTREALLYTYPE__` 用了双下划线前缀 | 双下划线是 C++ 保留标识符；`__BuildingActionIsCreatHuman` 同样问题，且少个 `e`（应为 `Create`） |
 | 4 | `removeXXX(I32)` 与 `SN(U64)` 类型不一致 | 比较时 `I32` 被提升为 `U64`，负数会变成极大值；实际不会传负数，但类型上不严谨 |
 | 5 | `refreshAllObjectScience` 不刷投掷物与农田 | 有意为之：投掷物发射时定值，农田按建成时科技定格 |
-| 6 | 城墙升级会把已有城墙一起换掉 | `BUILDING_GRANARY_WALL_UPDATE_*` 走的是 `changeObjectType`，场上初级墙会直接变成中级墙；帝国时代原作里城墙科技只解锁新建。**需确认是否符合预期** |
 | 7 | `ObjectCanImprove` / `changeObjectType` 命名不统一 | 一个驼峰一个下划线，属风格问题 |
 
 ---

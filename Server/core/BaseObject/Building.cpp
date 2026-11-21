@@ -200,13 +200,19 @@ void Building::refreshAttack(){
     rangeEffect = rangeBase.first;
     range = rangeBase.first > 0;
     minAttackRange = rangeBase.second;
+
+    I32 interval = 0;
+    I32 circle = ATTACK_CIRCLE_FRAMES;
     if(science != nullptr){
         minAttackRange += science->get_addition_DisAttack(sort,type,armyClass,attackType);
-        attackCircle=science->get_speed_attack(sort,type,armyClass)[1];
-        attackInteval=science->get_speed_attack(sort,type,armyClass)[0];
+        interval = science->get_speed_attack(sort,type,armyClass)[0];
+        circle   = science->get_speed_attack(sort,type,armyClass)[1];
     }
-    //间隔至少 1 帧，避免内核做取模/除法时除零
-    if(attackInteval<=0){attackInteval=1;}
-    if(attackCircle<0){attackCircle=0;}
+    //科技没给间隔就退回数值表（箭塔的 35 帧、炮塔的 75 帧），再不行给 1 帧，
+    //避免内核拿它做取模/除法时除零。
+    if(interval<=0){interval=ObjectBaseValue::getAttackInterval(sort,type);}
+    if(interval<=0){interval=1;}
+    attackInteval=interval;
+    attackCircle=circle>=0?circle:0;
 }
 
