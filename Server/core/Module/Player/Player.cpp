@@ -163,9 +163,6 @@ void Player::init(I32 playerID){
     this->playerID = playerID;
 }
 Army* Player::newArmy(IVec2 detailPos,I32 type, WeakPtr<Development> playerScience){
-    rememberPlayerScience(playerScience);
-    //内核传的可能是底层兵种，实际按当前科技给到已解锁的最高级别
-    type = resolveCreateType(SORT_ARMY,type);
     SafePtr<Army> a(new Army(detailPos,type,playerScience));
     a->setBelong(playerID,teamID);
     armies.push_back(a);

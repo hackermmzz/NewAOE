@@ -1,178 +1,420 @@
 #include "development.h"
 
 #include "Server/core/Public/var/Building.h"
+#include "Server/core/Public/var/Civilization.h"
+#include "Server/core/Public/var/Sort.h"
+#include "Server/core/BaseObject/Object.h"
+#include "Public/logger/logger.h"
 
-namespace {
-// TODO: 待接入时代配置表后改为查表；当前按石器、工具、铜器、铁器 4 个时代处理
-constexpr I32 STAGE_MIN = 0;
-constexpr I32 STAGE_MAX = 3;
-}
+#define BLD_BIT(x) (x >= 0 && x < 64 ? (U64(1) << x) : 0)
 
 Development::Development(WeakPtr<Player> playerValue, I32 civilizationValue)
     : player(playerValue),
-      stage(STAGE_MIN),
-      civilization(civilizationValue)
+      stage(CIVILIZATION_STONEAGE),
+      civilization(civilizationValue),
+      technology(),
+      blocked(),
+      blockedBuilding(0)
 {
+    // 【之后管】: TODO: 根据文明类型，初始化 blocked 和 blockedBuilding
 }
 
-// ---- 加成查询 ----
+// ---- 科技状态 ----
+
+bool Development::markTechnologyFinish(I32 action)
+{
+    // 纯枚举拦截：造人动作不是科技，不记录位图
+    if (action == BUILDING_CENTER_CREATEFARMER ||
+        action == BUILDING_ARMYCAMP_CREATE_CLUBMAN ||
+        action == BUILDING_ARMYCAMP_CREATE_SLINGER ||
+        action == BUILDING_RANGE_CREATE_BOWMAN ||
+        action == BUILDING_STABLE_CREATE_SCOUT ||
+        action == BUILDING_DOCK_CREATE_SAILING ||
+        action == BUILDING_TEMPLE_CREATE_PRIEST)
+    {
+        return false;
+    }
+
+    if (technology.has(action) || TechnologyBlocked(action)) {
+        return false;
+    }
+    
+    technology.add(action);
+
+    // 纯枚举：时代推进
+    if (action == BUILDING_CENTER_UPGRADE_TOOLAGE && stage < CIVILIZATION_TOOLAGE) {
+        stage = CIVILIZATION_TOOLAGE;
+    } else if (action == BUILDING_CENTER_UPGRADE_BRONZEAGE && stage < CIVILIZATION_BRONZEAGE) {
+        stage = CIVILIZATION_BRONZEAGE;
+    } else if (action == BUILDING_CENTER_UPGRADE_IRONAGE && stage < CIVILIZATION_IRONAGE) {
+        stage = CIVILIZATION_IRONAGE;
+    }
+    return true;
+}
+
+bool Development::TechnologyFinish(I32 technologyId) const { return technology.has(technologyId); }
+bool Development::TechnologyBlocked(I32 technologyId) const { return blocked.has(technologyId); }
+
+// ---- 加成查询 (严格根据 Excel Benefit 列硬编码) ----
 
 Double Development::get_rate_Move(I32 sort, I32 type) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    // 1. 轮子：村民移动速度提升50%
+    if (sort == SORT_FARMER && type == FARMERTYPE_FARMER && TechnologyFinish(BUILDING_MARKET_WHEEL_UPGRADE)) {
+        return Double(15) / Double(10);
+    }
+    // 2. 多神教：牧师移动速度提升40%
+    if (sort == SORT_ARMY && type == AT_PRIEST && TechnologyFinish(BUILDING_TEMPLE_POLYTHEISM)) {
+        return Double(14) / Double(10);
+    }
+    // 3. 上流社会：学院单位行动速度提升25% (这里加到移动速度上)
+    if (sort == SORT_ARMY && (type == AT_HOPLITE || type == AT_PHALANX || type == AT_CENTURION)) {
+        if (TechnologyFinish(BUILDING_GOVERNMENT_ARISTOCRACY)) {
+            return Double(125) / Double(100);
+        }
+    }
     return Double(1);
 }
 
 Double Development::get_rate_Blood(I32 sort, I32 type) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    // 贵族：骑兵单位及骆驼兵、两轮战车、镰刀战车、战车弓兵、骑弓兵、重骑弓兵生命值+15%
+    if (sort == SORT_ARMY && TechnologyFinish(BUILDING_GOVERNMENT_NOBILITY)) {
+        switch (type) {
+            case AT_SCOUT: case AT_CAVALRY: case AT_HEAVY_CAVALRY:
+            case AT_CATAPHRACT: case AT_CAMEL_RIDER: 
+            case AT_CHARIOT: case AT_SCYTHECHARIOT:
+            case AT_CHARIOT_ARCHER: case AT_HORSE_ARCHER:
+            case AT_HEAVY_HORSE_ARCHER:
+                return Double(115) / Double(100);
+            default: break;
+        }
+    }
     return Double(1);
 }
 
 I32 Development::get_addition_Blood(I32 sort, I32 type) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    // 神秘主义：牧师生命值翻倍（基础 25 翻倍为 50，相当于额外 +25）
+    if (sort == SORT_ARMY && type == AT_PRIEST && TechnologyFinish(BUILDING_TEMPLE_MYSTICISM)) {
+        return 25; 
+    }
     return 0;
 }
 
 Double Development::get_rate_Attack(I32 sort, I32 type, I32 armyClass, I32 attackType) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    (void)sort; (void)type; (void)armyClass; (void)attackType;
     return Double(1);
 }
 
 I32 Development::get_addition_Attack(I32 sort, I32 type, I32 armyClass, I32 attackType) const
 {
-    // TODO: 待设计配置表后填入具体加成
-    return 0;
+    I32 result = 0;
+    
+    // 1. 近战单位攻击提升
+    if (attackType == ATTACKTYPE_CLOSE) {
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_USETOOL)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_METALWORKING)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_METALLURGY)) result += 3;
+    }
+
+    // 2. 炼金术：远程单位攻击+1
+    if (attackType == ATTACKTYPE_SHOOT && TechnologyFinish(BUILDING_GOVERNMENT_ALCHEMY)) {
+        result += 1;
+    }
+
+    // 3. 炼金术：弩车/巨型弩车攻击+2
+    if (type == AT_BALLISTA || type == AT_HELEPOLIS) {
+        if (TechnologyFinish(BUILDING_GOVERNMENT_ALCHEMY)) result += 2;
+    }
+
+    // 4. 炼金术：喷火船攻击+6
+    if (type == AT_FIRESAILBOAT && TechnologyFinish(BUILDING_GOVERNMENT_ALCHEMY)) {
+        result += 6;
+    }
+
+    // 5. 采石术 / 攻城术：投石兵攻击+1
+    if (type == AT_SLINGER) {
+        if (TechnologyFinish(BUILDING_MARKET_STONE_UPGRADE)) result += 1;
+        if (TechnologyFinish(BUILDING_MARKET_SIEGECRAFT)) result += 1;
+    }
+
+    return result;
 }
 
 I32 Development::get_addition_DisAttack(I32 sort, I32 type, I32 armyClass, I32 attackType) const
 {
-    // TODO: 待设计配置表后填入具体加成
-    return 0;
+    I32 result = 0;
+
+    // 1. 使用木器 / 手工艺 / 工艺学：远程单位射程+1
+    if (attackType == ATTACKTYPE_SHOOT) {
+        if (TechnologyFinish(BUILDING_MARKET_WOOD_UPGRADE)) result += 1;
+        if (TechnologyFinish(BUILDING_MARKET_ARTISANSHIP)) result += 1;
+        if (TechnologyFinish(BUILDING_MARKET_CRAFT_UPGRADE)) result += 1;
+    }
+
+    // 2. 采石术 / 攻城术：投石兵射程+1
+    if (type == AT_SLINGER) {
+        if (TechnologyFinish(BUILDING_MARKET_STONE_UPGRADE)) result += 1;
+        if (TechnologyFinish(BUILDING_MARKET_SIEGECRAFT)) result += 1;
+    }
+
+    // 3. 工程学：攻城武器射程+2
+    if (armyClass == ARMY_SIEGE && TechnologyFinish(BUILDING_GOVERNMENT_ENGINEERING)) {
+        result += 2;
+    }
+
+    // 4. 来世：牧师招降射程+3
+    if (type == AT_PRIEST && TechnologyFinish(BUILDING_TEMPLE_AFTERLIFE)) {
+        result += 3;
+    }
+    
+    return result;
+}
+
+std::array<I32,2> Development::get_speed_attack(I32 sort, I32 type, I32 armyClass) const
+{
+    // 由于 Excel 表里缺少具体的前摇帧数，暂时返回 {0, 0}，由单位模块决定默认攻击生效时间。
+    (void)sort; (void)type; (void)armyClass;
+    return {0, 0}; 
 }
 
 Double Development::get_rate_Defence(I32 sort, I32 type, I32 armyClass, I32 attackType_got) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    (void)sort; (void)type; (void)armyClass; (void)attackType_got;
     return Double(1);
 }
 
 I32 Development::get_addition_Defence(I32 sort, I32 type, I32 armyClass, I32 attackType_got) const
 {
-    // TODO: 待设计配置表后填入具体加成
-    return 0;
+    I32 result = 0;
+
+    // 1. 步兵：兵营与学院单位护甲+2
+    if (armyClass == ARMY_INFANTRY) {
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_1)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_2)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_3)) result += 2;
+
+        // 青铜盾/铁盾/塔盾：步兵对投石兵/弩车/巨型弩车/远程的护甲+1
+        if (attackType_got == ATTACKTYPE_SHOOT) {
+            if (TechnologyFinish(BUILDING_STOCK_UPGRADE_MISSILE_DEFENSE_INFANTRY)) result += 1;
+            if (TechnologyFinish(BUILDING_STOCK_UPGRADE_IRON_SHIELD)) result += 1;
+            if (TechnologyFinish(BUILDING_STOCK_UPGRADE_TOWER_SHIELD)) result += 1;
+        }
+    } 
+    // 2. 弓箭兵：靶场单位护甲+2
+    else if (armyClass == ARMY_ARCHER) {
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_1)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_2)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_3)) result += 2;
+    } 
+    // 3. 骑兵：马厩单位护甲+2
+    else if (armyClass == ARMY_RIDER) {
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_1)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_2)) result += 2;
+        if (TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_3)) result += 2;
+    }
+
+    return result;
 }
 
 I32 Development::get_addition_ResourceCarry(I32 resourceSort) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    (void)resourceSort;
     return 0;
 }
 
 Double Development::get_rate_ResourceGather(I32 resourceSort) const
 {
-    // TODO: 待设计配置表后填入具体加成
-    return Double(1);
+    I32 percent = 0;
+    if (resourceSort == RESOURCESORT_WOOD) {
+        // 使用木器 / 手工艺 / 工艺学：村民伐木效率+2
+        if (TechnologyFinish(BUILDING_MARKET_WOOD_UPGRADE)) percent += 20;
+        if (TechnologyFinish(BUILDING_MARKET_ARTISANSHIP)) percent += 20;
+        if (TechnologyFinish(BUILDING_MARKET_CRAFT_UPGRADE)) percent += 20;
+    } else if (resourceSort == RESOURCESORT_STONE) {
+        // 采石术 / 攻城术：采石效率+3
+        if (TechnologyFinish(BUILDING_MARKET_STONE_UPGRADE)) percent += 30;
+        if (TechnologyFinish(BUILDING_MARKET_SIEGECRAFT)) percent += 30;
+    } else if (resourceSort == RESOURCESORT_GOLD) {
+        // 采金术：采金效率+3
+        if (TechnologyFinish(BUILDING_MARKET_GOLD_UPGRADE)) percent += 30;
+        
+        // 货币制：金矿产量提升25%（统一走采集速度处理）
+        if (TechnologyFinish(BUILDING_MARKET_COINAGE)) percent += 25;
+    }
+    return (Double(100) + Double(percent)) / Double(100);
 }
 
 I32 Development::get_addition_BuildingResourceMaxCnt(I32 sort, I32 type) const
 {
-    // TODO: 待设计配置表后填入具体加成
+    // 饲养 / 犁田 / 灌溉：农田产粮+75 / +100 / +125
+    if ((sort == SORT_BUILDING || sort == SORT_BUILDING_RESOURCE) && type == BUILDING_FARM) {
+        I32 extra = 0;
+        if (TechnologyFinish(BUILDING_MARKET_FARM_UPGRADE)) extra += 75;
+        if (TechnologyFinish(BUILDING_MARKET_PLOW_UPGRADE)) extra += 100;
+        if (TechnologyFinish(BUILDING_MARKET_IRRIGATION)) extra += 125;
+        return extra;
+    }
     return 0;
 }
 
-// ---- 时代 ----
-
-void Development::stageChange()
-{
-    if (stage >= STAGE_MAX) {
-        return;
-    }
-    stage += 1;
-}
+// ---- 时代与建筑 ----
 
 bool Development::stageCanChange() const
 {
-    // TODO: 待确认时代升级的前置条件和资源消耗
-    return false;
-}
-
-// ---- 建筑 ----
-
-bool Development::buildingActionAble(I32 buildingType, I32 actNum,
-                                     I32 wood, I32 food, I32 stone, I32 gold) const
-{
-    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) {
-        return false;
-    }
-    if (actNum <= 0) {
-        return false;
-    }
-    if (wood < 0 || food < 0 || stone < 0 || gold < 0) {
-        return false;
+    I32 nextAction = -1;
+    I32 cost = 0;
+    
+    switch (stage) {
+    case CIVILIZATION_STONEAGE:  nextAction = BUILDING_CENTER_UPGRADE_TOOLAGE;  cost = TOOL_AGE_COST_FOOD; break;
+    case CIVILIZATION_TOOLAGE:   nextAction = BUILDING_CENTER_UPGRADE_BRONZEAGE; cost = BRONZE_AGE_COST_FOOD; break;
+    case CIVILIZATION_BRONZEAGE: nextAction = BUILDING_CENTER_UPGRADE_IRONAGE;  cost = IRON_AGE_COST_FOOD; break;
+    default: return false;
     }
 
-    // 示例：市镇中心训练农民需要消耗食物
-    if (buildingType == BUILDING_CENTER && actNum == BUILDING_CENTER_CREATEFARMER) {
-        // TODO: 待设计配置表后填入具体资源消耗
-        return food > 0;
-    }
-
-    // 示例：市镇中心升级要求先进入下一个时代
-    // 时代升级在 BuildingAction 里拆成了三个动作，这里三个都算。
-    if (buildingType == BUILDING_CENTER
-        && (actNum == BUILDING_CENTER_UPGRADE_TOOLAGE
-            || actNum == BUILDING_CENTER_UPGRADE_BRONZEAGE
-            || actNum == BUILDING_CENTER_UPGRADE_IRONAGE)) {
-        // TODO: 待确认时代升级的前置条件和资源消耗
-        return true;
-    }
-
-    // TODO: 待设计配置表后补充其余建筑动作的时代/资源前置条件
-    return true;
-}
-
-I32 Development::buildingActionTimeCost(I32 buildingType, I32 actNum) const
-{
-    // TODO: 待设计时间/帧数配置表后填入实际耗时
-    return 0;
+    if (TechnologyBlocked(nextAction)) return false;
+    return cost > 0;
 }
 
 bool Development::buildingCanBuild(I32 buildingType) const
 {
-    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) {
-        return false;
-    }
-    if (civilization < 0) {
-        return false;
-    }
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return false;
+    if ((blockedBuilding & BLD_BIT(buildingType)) != 0) return false;
 
     switch (buildingType) {
-    case BUILDING_TEMPLE:
-    case BUILDING_SMALL_WALL:
-    case BUILDING_MEDIUM_WALL:
-    case BUILDING_FORTIFIED_WALL:
-        // 这些建筑尚未实现
-        return false;
-    case BUILDING_SIEGE:
-        // 示例：高级建筑要求进入工具时代之后
-        // TODO: 待设计文明/时代解锁配置表后确认具体时代
-        return stage > STAGE_MIN;
-    default:
-        // TODO: 待设计文明/时代解锁配置表后补充具体条件
-        return true;
+    case BUILDING_CENTER: return TOWN_CENTER_COST_WOOD > 0;
+    case BUILDING_HOME: return HOUSE_COST_WOOD > 0;
+    case BUILDING_ARMYCAMP: return BARRACKS_COST_WOOD > 0;
+    // 防御塔需要科技解锁
+    case BUILDING_WATCH_TOWER: return TechnologyFinish(BUILDING_GRANARY_ARROWTOWER);
+    case BUILDING_SENTRY_TOWER: return TechnologyFinish(BUILDING_GRANARY_ARROWTOWER_UPGRADE_1);
+    case BUILDING_GUARD_TOWER: return TechnologyFinish(BUILDING_GRANARY_ARROWTOWER_UPGRADE_2);
+    default: return true;
     }
+}
+
+bool Development::buildingActionAble(I32 buildingType, I32 actNum) const
+{
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return false;
+    if (TechnologyBlocked(actNum)) return false;
+
+    // 1. 动作归属建筑限制
+    if (actNum == BUILDING_CENTER_CREATEFARMER && buildingType != BUILDING_CENTER) return false;
+    if (actNum == BUILDING_ARMYCAMP_CREATE_CLUBMAN && buildingType != BUILDING_ARMYCAMP) return false;
+    if (actNum == BUILDING_RANGE_CREATE_BOWMAN && buildingType != BUILDING_RANGE) return false;
+    if (actNum == BUILDING_STABLE_CREATE_CAVALRY && buildingType != BUILDING_STABLE) return false;
+    if (actNum == BUILDING_TEMPLE_CREATE_PRIEST && buildingType != BUILDING_TEMPLE) return false;
+    if (actNum == BUILDING_DOCK_CREATE_SAILING && buildingType != BUILDING_DOCK) return false;
+
+    // 2. 科技前置限制（来自 Excel Benefit 列）
+    if (actNum == BUILDING_STABLE_UPGRADE_CATAPHRACT) {
+        if (!TechnologyFinish(BUILDING_STOCK_UPGRADE_METALLURGY)) return false;
+    }
+    if (actNum == BUILDING_RANGE_UPGRADE_HORSE_ARCHER) {
+        if (!TechnologyFinish(BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_3)) return false;
+    }
+    if (actNum == BUILDING_STABLE_UPGRADE_CHARIOT) {
+        if (!TechnologyFinish(BUILDING_GOVERNMENT_NOBILITY)) return false;
+    }
+    if (actNum == BUILDING_COLLAGE_UPGRADE_CENTURION) {
+        if (!TechnologyFinish(BUILDING_GOVERNMENT_ARISTOCRACY)) return false;
+    }
+    if (actNum == BUILDING_GRANARY_ARROWTOWER_UPGRADE_3) {
+        if (!TechnologyFinish(BUILDING_GOVERNMENT_BALLISTICS)) return false;
+    }
+    if (actNum == BUILDING_DOCK_UPGRADE_TRIREME) {
+        if (!TechnologyFinish(BUILDING_GOVERNMENT_ENGINEERING)) return false;
+    }
+    if (actNum == BUILDING_SIEGE_UPGRADE_HELEPOLIS) {
+        if (!TechnologyFinish(BUILDING_MARKET_CRAFT_UPGRADE)) return false;
+    }
+    if (actNum == BUILDING_SIEGE_UPGRADE_HEAVYCATAPULT) {
+        if (!TechnologyFinish(BUILDING_MARKET_SIEGECRAFT)) return false;
+    }
+    if (actNum == BUILDING_STABLE_CREATE_CHARIOT) {
+        if (!TechnologyFinish(BUILDING_MARKET_WHEEL_UPGRADE)) return false;
+    }
+    if (actNum == BUILDING_RANGE_CREATE_CHARIOT_ARCHER) {
+        if (!TechnologyFinish(BUILDING_MARKET_WHEEL_UPGRADE)) return false;
+    }
+    if (actNum == BUILDING_GRANARY_WALL_UPDATE_1) {
+        if (!TechnologyFinish(BUILDING_GRANARY_WALL)) return false;
+    }
+    if (actNum == BUILDING_GRANARY_WALL_UPDATE_2) {
+        if (!TechnologyFinish(BUILDING_GRANARY_WALL_UPDATE_1)) return false;
+    }
+    if (actNum == BUILDING_GRANARY_ARROWTOWER_UPGRADE_1) {
+        if (!TechnologyFinish(BUILDING_GRANARY_ARROWTOWER)) return false;
+    }
+    if (actNum == BUILDING_GRANARY_ARROWTOWER_UPGRADE_2) {
+        if (!TechnologyFinish(BUILDING_GRANARY_ARROWTOWER_UPGRADE_1)) return false;
+    }
+    if (actNum == BUILDING_CENTER_UPGRADE_BRONZEAGE) {
+        if (!TechnologyFinish(BUILDING_CENTER_UPGRADE_TOOLAGE)) return false;
+    }
+    if (actNum == BUILDING_CENTER_UPGRADE_IRONAGE) {
+        if (!TechnologyFinish(BUILDING_CENTER_UPGRADE_BRONZEAGE)) return false;
+    }
+
+    return true;
 }
 
 I32 Development::buildingBuildTimeCost(I32 buildingType) const
 {
-    // TODO: 待设计时间/帧数配置表后填入实际耗时
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return 0;
+    switch (buildingType) {
+    case BUILDING_CENTER: return TOWN_CENTER_BUILD_TIME;
+    case BUILDING_HOME: return HOUSE_BUILD_TIME;
+    case BUILDING_ARMYCAMP: return BARRACKS_BUILD_TIME;
+    default: return 0;
+    }
+}
+
+std::array<I32,4> Development::buildingResourceCost(I32 buildingType) const
+{
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return {0, 0, 0, 0};
+    switch (buildingType) {
+    case BUILDING_CENTER: return { TOWN_CENTER_COST_WOOD, TOWN_CENTER_COST_FOOD, TOWN_CENTER_COST_STONE, TOWN_CENTER_COST_GOLD };
+    case BUILDING_HOME: return { HOUSE_COST_WOOD, HOUSE_COST_FOOD, HOUSE_COST_STONE, HOUSE_COST_GOLD };
+    case BUILDING_ARMYCAMP: return { BARRACKS_COST_WOOD, BARRACKS_COST_FOOD, BARRACKS_COST_STONE, BARRACKS_COST_GOLD };
+    default: return {0, 0, 0, 0};
+    }
+}
+
+I32 Development::buildingActionTimeCost(I32 buildingType, I32 actNum) const
+{
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return 0;
+    if (actNum == BUILDING_CENTER_CREATEFARMER) return VILLAGER_TRAIN_TIME;
+    if (actNum == BUILDING_ARMYCAMP_CREATE_CLUBMAN) return CLUBMAN_TRAIN_TIME;
+    if (actNum == BUILDING_ARMYCAMP_CREATE_SLINGER) return SLINGER_TRAIN_TIME;
+    if (actNum == BUILDING_RANGE_CREATE_BOWMAN) return BOWMAN_TRAIN_TIME;
+    if (actNum == BUILDING_STABLE_CREATE_SCOUT) return SCOUT_TRAIN_TIME;
+    if (actNum == BUILDING_STOCK_UPGRADE_USETOOL) return TOOLWORKING_RESEARCH_TIME;
+    if (actNum == BUILDING_CENTER_UPGRADE_TOOLAGE) return TOOL_AGE_RESEARCH_TIME;
+    if (actNum == BUILDING_CENTER_UPGRADE_BRONZEAGE) return BRONZE_AGE_RESEARCH_TIME;
+    if (actNum == BUILDING_CENTER_UPGRADE_IRONAGE) return IRON_AGE_RESEARCH_TIME;
     return 0;
 }
 
-void Development::tick()
+std::array<I32,4> Development::buildingActionResourceCost(I32 buildingType, I32 actNum) const
 {
-    // TODO: 待实现帧同步更新逻辑
+    if (buildingType < 0 || buildingType >= BUILDING_TYPE_MAXNUM) return {0, 0, 0, 0};
+    if (actNum == BUILDING_CENTER_CREATEFARMER) return { VILLAGER_COST_WOOD, VILLAGER_COST_FOOD, VILLAGER_COST_STONE, VILLAGER_COST_GOLD };
+    if (actNum == BUILDING_ARMYCAMP_CREATE_CLUBMAN) return { CLUBMAN_COST_WOOD, CLUBMAN_COST_FOOD, CLUBMAN_COST_STONE, CLUBMAN_COST_GOLD };
+    if (actNum == BUILDING_RANGE_CREATE_BOWMAN) return { BOWMAN_COST_WOOD, BOWMAN_COST_FOOD, BOWMAN_COST_STONE, BOWMAN_COST_GOLD };
+    if (actNum == BUILDING_STOCK_UPGRADE_USETOOL) return { TOOLWORKING_COST_WOOD, TOOLWORKING_COST_FOOD, TOOLWORKING_COST_STONE, TOOLWORKING_COST_GOLD };
+    if (actNum == BUILDING_CENTER_UPGRADE_TOOLAGE) return { TOOL_AGE_COST_WOOD, TOOL_AGE_COST_FOOD, TOOL_AGE_COST_STONE, TOOL_AGE_COST_GOLD };
+    if (actNum == BUILDING_CENTER_UPGRADE_BRONZEAGE) return { BRONZE_AGE_COST_WOOD, BRONZE_AGE_COST_FOOD, BRONZE_AGE_COST_STONE, BRONZE_AGE_COST_GOLD };
+    if (actNum == BUILDING_CENTER_UPGRADE_IRONAGE) return { IRON_AGE_COST_WOOD, IRON_AGE_COST_FOOD, IRON_AGE_COST_STONE, IRON_AGE_COST_GOLD };
+    return {0, 0, 0, 0};
 }
+
+void Development::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action)
+{
+    (void)object;
+    markTechnologyFinish(action);
+}
+
+void Development::tick() {}
