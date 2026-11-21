@@ -49,6 +49,8 @@ target_sources(newaoe_core INTERFACE
     "${CMAKE_CURRENT_LIST_DIR}/Module/Player/Player.h"
     "${CMAKE_CURRENT_LIST_DIR}/Module/Development/development.cpp"
     "${CMAKE_CURRENT_LIST_DIR}/Module/Development/development.h"
+    "${CMAKE_CURRENT_LIST_DIR}/Module/Map/map.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/Module/Map/map.h"
 )
 
 target_include_directories(newaoe_core INTERFACE

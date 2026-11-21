@@ -209,7 +209,7 @@ void Object::changeType(I32 newType);   // sort 不变，只换 type
 | `attackType` | `ATTACKTYPE_CLOSE` / `ATTACKTYPE_SHOOT`，决定用哪一个 |
 | `range` / `rangeEffect` | 是否范围伤害 / 溅射半径（区块） |
 | `minAttackRange` | 攻击距离（区块） |
-| `attackCircle` | 从出手到真正造成伤害要经过的帧数 |
+| `attackCircle` | 从出手到真正造成伤害要经过的帧数（科技没给值时用默认 `ATTACK_CIRCLE_FRAMES`） |
 | `attackCurrentTick` | 当前进行到第几帧 |
 | `attackInteval` | 攻击间隔（帧） |
 
@@ -453,7 +453,7 @@ rebuildCrashBox();   // 内部查 getCrashBox(sort, type)
 
 | # | 问题 | 位置 |
 |---|---|---|
-| 1 | `Development::get_speed_attack` 尚未实现，`Human.cpp` / `Building.cpp` 现在**编译不过**，等科技模块合入 | `Human.cpp:149-150`、`Building.cpp:191-192` |
+| 1 | ~~`Development::get_speed_attack` 尚未实现~~ —— 已随 main 合入（返回 `std::array<I32,2>{间隔, 前摇}`，目前恒为 `{0,0}`，由单位模块取默认值） | `Development` |
 | 2 | `Double` 的乘除目前恒为 0（`Fixed<I64,I64,32>` 中间值溢出，库级问题），所有 `基础值 × 比例` 都会算成 0。坐标换算已改用整数（`BLOCK_SIDE_DETAIL`）绕开，但伤害/血量仍受影响 | `Server/core/type.h` |
 | 3 | ~~`StaticRes` 碰撞盒未初始化~~ —— 实际由构造里的 `setPos()` 建好（形状/尺寸已改为 1×1 区块矩形）；`StaticResource.cpp` 里那行注释掉的 `rebuildCrashBox()` 只是冗余 | `StaticResource.cpp` |
 | 4 | `BuildingResource` 构造时 `sort` 还是 `SORT_BUILDING`，防御按建筑表算，改 `sort` 后没有重算 | `BuildingResource.cpp` |

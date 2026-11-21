@@ -215,6 +215,8 @@ void Building::refreshAttack(){
     if(interval<=0){interval=ObjectBaseValue::getAttackInterval(sort,type);}
     if(interval<=0){interval=1;}
     attackInteval=interval;
-    attackCircle=circle>=0?circle:0;
+    //科技没给前摇（Development 目前恒返回 0，表里也没有这一列）就退回默认半秒
+    if(circle<=0){circle=ATTACK_CIRCLE_FRAMES;}
+    attackCircle=circle;
 }
 
