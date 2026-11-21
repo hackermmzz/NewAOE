@@ -12,7 +12,7 @@ protected:
 public:
     BuildingResource(I32 type, IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent);
     Double getMaxCnt(WeakPtr<Development> playerScience);
-    bool isGatherAble();                //没修建完之前不可采集
+    bool isGatherAble()override;                //没修建完之前不可采集
 };
 
 

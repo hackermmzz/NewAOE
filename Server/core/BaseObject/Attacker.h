@@ -23,8 +23,9 @@ public:
 	virtual Double getAttackBasic();	//基础伤害
 	virtual Double getAttackAdditon();	//科技加成值 = 当前攻击力 - 基础值
 	virtual void notifyHit();	//打中了造成了伤害时候调用这个函数
-	I32 getAttackCircle();		//获取多少帧后真正发动攻击,造成伤害
+	virtual I32 getAttackCircle();		//获取多少帧后真正发动攻击,造成伤害
 	I32 getCurrentAttackTick(); //获取当前进行到多少帧了
-	I32 getAttackInteval();		//获取攻击间隔
+	virtual I32 getAttackInteval();		//获取攻击间隔
 	void resetAttackTick(); 	//重置攻击帧数
+	virtual void refreshAttack();
 }; 

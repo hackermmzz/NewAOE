@@ -22,15 +22,20 @@ Double Resource::getMaxCnt(){
     return maxCnt;
 }
 void Resource::decayResource(){
-    if(decayRate <= Double::Zero()){
-        return;
-    }
-    cntLeft -= decayRate;
-    //腐烂不能把剩余量扣成负数
-    if(cntLeft < Double::Zero()){
+    reduceResource(decayRate);
+}
+void Resource::reduceResource(Double ResourceAmount){
+    if(ResourceAmount <= Double::Zero()){return;}
+    cntLeft -=ResourceAmount;
+    if(cntLeft <=Double::Zero()){
         cntLeft = Double::Zero();
+        gatherAble=false;
     }
 }
 bool Resource::isSurplus(){
     return cntLeft > Double::Zero();
+}
+void Resource::clear(){
+    cntLeft=Double::Zero();
+    gatherAble=false;
 }
