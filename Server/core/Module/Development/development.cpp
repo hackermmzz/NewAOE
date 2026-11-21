@@ -177,9 +177,43 @@ I32 Development::get_addition_DisAttack(I32 sort, I32 type, I32 armyClass, I32 a
 
 std::array<I32,2> Development::get_speed_attack(I32 sort, I32 type, I32 armyClass) const
 {
-    // 暂不支持攻击前摇/帧数
-    (void)sort; (void)type; (void)armyClass;
-    return {0, 0}; 
+    (void)sort; (void)armyClass;
+
+    // 从表里读取攻击间距（单位：秒）
+    Double intervalSeconds = Double(0);
+    
+    if (sort == SORT_ARMY) {
+        switch (type) {
+            case AT_CLUBMAN: intervalSeconds = CLUBMAN_ATTACK_INTERVAL; break;
+            case AT_AXEMAN: intervalSeconds = AXEMAN_ATTACK_INTERVAL; break;
+            case AT_SLINGER: intervalSeconds = SLINGER_ATTACK_INTERVAL; break;
+            case AT_SHORT_SWORDSMAN: intervalSeconds = SHORT_SWORDSMAN_ATTACK_INTERVAL; break;
+            case AT_BOWMAN: intervalSeconds = BOWMAN_ATTACK_INTERVAL; break;
+            case AT_CAVALRY: intervalSeconds = CAVALRY_ATTACK_INTERVAL; break;
+            case AT_CATAPULT: intervalSeconds = CATAPULT_ATTACK_INTERVAL; break;
+            case AT_STONE_THROWER: intervalSeconds = STONE_THROWER_ATTACK_INTERVAL; break;
+            // ... 按你的表补全其他兵种
+            default: break;
+        }
+    } else if (sort == SORT_FARMER) {
+        if (type == FARMERTYPE_FARMER) {
+            intervalSeconds = VILLAGER_ATTACK_INTERVAL;
+        }
+    }
+
+    if (intervalSeconds <= Double(0)) {
+        return {0, 0}; // 没有配置或不是攻击单位
+    }
+
+    // 将秒转换为帧数 (假设 GAME_TPS = 25，如果你的配置不同请修改)
+    // 注意：这里假设 1 秒 = GAME_TPS 帧
+    I32 totalFrames = (I32)(intervalSeconds * Double(GAME_TPS));
+    if (totalFrames <= 0) return {0, 0};
+
+    // 【安全默认】：因为没有前摇配置，默认在最后一帧才生效。
+    // 如果你以后在 Excel 里加了“前摇帧数”字段，可在这里改为：
+    // return { totalFrames, totalFrames - 前摇帧数 };
+    return { totalFrames, totalFrames };
 }
 
 Double Development::get_rate_Defence(I32 sort, I32 type, I32 armyClass, I32 attackType_got) const
