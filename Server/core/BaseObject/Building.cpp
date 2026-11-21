@@ -159,7 +159,7 @@ void Building::refreshBlood(){
         return;
     }
     //已经被打掉的不因上限变化而复活
-    if(currentBlood<=Double::Zero()){
+    if(isDie()){
         maxBlood=newmaxBlood;
         return;
     }

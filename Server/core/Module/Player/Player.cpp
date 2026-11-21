@@ -286,8 +286,6 @@ void Player::notifyBuildingActionFinish(WeakPtr<Object> object, I32 action){
     refreshAllObjectScience();
     return;
 
-    //城墙升级会把场上已有的低一级城墙一起换成新级别的（和兵种升级同一条路径），
-    //这是确认过的行为，不是漏了 upgradeExisting 开关。
     case BUILDING_GRANARY_WALL_UPDATE_1:            // 升级为中级城墙（青铜）
     RealType=BUILDING_MEDIUM_WALL;
     Sort=SORT_BUILDING,Code=21;

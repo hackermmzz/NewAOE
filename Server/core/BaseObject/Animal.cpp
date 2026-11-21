@@ -10,14 +10,11 @@
 namespace{
 //动物尸体能采出来的东西：树是木头，其余是猎物（走仓库食物）
 I32 AnimalProductSort(I32 type){
-    if(type == ANIMAL_TREE){
-        return PRODUCTSORT_WOOD;
-    }
+    if(type == ANIMAL_TREE)return PRODUCTSORT_WOOD;
     return PRODUCTSORT_STOCKFOOD;
 }
 
 //只有狮子、鳄鱼这类会主动攻击的算敌对，其余是中立
-
 I32 AnimalFriendly(I32 type){
     if(type == ANIMAL_LION || type == ANIMAL_ALLIGATOR){
         return FRIENDLY_ENEMY;
@@ -53,14 +50,12 @@ Animal::Animal(I32 type,IVec2 detailPos)
     attackCurrentTick = 0;
     attackInteval = ObjectBaseValue::getAttackInterval(SORT_ANIMAL,type);
     speed = ObjectBaseValue::getBasicSpeed(SORT_ANIMAL,type);
-
     //动物死了才能采，所以刚创建时不可采集
     maxCnt = ObjectBaseValue::getResourceBasicMaxCnt(SORT_ANIMAL,type);
     cntLeft = maxCnt;
     decayRate = Double::Zero();
     resourceSort = AnimalProductSort(type);
     gatherAble = false;
-
     rebuildCrashBox();
 }
 
