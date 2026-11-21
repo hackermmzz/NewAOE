@@ -20,8 +20,10 @@ void Human::setTransported(bool value){
 }
 
 I32 Human::getArmyClass() const{
-    //农民/渔船等经济单位没有兵种大类，按步兵检索科技。
-    return ARMY_INFANTRY;
+    //经济单位（农民、渔船、商船、运输船）没有兵种大类，返回 -1。
+    //不能按步兵算 —— 否则步兵的三级护甲科技会给渔船也套上一身甲。
+    //兵种大类由 Army::getArmyClass 覆写返回，这个默认实现只作用于 Farmer。
+    return -1;
 }
 
 //---- UI 用的「基础值 / 加成值」拆分 ----
@@ -92,12 +94,23 @@ void Human::refreshByScience(){
     //---- 攻击（first=近战，second=远程）----
     const std::pair<Double,Double> attackBase =
         ObjectBaseValue::getBasicAttack(objectSort,objectType);
-    attackClose = attackBase.first
-                * science->get_rate_Attack(objectSort,objectType,armyClass,ATTACKTYPE_CLOSE)
-                + Double(science->get_addition_Attack(objectSort,objectType,armyClass,ATTACKTYPE_CLOSE));
-    attackShoot = attackBase.second
-                * science->get_rate_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT)
-                + Double(science->get_addition_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT));
+    //基础攻击为 0 表示这个单位本来就不会用这种方式攻击（祭司、渔船都没有近战
+    //攻击，投石兵没有近战攻击），不能被科技「凭空加成」出来，否则会出现祭司
+    //能砍人、投石兵贴身比远程还疼这种结果。
+    if(attackBase.first > Double::Zero()){
+        attackClose = attackBase.first
+                    * science->get_rate_Attack(objectSort,objectType,armyClass,ATTACKTYPE_CLOSE)
+                    + Double(science->get_addition_Attack(objectSort,objectType,armyClass,ATTACKTYPE_CLOSE));
+    }else{
+        attackClose = Double::Zero();
+    }
+    if(attackBase.second > Double::Zero()){
+        attackShoot = attackBase.second
+                    * science->get_rate_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT)
+                    + Double(science->get_addition_Attack(objectSort,objectType,armyClass,ATTACKTYPE_SHOOT));
+    }else{
+        attackShoot = Double::Zero();
+    }
 
     //---- 攻击方式、范围伤害与攻击距离 ----
     const std::pair<I32,I32> rangeBase =
