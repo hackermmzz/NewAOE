@@ -1,37 +1,39 @@
 #include "Player.h"
 #include "Server/core/Public/config/ObjectBaseValue.h"
 
+//判断是否是生产单位的建筑
 bool __BuildingActionIsCreatHuman(I32 BuildingAction){
     switch(BuildingAction){
-    case BUILDING_CENTER_CREATEFARMER:
-    case BUILDING_ARMYCAMP_CREATE_CLUBMAN:
-    case BUILDING_ARMYCAMP_CREATE_SHORTSWORD:
-    case BUILDING_ARMYCAMP_CREATE_SLINGER:
-    case BUILDING_RANGE_CREATE_BOWMAN:
-    case BUILDING_RANGE_CREATE_COMPOSITE_BOWMAN:
-    case BUILDING_RANGE_CREATE_CHARIOT_ARCHER:
-    case BUILDING_RANGE_CREATE_HORSE_ARCHER:
-    case BUILDING_RANGE_CREATE_ELEPHANT_ARCHER:
-    case BUILDING_STABLE_CREATE_SCOUT:
-    case BUILDING_STABLE_CREATE_CAVALRY:
-    case BUILDING_STABLE_CREATE_CHARIOT:
-    case BUILDING_STABLE_CREATE_WAR_ELEPHANT:
-    case BUILDING_STABLE_CREATE_CAMEL:
-    case BUILDING_DOCK_CREATE_SAILING:
-    case BUILDING_DOCK_CREATE_TRADEBOAT:
-    case BUILDING_DOCK_CREATE_TRANSPORT:
-    case BUILDING_DOCK_CREATE_SCOUTSHIP:
-    case BUILDING_DOCK_CREATE_CATAPULT_TRIREME:
-    case BUILDING_DOCK_CREATE_FIREGALLEY:
-    case BUILDING_SIEGE_CREATE_STONE_THROWER:
-    case BUILDING_SIEGE_CREATE_BALLISTA:
-    case BUILDING_COLLAGE_CREATE_HOPLITE:
-    case BUILDING_TEMPLE_CREATE_PRIEST:
+    case BUILDING_CENTER_CREATEFARMER:            // 城镇中心造农民
+    case BUILDING_ARMYCAMP_CREATE_CLUBMAN:        // 兵营：棍棒兵
+    case BUILDING_ARMYCAMP_CREATE_SHORTSWORD:     // 兵营：短剑兵
+    case BUILDING_ARMYCAMP_CREATE_SLINGER:        // 兵营：投石手
+    case BUILDING_RANGE_CREATE_BOWMAN:            // 靶场：弓箭手
+    case BUILDING_RANGE_CREATE_COMPOSITE_BOWMAN:  // 靶场：复合弓手
+    case BUILDING_RANGE_CREATE_CHARIOT_ARCHER:    // 靶场：战车弓兵
+    case BUILDING_RANGE_CREATE_HORSE_ARCHER:      // 靶场：骑射手
+    case BUILDING_RANGE_CREATE_ELEPHANT_ARCHER:   // 靶场：象弓兵
+    case BUILDING_STABLE_CREATE_SCOUT:            // 马厩：侦察骑兵
+    case BUILDING_STABLE_CREATE_CAVALRY:          // 马厩：骑兵
+    case BUILDING_STABLE_CREATE_CHARIOT:          // 马厩：战车
+    case BUILDING_STABLE_CREATE_WAR_ELEPHANT:     // 马厩：战象
+    case BUILDING_STABLE_CREATE_CAMEL:            // 马厩：骆驼兵
+    case BUILDING_DOCK_CREATE_SAILING:            // 码头：帆船战斗单位
+    case BUILDING_DOCK_CREATE_TRADEBOAT:          // 码头：贸易船
+    case BUILDING_DOCK_CREATE_TRANSPORT:          // 码头：运输船
+    case BUILDING_DOCK_CREATE_SCOUTSHIP:          // 码头：侦察船
+    case BUILDING_DOCK_CREATE_CATAPULT_TRIREME:   // 码头：投石三列桨战船
+    case BUILDING_DOCK_CREATE_FIREGALLEY:         // 码头：火船
+    case BUILDING_SIEGE_CREATE_STONE_THROWER:     // 攻城工坊：投石机
+    case BUILDING_SIEGE_CREATE_BALLISTA:          // 攻城工坊：弩炮
+    case BUILDING_COLLAGE_CREATE_HOPLITE:         // 学院：重步兵（方阵兵）
+    case BUILDING_TEMPLE_CREATE_PRIEST:           // 神庙：祭司
         return true;
     default:
         return false;
     }
 }
+
 
 Player::Player(I32 civilization, I32 teamID){
     this->civilization = civilization;

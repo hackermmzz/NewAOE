@@ -135,15 +135,35 @@ class ObjectBaseValue{
         5000    // 弩炮
     };
     //对象名
-    constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={"房屋","谷仓","市镇中心","仓库","农场","市场","瞭望箭塔","警戒箭塔","防御箭塔","防御炮塔","军营","马厩","靶场","船坞","攻城武器厂","学院","政府中心","世界奇观","神庙","初级城墙","中级城墙","高级城墙"};
-    constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={"浆果丛","石矿","金矿","鱼群"};
-    constexpr static const char* const Name_Farmer[FARMERTYPE_MAXNUM]={"农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"};
-    constexpr static const char* const Name_Animal[ANIMLA_TYPE_MANNUM]={"树","瞪羚","大象","狮子","鳄鱼"};
-    constexpr static const char* const Name_Missile[NUMBER_MISSILE]={"矛","箭","圆石","巨石","弩炮"};
-    constexpr static const char* const Name_Army[AT_ARMY_MAX_NUM]={"棍棒兵","刀斧兵","短剑兵","阔剑兵","长剑兵","军团步兵",
-        "投石兵","弓兵","强弓兵","复合弓兵","弓骑兵","重装弓骑兵","象弓兵","战车弓兵","侦察骑兵",
-        "骑兵","重骑兵","铁甲骑兵","骆驼骑兵","战车","刀轮战车","战象","装甲战象","投石车","中型投石车","重型投石车","弩炮","重型弩炮","侦察船",
-        "桨帆船","三列桨帆船","无敌战船","火帆船","方阵兵","十夫长","百夫长","祭司"};
+    constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={
+        "房屋"      ,"谷仓"     ,"市镇中心" ,"仓库"     ,"农场",
+        "市场"      ,"瞭望箭塔" ,"警戒箭塔" ,"防御箭塔"  ,"防御炮塔",
+        "军营"      ,"马厩"     ,"靶场"     ,"船坞"     ,"攻城武器厂",
+        "学院"      ,"政府中心" ,"世界奇观" ,"神庙"     ,"初级城墙",
+        "中级城墙"  ,"高级城墙"
+    };
+    constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={
+        "浆果丛","石矿","金矿","鱼群"
+    };
+    constexpr static const char* const Name_Farmer[FARMERTYPE_MAXNUM]={
+        "农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"
+    };
+    constexpr static const char* const Name_Animal[ANIMLA_TYPE_MANNUM]={
+        "树","瞪羚","大象","狮子","鳄鱼"
+    };
+    constexpr static const char* const Name_Missile[NUMBER_MISSILE]={
+        "矛","箭","圆石","巨石","弩炮"
+    };
+    constexpr static const char* const Name_Army[AT_ARMY_MAX_NUM]={
+        "棍棒兵"    ,"刀斧兵"       ,"短剑兵"   ,"阔剑兵"   ,"长剑兵",
+        "军团步兵"  ,"投石兵"       ,"弓兵"     ,"强弓兵"   ,"复合弓兵",
+        "弓骑兵"    ,"重装弓骑兵"   ,"象弓兵"   ,"战车弓兵" ,"侦察骑兵",
+        "骑兵"      ,"重骑兵"       ,"铁甲骑兵" ,"骆驼骑兵" ,"战车",
+        "刀轮战车"  ,"战象"         ,"装甲战象" ,"投石车"   ,"中型投石车",
+        "重型投石车","弩炮"         ,"重型弩炮" ,"侦察船"   ,"桨帆船",
+        "三列桨帆船","无敌战船"     ,"火帆船"   ,"方阵兵"   ,"十夫长",
+        "百夫长"    ,"祭司"
+    };
     constexpr static const char* const* const ObjectName[SORT_MAXNUM]={
         Name_Building,          // SORT_BUILDING
         Name_StaticRes,         // SORT_STATICRES
@@ -169,6 +189,7 @@ class ObjectBaseValue{
     };
     // 下标为 AT_*
     constexpr static const UnitValue ArmyValue[AT_ARMY_MAX_NUM]={
+        //                 移速  视野   攻近 攻远 防近 防远 射程 溅射 攻击间隔 碰撞半径
         /* 棍棒兵      */ { 1200,  5,     3,  0,  0,  0,  1, 0,  38, 150},
         /* 刀斧兵      */ { 1200,  5,     5,  0,  0,  0,  1, 0,  38, 150},
         /* 短剑兵      */ { 1200,  5,     7,  0,  1,  0,  1, 0,  38, 150},
@@ -257,7 +278,7 @@ class ObjectBaseValue{
         /* 高级城墙    */ { 0, 1000}
     };
     //建筑的攻击数值。目前只有箭塔/炮塔有攻击，数值按对应弓兵取值：
-    //  瞭望箭塔 = 弓兵、警戒箭塔 = 强弓兵、防御箭塔 = 复合弓兵、防御炮塔 = 弩炮。
+    //瞭望箭塔 = 弓兵、警戒箭塔 = 强弓兵、防御箭塔 = 复合弓兵、防御炮塔 = 弩炮。
     //溅射一律为 0：塔打的是单体，不继承弩炮的范围伤害。
     struct BuildingAttackValue{
         I32 attackShoot;    // 远程攻击
@@ -331,10 +352,12 @@ class ObjectBaseValue{
     //获取开局初始资源
     static std::array<I32, 4> getStartResource(I32 civilization){
         array<I32, 4> tmp;
-        for(I32 i=0;i<4;i++){tmp[i] =BasicStartResource[i];}
-        if(civilization==CIVILIZATION_SHANG)tmp[RESOURCESORT_FOOD]-=40;
-        if(civilization==CIVILIZATION_PALMYRENEAN)tmp[RESOURCESORT_FOOD]+=75;
-        if(civilization==CIVILIZATION_CARTHAGINIAN){for(int i=0;i<4;i++){tmp[i]+=50;}};
+        for(I32 i=0;i<4;i++){tmp[i] = BasicStartResource[i];}
+        // 各文明开局资源加成/减成
+        if(civilization==CIVILIZATION_SHANG) tmp[RESOURCESORT_FOOD]-=40;
+        if(civilization==CIVILIZATION_PALMYRENEAN) tmp[RESOURCESORT_FOOD]+=75;
+        if(civilization==CIVILIZATION_CARTHAGINIAN) {for(int i=0;i<4;i++){tmp[i]+=50;}};
+
         return tmp;
     }
     //获取对象基础血量
@@ -378,7 +401,7 @@ class ObjectBaseValue{
         const UnitValue* value=findUnitValue(sort,type);
         return value==nullptr ? Double::Zero() : Double(value->speed);
     }
-    //基础资源最大值
+    //基础资源最大基础值
     static Double getResourceBasicMaxCnt(I32 sort,I32 type){
         switch(sort){
         case SORT_STATICRES:{
@@ -411,9 +434,10 @@ class ObjectBaseValue{
         }
     }
     //资源腐烂速度
+    //未填数值
     static Double getResourceDecayRate(I32 sort,I32 type){
         switch(sort){
-        case SORT_STATICRES:{
+        /*case SORT_STATICRES:{
             switch (type){
             case STATICRES_Bush:return Double::Zero();
             case STATICRES_Stone:return Double::Zero();
@@ -421,7 +445,7 @@ class ObjectBaseValue{
             case STATICRES_Fish:return Double::Zero();
             default:return Double::Zero();
         }
-        }
+        }*/
         case SORT_ANIMAL:{
             switch (type){
             case ANIMAL_TREE:return Double::Zero();
@@ -432,17 +456,17 @@ class ObjectBaseValue{
             default:return Double::Zero();
             }
         }
-        case SORT_BUILDING:
+        /*case SORT_BUILDING:
         case SORT_BUILDING_RESOURCE:{
             switch (type){
             case BUILDING_FARM:return Double::Zero();
             default:return Double::Zero();
             }
-        }
+        }*/
         default:return Double::Zero();
         }
     }
-    //农民采集最大量
+    //农民采集最大基础量
     static Double getFarmerBasicCollectMax(I32 sort,I32 type){
         switch(sort){
         case SORT_STATICRES:{
@@ -455,14 +479,7 @@ class ObjectBaseValue{
         }
         }
         case SORT_ANIMAL:{
-            switch (type){
-            case ANIMAL_TREE:return 10;
-            case ANIMAL_GAZELLE:return 10;
-            case ANIMAL_ELEPHANT:return 10;
-            case ANIMAL_LION:return 10;
-            case ANIMAL_ALLIGATOR:return 10;
-            default:return Double::Zero();
-            }
+            return 10;
         }
         case SORT_BUILDING:
         case SORT_BUILDING_RESOURCE:{
@@ -514,8 +531,8 @@ class ObjectBaseValue{
     }
     //基础攻击力 first=近战,second=远程
     static std::pair<Double,Double> getBasicAttack(I32 sort,I32 type){
-        //建筑只有远程攻击（目前只有箭塔/炮塔有值）
-        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+        //建筑只有远程攻击（目前只有箭塔/炮塔有值） 不考虑农田
+        if(sort==SORT_BUILDING){
             const BuildingAttackValue* value=findBuildingAttackValue(type);
             return std::make_pair(Double::Zero(),value==nullptr?Double::Zero():Double(value->attackShoot));
         }
@@ -525,7 +542,7 @@ class ObjectBaseValue{
     }
     //基础攻击范围 first=范围伤害影响的范围,second=攻击范围（单位：区块）
     static std::pair<I32,I32> getBasicAttackRange(I32 sort,I32 type){
-        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+        if(sort==SORT_BUILDING){
             const BuildingAttackValue* value=findBuildingAttackValue(type);
             return value==nullptr ? std::make_pair(0,0) : std::make_pair(value->splash,value->attackRange);
         }
@@ -535,7 +552,7 @@ class ObjectBaseValue{
     }
     //基础攻击间隔（单位：帧）
     static I32 getAttackInterval(I32 sort,I32 type){
-        if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
+        if(sort==SORT_BUILDING){
             const BuildingAttackValue* value=findBuildingAttackValue(type);
             return value==nullptr ? 0 : value->attackTicks;
         }
