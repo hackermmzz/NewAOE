@@ -5,4 +5,4 @@
 #include "Public/fixed_point/include.h"
 
 //定点数类型
-using Double=Fixed<I64,I64,32>;
+using Double=Fixed<Int128,I64,32>;
