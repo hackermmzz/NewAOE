@@ -20,10 +20,16 @@ bool InstructionModule::isPriest(Object& o)
 { return isArmy(o) && o.getType()==AT_PRIEST; }
 
 bool InstructionModule::isFishingBoat(Object& o)
-{ return o.getSort()==SORT_FARMER && o.getType()==FARMERTYPE_SAILING; }
+{
+    return o.getSort() == SORT_FARMER &&
+           (o.getType() == FARMERTYPE_SMALL_SAILING || o.getType() == FARMERTYPE_BIG_SAILING);
+}
 
 bool InstructionModule::isTransportBoat(Object& o)
-{ return o.getSort()==SORT_FARMER && o.getType()==FARMERTYPE_WOOD_BOAT; }
+{
+    return o.getSort() == SORT_FARMER &&
+           (o.getType() == FARMERTYPE_LIGHT_TRANSPORT || o.getType() == FARMERTYPE_HEAVY_TRANSPORT);
+}
 
 bool InstructionModule::isBuilding(Object& o)
 { return o.getSort()==SORT_BUILDING || o.getSort()==SORT_BUILDING_RESOURCE; }
@@ -35,7 +41,23 @@ bool InstructionModule::isStaticResource(Object& o)
 { return o.getSort()==SORT_STATICRES; }
 
 bool InstructionModule::isShip(Object& o)
-{ return isFishingBoat(o) || isTransportBoat(o) || (isArmy(o) && o.getType()==AT_SHIP); }
+{
+    if (o.getSort() == SORT_FARMER) {
+        return isFishingBoat(o) || isTransportBoat(o) ||
+               o.getType() == FARMERTYPE_SMALL_TRADE_BOAT || o.getType() == FARMERTYPE_BIG_TRADE_BOAT;
+    }
+    if (!isArmy(o)) return false;
+    switch (o.getType()) {
+        case AT_SCOUT_SHIP:
+        case AT_WAR_GALLEY:
+        case AT_TRIREME:
+        case AT_CATAPULT_TRIREME:
+        case AT_FIRESAILBOAT:
+            return true;
+        default:
+            return false;
+    }
+}
 
 bool InstructionModule::human(Object& o)
 { return isVillager(o) || (isArmy(o) && !isShip(o)); }
@@ -58,14 +80,21 @@ I32 InstructionModule::addRelation(WeakPtr<Object> a,WeakPtr<Object> b,I32 event
   if(event!=CoreEven_Attacking && event!=CoreEven_Gather && event!=CoreEven_FixBuilding && event!=CoreEven_Transport) return ACTION_INVALID_ACTION;
   if(isBuilding(*w) && !ctx.constructed(*w)) return ACTION_INVALID_BUILDACT_NEEDBUILT;
   if(event==CoreEven_FixBuilding) {
-   if(!isVillager(*w) || (!isBuilding(*g) && !isFishingBoat(*g) && !isTransportBoat(*g) && !(isArmy(*g) && isShip(*g)))) return ACTION_INVALID_ACTION;
+   if(!isVillager(*w) || (!isBuilding(*g) && !isShip(*g))) return ACTION_INVALID_ACTION;
    // Ship repair shore/resource rules are checked by the kernel.
    if(ctx.fullHp(*g) && (!isBuilding(*g) || ctx.constructed(*g))) return ACTION_INVALID_HUMANACTION_BUILDNOTNEEDFIX;
   }
   // Soldiers cannot gather wood, stone, gold or any other resource.
   if(event==CoreEven_Gather && !isVillager(*w) && !isFishingBoat(*w)) return ACTION_INVALID_ACTION;
-  const bool healing = event==CoreEven_Attacking && isPriest(*w) && w->getPlayerRepresent()==g->getPlayerRepresent();
-  if(healing && (!isPriest(*w) || w.get()==g.get() || !human(*g) || isShip(*g) || ctx.fullHp(*g) || w->getPlayerRepresent()!=g->getPlayerRepresent())) return ACTION_INVALID_PRIEST_TARGET_ERROR;
+  if (event == CoreEven_Attacking && isPriest(*w)) {
+   const auto [workerPlayer, workerTeam] = w->getBelong();
+   const auto [goalPlayer, goalTeam] = g->getBelong();
+   const bool friendly = workerPlayer >= 0 && goalPlayer >= 0 &&
+       (workerPlayer == goalPlayer || (workerTeam >= 0 && workerTeam == goalTeam));
+   if (friendly && (w.get() == g.get() || !human(*g) || ctx.fullHp(*g))) {
+    return ACTION_INVALID_PRIEST_TARGET_ERROR;
+   }
+  }
   if(event==CoreEven_Attacking && (isFishingBoat(*w) || isTransportBoat(*w))) return ACTION_INVALID_ACTION;
   if(event==CoreEven_Attacking && (isArmy(*w) || isPriest(*w)) && (isAnimal(*g) && g->getType()==ANIMAL_TREE)) return ACTION_INVALID_ACTION;
   if(event==CoreEven_Attacking && !ctx.canAttack(*w) && !isPriest(*w)) return ACTION_INVALID_ACTION;
@@ -103,7 +132,7 @@ I32 InstructionModule::addRelation(WeakPtr<Object> a,IVec2 p,I32 event,I32 type)
   const auto h=ctx.height(p);
   for(I32 x=p.x;x<std::int64_t(p.x)+spec.width;++x) for(I32 y=p.y;y<std::int64_t(p.y)+spec.height;++y) {
    IVec2 cell{x,y};
-   if(!ctx.explored(w->getPlayerRepresent(),cell)) return ACTION_INVALID_HUMANBUILD_UNEXPLORE;
+   if(!ctx.explored(w->getBelong().first,cell)) return ACTION_INVALID_HUMANBUILD_UNEXPLORE;
    if(!spec.isFarm && (ctx.isSlope(cell) || ctx.height(cell)!=h))
     return ACTION_INVALID_HUMANBUILD_DIFFERENTHIGH;
    if(ctx.blocked(cell)) return ACTION_INVALID_HUMANBUILD_OVERLAP;

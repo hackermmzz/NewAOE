@@ -78,4 +78,3 @@ public:
  void filterInstruction(std::vector<Instruction>& ins,I32 coreClock);
  void resetClock();
 };
-
