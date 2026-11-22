@@ -3,8 +3,7 @@
 
 
 
-Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Object()
-{
+Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I32 percent):Object(){
     sort = SORT_BUILDING;
     this->type = type;
     switch(type){
@@ -20,29 +19,36 @@ Building::Building(I32 type,IVec2 blockPos, WeakPtr<Development> playerScience,I
     case BUILDING_FORTIFIED_WALL:
         this->fundation = FOUNDATION_SMALL;
         break;
+    case BUILDING_WONDER:
+        this->fundation = FOUNDATION_HUGE;
+        break;
     default:
         this->fundation = FOUNDATION_BIG;
         break;
     }
     this->block_pos = blockPos;
     //建筑给的是区块坐标，细节坐标按区块边长换算出来
-    this->detail_pos = IVec2(static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.x)),
-                             static_cast<I32>(BLOCKSIDELENGTH * Double(blockPos.y)));
+    this->detail_pos = IVec2(blockPos.x * Object::BlockSideDetail,blockPos.y * Object::BlockSideDetail);
     vision = ObjectBaseValue::getBasicVision(sort,type);
     this->playerScience = playerScience;
-    this->constructed = false;
+    //建造进度夹到 [0,100]：外部传负值会让血量折算成负数、传超过 100 没有意义
+    this->Percent=percent;
+    if(this->Percent<0)this->Percent=0;
+    if(this->Percent>100)this->Percent=100;
+    this->constructed = (this->Percent>=100);
     //设置名称
     name = ObjectBaseValue::getObjectName(sort,type);
-    this->Percent=Percent;
     // 内部血量统一按「满血」存放，建造进度只在读取时折算（见 getMaxBlood / getBlood），
-    // 这样科技变化时只需要刷新一次满血值，不必关心当前盖到几成。
     maxBlood = computeFullBlood();
     currentBlood = maxBlood;
+    //血量/防御/攻击/射程/攻防间隔一次性按当前科技算好。
+    //只刷防御的话，塔的 attackInteval 会停在构造初值，要等下一次科技动作才更新。
+    refresh();
     //碰撞盒按基础数值表建立
     rebuildCrashBox();
 }
 bool Building::isConstructed(){
-    if(Percent==100)constructed=true;
+    if(Percent>=100)constructed=true;
     return constructed;
 }
 bool Building::isMatchResourceType(int productSort){
@@ -81,6 +87,7 @@ void Building::build(I32 percent){
     Percent += percent;
     if(Percent > 100){
         Percent = 100;
+        constructed=true;
     }
     if(Percent < 0){
         Percent = 0;
@@ -89,9 +96,7 @@ void Building::build(I32 percent){
 
 Double Building::getMaxBlood(){
     //建成后走正常逻辑
-    if(Percent >= 100){
-        return maxBlood;
-    }
+    if(isConstructed())return maxBlood;
     //施工中：满血值 × 建造进度
     Double scaled = maxBlood * Double(Percent) / Double(100);
     //进度为 0 时算出来是 0，保底给 1 点，避免建筑一落地就是死的
@@ -100,35 +105,18 @@ Double Building::getMaxBlood(){
 
 Double Building::getBlood(){
     //建成后走正常逻辑
-    if(Percent >= 100){
-        return currentBlood;
-    }
+    if(isConstructed())return currentBlood;
     //施工中：当前血量同样按进度折算；已经被打掉的建筑不再保底
-    if(currentBlood <= Double::Zero()){
-        return Double::Zero();
-    }
-    Double scaled = currentBlood * Double(Percent) / Double(100);
-    return scaled <= Double::Zero() ? Double(1) : scaled;
-}
-
-void Building::refreshByScience(){
-    //上限涨多少、当前血量跟着涨多少，残血建筑不会被科技直接奶满
-    const Double oldMaxBlood = maxBlood;
-    const Double oldCurrentBlood = currentBlood;
-    maxBlood = computeFullBlood();
-    syncBloodAfterMaxChange(oldMaxBlood,oldCurrentBlood);
-
-    //攻击/护甲/射程暂不在这里重算：BuildingBase 目前只收了口径明确的视野与占地，
-    //塔的攻击数值还没有进表，直接重算会把塔的攻击清成 0。
-    //等建筑的攻击列补进 ObejctBaseValue 之后再一并处理。
+    Double result=getMaxBlood()-(maxBlood-currentBlood);
+    if(result<= Double::Zero())return Double::Zero();
+    return result;
 }
 
 //---- UI 用的「基础值 / 加成值」拆分 ----
 //基础值一律取 ObejctBaseValue，加成值 = 当前值（已含科技）- 基础值。
 
 Double Building::getAttackBasic(){
-    const std::pair<Double,Double> base =
-        ObjectBaseValue::getBasicAttack(getSort(),getType());
+    const std::pair<Double,Double> base =ObjectBaseValue::getBasicAttack(getSort(),getType());
     return attackType == ATTACKTYPE_SHOOT ? base.second : base.first;
 }
 
@@ -152,3 +140,83 @@ Double Building::getDefenceCloseAddition(){
 Double Building::getDefenceShootAddition(){
     return defenceShoot - getDefenceShootBasic();
 }
+void Building::refresh(){
+    refreshBlood();
+    refreshDefence();
+    refreshAttack();
+}
+void Building::refreshBlood(){
+    //科技为空时按基础值算，和 Human 保持同一口径
+    Double newmaxBlood=ObjectBaseValue::getBasicBlood(sort,type);
+    SafePtr<Development> science = playerScience.lock();
+    if(science != nullptr){
+        newmaxBlood=newmaxBlood*science->get_rate_Blood(sort,type)+science->get_addition_Blood(sort,type);
+    }
+    //构造时已经写过满血值；这里只在被清空过（异常路径）时补一次初始化
+    if(maxBlood<=Double::Zero()){
+        maxBlood=newmaxBlood;
+        currentBlood=newmaxBlood;
+        return;
+    }
+    //已经被打掉的不因上限变化而复活
+    if(isDie()){
+        maxBlood=newmaxBlood;
+        return;
+    }
+    currentBlood+=newmaxBlood-maxBlood;
+    maxBlood=newmaxBlood;
+    if(currentBlood>maxBlood)currentBlood=maxBlood;
+    if(currentBlood<Double::Zero())currentBlood=Double::Zero();
+}
+void Building::refreshDefence(){
+    if(isDie()){return;}
+    const std::pair<Double,Double> base=ObjectBaseValue::getBasicDefence(getSort(),getType());
+    SafePtr<Development> science = playerScience.lock();
+    if(science == nullptr){
+        defenceClose=base.first;
+        defenceShoot=base.second;
+        return;
+    }
+    defenceClose=base.first*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_CLOSE)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_CLOSE);
+    defenceShoot=base.second*science->get_rate_Defence(sort,type,-1,ATTACKTYPE_SHOOT)+science->get_addition_Defence(sort,type,-1,ATTACKTYPE_SHOOT);
+}
+void Building::refreshAttack(){
+    if(isDie()){return;}
+    SafePtr<Development> science = playerScience.lock();
+    const std::pair<Double,Double> attackBase =ObjectBaseValue::getBasicAttack(sort,type);
+    I32 armyClass=-1;
+    if(attackBase.first > Double::Zero()){
+        attackClose = science==nullptr ? attackBase.first
+                    : attackBase.first*science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE)+ Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_CLOSE));
+    }else{
+        attackClose = Double::Zero();
+    }
+    if(attackBase.second > Double::Zero()){
+        attackShoot = science==nullptr ? attackBase.second
+                    : attackBase.second * science->get_rate_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT) + Double(science->get_addition_Attack(sort,type,armyClass,ATTACKTYPE_SHOOT));
+    }else{
+        attackShoot = Double::Zero();
+    }
+    const std::pair<I32,I32> rangeBase = ObjectBaseValue::getBasicAttackRange(sort,type);
+    attackType = attackBase.second > Double::Zero() ? ATTACKTYPE_SHOOT : ATTACKTYPE_CLOSE;
+    rangeEffect = rangeBase.first;
+    range = rangeBase.first > 0;
+    minAttackRange = rangeBase.second;
+
+    I32 interval = 0;
+    I32 circle = ATTACK_CIRCLE_FRAMES;
+    if(science != nullptr){
+        minAttackRange += science->get_addition_DisAttack(sort,type,armyClass,attackType);
+        interval = science->get_speed_attack(sort,type,armyClass)[0];
+        circle   = science->get_speed_attack(sort,type,armyClass)[1];
+    }
+    //科技没给间隔就退回数值表（箭塔的 35 帧、炮塔的 75 帧），再不行给 1 帧，
+    //避免内核拿它做取模/除法时除零。
+    if(interval<=0){interval=ObjectBaseValue::getAttackInterval(sort,type);}
+    if(interval<=0){interval=1;}
+    attackInteval=interval;
+    //科技没给前摇（Development 目前恒返回 0，表里也没有这一列）就退回默认半秒
+    if(circle<=0){circle=ATTACK_CIRCLE_FRAMES;}
+    attackCircle=circle;
+}
+

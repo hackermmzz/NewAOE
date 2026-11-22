@@ -36,7 +36,6 @@ enum BuildingAction
     BUILDING_CENTER_UPGRADE_TOOLAGE,           // 升级到工具时代（石器）
     BUILDING_CENTER_UPGRADE_BRONZEAGE,         // 升级到铜器时代（工具）
     BUILDING_CENTER_UPGRADE_IRONAGE,           // 升级到铁器时代（铜器）
-    //BUILDING_CENTER_CITY_WATCH,                // 城防：全部建筑视野+3（青铜）
 
     // ---------- 房屋 House：无行为 ----------
 
@@ -72,15 +71,15 @@ enum BuildingAction
     BUILDING_STOCK_UPGRADE_METALWORKING,       // 金属加工：近战攻击+2（青铜）
     BUILDING_STOCK_UPGRADE_METALLURGY,         // 冶金：近战攻击+3（铁器）
 
-    BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_1,   // 皮革护甲（步兵）：护甲+2（工具）
+    BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_1, // 皮革护甲（步兵）：护甲+2（工具）
     BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_2, // 鳞甲（步兵）：护甲+2（青铜）
     BUILDING_STOCK_UPGRADE_DEFENSE_INFANTRY_3, // 锁子甲（步兵）：护甲+2（铁器）
 
-    BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_1,     // 皮革护甲（弓兵）：护甲+2（工具）
+    BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_1,   // 皮革护甲（弓兵）：护甲+2（工具）
     BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_2,   // 鳞甲（弓兵）：护甲+2（青铜）
     BUILDING_STOCK_UPGRADE_DEFENSE_ARCHER_3,   // 锁子甲（弓兵）：护甲+2（铁器，解锁重装马弓手）
 
-    BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_1,      // 皮革护甲（骑兵）：护甲+2（工具）
+    BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_1,    // 皮革护甲（骑兵）：护甲+2（工具）
     BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_2,    // 鳞甲（骑兵）：护甲+2（青铜）
     BUILDING_STOCK_UPGRADE_DEFENSE_RIDER_3,    // 锁子甲（骑兵）：护甲+2（铁器）
 
@@ -133,13 +132,13 @@ enum BuildingAction
     BUILDING_DOCK_UPGRADE_SAILING,             // 升级为大型渔船（船）（青铜）
 
     BUILDING_DOCK_CREATE_TRADEBOAT,            // 造商船（石器）
-    BUILDING_DOCK_UPGRADE_TRADEBOAT,           // 升级为商船（船）（青铜）
+    BUILDING_DOCK_UPGRADE_TRADEBOAT,           // 升级为大型商船（船）（青铜）
 
     BUILDING_DOCK_CREATE_TRANSPORT,            // 造运输船（工具）
     BUILDING_DOCK_UPGRADE_TRANSPORT,           // 升级为重型运输船（铁器）
 
     BUILDING_DOCK_CREATE_SCOUTSHIP,            // 造侦察船（工具）
-    BUILDING_DOCK_UPGRADE_WAR_GALLEY,           // 升级为桨帆船（青铜）
+    BUILDING_DOCK_UPGRADE_WAR_GALLEY,          // 升级为桨帆船（青铜）
     BUILDING_DOCK_UPGRADE_TRIREME,             // 升级为三列桨帆船（铁器）
 
     BUILDING_DOCK_CREATE_CATAPULT_TRIREME,     // 造无敌战船（铁器）
@@ -178,7 +177,6 @@ enum BuildingAction
     BUILDING_TEMPLE_AFTERLIFE,                 // 来生：转化射程与视野+3（铁器）
     BUILDING_TEMPLE_FANATICISM,                // 狂热：祭司复活速度+50%、解锁军团（铁器）
     BUILDING_TEMPLE_ZEALOTRY,                  // 圣战：村民攻击+7、生命+40（铁器）
-    //BUILDING_TEMPLE_THEOCRACY,                 // 神权政治：一群祭司转化后只需一人休息（铁器）
     BUILDING_TEMPLE_SACRIFICE,                 // 献祭：牺牲祭司立即转化敌方单位（铁器）
 };
 

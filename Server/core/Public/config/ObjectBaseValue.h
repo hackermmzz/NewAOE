@@ -10,6 +10,8 @@
 #include "Server/core/Public/var/Sort.h"
 #include "Server/core/Public/var/StaticResource.h"
 #include "Server/core/type.h"
+#include "Server/core/Public/config/Core.h"
+#include "Server/core/Public/config/unit_attribute.h"
 #include "Server/core/BaseObject/CrashBox.h"
 #include <array>
 #include <string>
@@ -123,16 +125,47 @@ class ObjectBaseValue{
         BaseBlood_Building,     // SORT_BUILDING_RESOURCE
         BaseBlood_Army          // SORT_ARMY
     };
+    //静态资源碰撞盒边长：1×1 区块 = 1000 细节坐标（与 Object::BlockSideDetail 一致）
+    constexpr static const I32 StaticResCrashSide=BLOCKSIDELENGTH;
+    //投掷物飞行速度（细节坐标/秒）。数据表没有这一列，按「比弓箭手快一个量级、
+    //越重的弹道越慢」估的：投掷物不改方向，速度只决定飞完这段距离要多久。
+    constexpr static const I32 MissileSpeed[NUMBER_MISSILE]={
+        6000,   // 矛
+        7000,   // 箭
+        4000,   // 圆石
+        3000,   // 巨石
+        5000    // 弩炮
+    };
     //对象名
-    constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={"房屋","谷仓","市镇中心","仓库","农场","市场","瞭望箭塔","警戒箭塔","防御箭塔","防御炮塔","军营","马厩","靶场","船坞","攻城武器厂","学院","政府中心","世界奇观","神庙","初级城墙","中级城墙","高级城墙"};
-    constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={"浆果丛","石矿","金矿","鱼群"};
-    constexpr static const char* const Name_Farmer[FARMERTYPE_MAXNUM]={"农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"};
-    constexpr static const char* const Name_Animal[ANIMLA_TYPE_MANNUM]={"树","瞪羚","大象","狮子","鳄鱼"};
-    constexpr static const char* const Name_Missile[NUMBER_MISSILE]={"矛","箭","圆石","巨石","弩炮"};
-    constexpr static const char* const Name_Army[AT_ARMY_MAX_NUM]={"棍棒兵","刀斧兵","短剑兵","阔剑兵","长剑兵","军团步兵",
-        "投石兵","弓兵","强弓兵","复合弓兵","弓骑兵","重装弓骑兵","象弓兵","战车弓兵","侦察骑兵",
-        "骑兵","重骑兵","铁甲骑兵","骆驼骑兵","战车","刀轮战车","战象","装甲战象","投石车","中型投石车","重型投石车","弩炮","重型弩炮","侦察船",
-        "桨帆船","三列桨帆船","无敌战船","火帆船","方阵兵","十夫长","百夫长","祭司"};
+    constexpr static const char* const Name_Building[BUILDING_TYPE_MAXNUM]={
+        "房屋"      ,"谷仓"     ,"市镇中心" ,"仓库"     ,"农场",
+        "市场"      ,"瞭望箭塔" ,"警戒箭塔" ,"防御箭塔"  ,"防御炮塔",
+        "军营"      ,"马厩"     ,"靶场"     ,"船坞"     ,"攻城武器厂",
+        "学院"      ,"政府中心" ,"世界奇观" ,"神庙"     ,"初级城墙",
+        "中级城墙"  ,"高级城墙"
+    };
+    constexpr static const char* const Name_StaticRes[STATICRES_MAXNUM]={
+        "浆果丛","石矿","金矿","鱼群"
+    };
+    constexpr static const char* const Name_Farmer[FARMERTYPE_MAXNUM]={
+        "农民","小型渔船","大型渔船","小型商船","大型商船","小型运输船","重型运输船"
+    };
+    constexpr static const char* const Name_Animal[ANIMLA_TYPE_MANNUM]={
+        "树","瞪羚","大象","狮子","鳄鱼"
+    };
+    constexpr static const char* const Name_Missile[NUMBER_MISSILE]={
+        "矛","箭","圆石","巨石","弩炮"
+    };
+    constexpr static const char* const Name_Army[AT_ARMY_MAX_NUM]={
+        "棍棒兵"    ,"刀斧兵"       ,"短剑兵"   ,"阔剑兵"   ,"长剑兵",
+        "军团步兵"  ,"投石兵"       ,"弓兵"     ,"强弓兵"   ,"复合弓兵",
+        "弓骑兵"    ,"重装弓骑兵"   ,"象弓兵"   ,"战车弓兵" ,"侦察骑兵",
+        "骑兵"      ,"重骑兵"       ,"铁甲骑兵" ,"骆驼骑兵" ,"战车",
+        "刀轮战车"  ,"战象"         ,"装甲战象" ,"投石车"   ,"中型投石车",
+        "重型投石车","弩炮"         ,"重型弩炮" ,"侦察船"   ,"桨帆船",
+        "三列桨帆船","无敌战船"     ,"火帆船"   ,"方阵兵"   ,"十夫长",
+        "百夫长"    ,"祭司"
+    };
     constexpr static const char* const* const ObjectName[SORT_MAXNUM]={
         Name_Building,          // SORT_BUILDING
         Name_StaticRes,         // SORT_STATICRES
@@ -158,6 +191,7 @@ class ObjectBaseValue{
     };
     // 下标为 AT_*
     constexpr static const UnitValue ArmyValue[AT_ARMY_MAX_NUM]={
+        //                 移速  视野   攻近 攻远 防近 防远 射程 溅射 攻击间隔 碰撞半径
         /* 棍棒兵      */ { 1200,  5,     3,  0,  0,  0,  1, 0,  38, 150},
         /* 刀斧兵      */ { 1200,  5,     5,  0,  0,  0,  1, 0,  38, 150},
         /* 短剑兵      */ { 1200,  5,     7,  0,  1,  0,  1, 0,  38, 150},
@@ -245,6 +279,40 @@ class ObjectBaseValue{
         /* 中级城墙    */ { 0, 1000},
         /* 高级城墙    */ { 0, 1000}
     };
+    //建筑的攻击数值。目前只有箭塔/炮塔有攻击，数值按对应弓兵取值：
+    //瞭望箭塔 = 弓兵、警戒箭塔 = 强弓兵、防御箭塔 = 复合弓兵、防御炮塔 = 弩炮。
+    //溅射一律为 0：塔打的是单体，不继承弩炮的范围伤害。
+    struct BuildingAttackValue{
+        I32 attackShoot;    // 远程攻击
+        I32 attackRange;    // 攻击距离：区块
+        I32 splash;         // 范围伤害半径：区块，0 表示无溅射
+        I32 attackTicks;    // 攻击间隔：帧
+    };
+    // 下标为 BUILDING_*
+    constexpr static const BuildingAttackValue BuildingAttack[BUILDING_TYPE_MAXNUM]={
+        /* 房屋        */ {  0, 0, 0,  0},
+        /* 谷仓        */ {  0, 0, 0,  0},
+        /* 市镇中心    */ {  0, 0, 0,  0},
+        /* 仓库        */ {  0, 0, 0,  0},
+        /* 农场        */ {  0, 0, 0,  0},
+        /* 市场        */ {  0, 0, 0,  0},
+        /* 瞭望箭塔    */ {  3, 5, 0, 35},
+        /* 警戒箭塔    */ {  4, 6, 0, 35},
+        /* 防御箭塔    */ {  5, 7, 0, 35},
+        /* 防御炮塔    */ { 40, 9, 0, 75},
+        /* 军营        */ {  0, 0, 0,  0},
+        /* 马厩        */ {  0, 0, 0,  0},
+        /* 靶场        */ {  0, 0, 0,  0},
+        /* 船坞        */ {  0, 0, 0,  0},
+        /* 攻城武器厂  */ {  0, 0, 0,  0},
+        /* 学院        */ {  0, 0, 0,  0},
+        /* 政府中心    */ {  0, 0, 0,  0},
+        /* 世界奇观    */ {  0, 0, 0,  0},
+        /* 神庙        */ {  0, 0, 0,  0},
+        /* 初级城墙    */ {  0, 0, 0,  0},
+        /* 中级城墙    */ {  0, 0, 0,  0},
+        /* 高级城墙    */ {  0, 0, 0,  0}
+    };
 
     // 枚举越界保护：所有查表都先过一遍，避免下标写错时读到别的对象的数据。
     static bool inRange(I32 value,I32 count){
@@ -264,37 +332,231 @@ class ObjectBaseValue{
         }
     }
     static const BuildingValue* findBuildingValue(I32 type){
-        return inRange(type,BUILDING_TYPE_MAXNUM) ? &BuildingBase[type] : nullptr;
+        return inRange(type,BUILDING_TYPE_MAXNUM) ? &rt().building[type] : nullptr;
+    }
+    static const BuildingAttackValue* findBuildingAttackValue(I32 type){
+        return inRange(type,BUILDING_TYPE_MAXNUM) ? &rt().buildingAttack[type] : nullptr;
     }
     static const UnitValue* findUnitValue(I32 sort,I32 type){
+        const RuntimeTables& t=rt();
         switch(sort){
         case SORT_ARMY:
-            return inRange(type,AT_ARMY_MAX_NUM) ? &ArmyValue[type] : nullptr;
+            return inRange(type,AT_ARMY_MAX_NUM) ? &t.army[type] : nullptr;
         case SORT_FARMER:
-            return inRange(type,FARMERTYPE_MAXNUM) ? &FarmerValue[type] : nullptr;
+            return inRange(type,FARMERTYPE_MAXNUM) ? &t.farmer[type] : nullptr;
         case SORT_ANIMAL:
-            return inRange(type,ANIMLA_TYPE_MANNUM) ? &AnimalValue[type] : nullptr;
+            return inRange(type,ANIMLA_TYPE_MANNUM) ? &t.animal[type] : nullptr;
         default:
             return nullptr;
         }
+    }
+
+
+    // ---- 运行时数值表 ----
+    // 上面的 constexpr 表是「默认值」；这里在首次使用时复制一份，再用
+    // unit_attribute 里由 Excel 解析出来的变量覆盖。数值只有一份来源；
+    // unit_attribute 还没被解析（变量全是 0）时退回默认表，不会出现全 0。
+    struct RuntimeTables{
+        I32                 bloodBuilding[BUILDING_TYPE_MAXNUM];
+        I32                 bloodArmy[AT_ARMY_MAX_NUM];
+        I32                 bloodFarmer[FARMERTYPE_MAXNUM];
+        I32                 bloodAnimal[ANIMLA_TYPE_MANNUM];
+        UnitValue           army[AT_ARMY_MAX_NUM];
+        UnitValue           farmer[FARMERTYPE_MAXNUM];
+        UnitValue           animal[ANIMLA_TYPE_MANNUM];
+        BuildingValue       building[BUILDING_TYPE_MAXNUM];
+        BuildingAttackValue buildingAttack[BUILDING_TYPE_MAXNUM];
+    };
+    static RuntimeTables& rtMutable(){
+        static RuntimeTables tables=makeRuntime();
+        // 哨兵：Excel 解析把 CLUBMAN_HP 从 0 变成真实值之后，自动重建一次表，
+        // 这样不要求「先 ParseUnitAttribute 再建对象」的调用顺序。
+        static I32 lastSentinel=CLUBMAN_HP;
+        if(CLUBMAN_HP!=lastSentinel){
+            tables=makeRuntime();
+            lastSentinel=CLUBMAN_HP;
+        }
+        return tables;
+    }
+    static const RuntimeTables& rt(){return rtMutable();}
+    static RuntimeTables makeRuntime(){
+        RuntimeTables t;
+        for(I32 i=0;i<BUILDING_TYPE_MAXNUM;i++){
+            t.bloodBuilding[i]=BaseBlood_Building[i];
+            t.building[i]=BuildingBase[i];
+            t.buildingAttack[i]=BuildingAttack[i];
+        }
+        for(I32 i=0;i<AT_ARMY_MAX_NUM;i++){ t.bloodArmy[i]=BaseBlood_Army[i]; t.army[i]=ArmyValue[i]; }
+        for(I32 i=0;i<FARMERTYPE_MAXNUM;i++){ t.bloodFarmer[i]=BaseBlood_Farmer[i]; t.farmer[i]=FarmerValue[i]; }
+        for(I32 i=0;i<ANIMLA_TYPE_MANNUM;i++){ t.bloodAnimal[i]=BaseBlood_Animal[i]; t.animal[i]=AnimalValue[i]; }
+        fillFromUnitAttribute(t);
+        return t;
+    }
+    // 区块/秒 -> 细节坐标/秒。用整数移位实现，绕开定点数乘法（Fixed 的 * 目前会溢出成 0）。
+    // 加半个 2^32 做四舍五入：1.2 在定点数里是 1.1999…，直接截断会得到 1199。
+    static I32 DetailPerSecond(Double blocksPerSecond){
+        return static_cast<I32>((static_cast<I64>(blocksPerSecond.raw())*1000+(static_cast<I64>(1)<<31))>>32);
+    }
+    // 秒 -> 帧（四舍五入）
+    static I32 TicksFromSeconds(Double seconds){
+        return static_cast<I32>((static_cast<I64>(seconds.raw())*GAME_TPS+(static_cast<I64>(1)<<31))>>32);
+    }
+    // 近战/远程在表里是两列，按默认表里非零的那一列写入
+    static void ApplyAttack(UnitValue& v,I32 attack){
+        if(v.attackShoot>0)v.attackShoot=attack; else v.attackClose=attack;
+    }
+    static void fillFromUnitAttribute(RuntimeTables& t){
+        // 用 CLUBMAN_HP 当「Excel 是否已经解析过」的哨兵：
+        // 没解析时所有变量都是 0，直接跳过，保留默认表。
+        if(CLUBMAN_HP<=0)return;
+
+        // 兵种：HP / 速度 / 视野 / 双护甲 / 攻击 / 攻击间隔（+射程）
+#define UA_UNIT(T,P) do{ \
+        t.bloodArmy[T]=P##_HP; \
+        t.army[T].speed=DetailPerSecond(P##_SPEED); \
+        t.army[T].vision=P##_LINE_OF_SIGHT; \
+        t.army[T].defenceClose=P##_HAND_ARMOR; \
+        t.army[T].defenceShoot=P##_PIERCE_ARMOR; \
+        ApplyAttack(t.army[T],P##_ATTACK); \
+        if(P##_ATTACK_INTERVAL.raw()>0)t.army[T].attackTicks=TicksFromSeconds(P##_ATTACK_INTERVAL); \
+        if(P##_RANGE>0)t.army[T].attackRange=P##_RANGE; \
+    }while(0)
+#define UA_UNIT_NORANGE(T,P) do{ \
+        t.bloodArmy[T]=P##_HP; \
+        t.army[T].speed=DetailPerSecond(P##_SPEED); \
+        t.army[T].vision=P##_LINE_OF_SIGHT; \
+        t.army[T].defenceClose=P##_HAND_ARMOR; \
+        t.army[T].defenceShoot=P##_PIERCE_ARMOR; \
+        ApplyAttack(t.army[T],P##_ATTACK); \
+        if(P##_ATTACK_INTERVAL.raw()>0)t.army[T].attackTicks=TicksFromSeconds(P##_ATTACK_INTERVAL); \
+    }while(0)
+#define UA_UNIT_NOATK(T,P) do{ \
+        t.bloodArmy[T]=P##_HP; \
+        t.army[T].speed=DetailPerSecond(P##_SPEED); \
+        t.army[T].vision=P##_LINE_OF_SIGHT; \
+        t.army[T].defenceClose=P##_HAND_ARMOR; \
+        t.army[T].defenceShoot=P##_PIERCE_ARMOR; \
+        if(P##_ATTACK_INTERVAL.raw()>0)t.army[T].attackTicks=TicksFromSeconds(P##_ATTACK_INTERVAL); \
+    }while(0)
+#define UA_BOAT(T,P) do{ \
+        t.bloodFarmer[T]=P##_HP; \
+        t.farmer[T].speed=DetailPerSecond(P##_SPEED); \
+        t.farmer[T].vision=P##_LINE_OF_SIGHT; \
+        t.farmer[T].defenceClose=P##_HAND_ARMOR; \
+        t.farmer[T].defenceShoot=P##_PIERCE_ARMOR; \
+    }while(0)
+
+    UA_UNIT(AT_BALLISTA, BALLISTA);
+    UA_UNIT(AT_BOWMAN, BOWMAN);
+    UA_UNIT(AT_CATAPULT, CATAPULT);
+    UA_UNIT(AT_CATAPULT_TRIREME, CATAPULT_TRIREME);
+    UA_UNIT(AT_CHARIOT_ARCHER, CHARIOT_ARCHER);
+    UA_UNIT(AT_COMPOSITE_BOWMAN, COMPOSITE_BOWMAN);
+    UA_UNIT(AT_ELEPHANT_ARCHER, ELEPHANT_ARCHER);
+    UA_UNIT(AT_FIRESAILBOAT, FIRE_GALLEY);
+    UA_UNIT(AT_HEAVY_CATAPULT, HEAVY_CATAPULT);
+    UA_UNIT(AT_HEAVY_HORSE_ARCHER, HEAVY_HORSE_ARCHER);
+    UA_UNIT(AT_HELEPOLIS, HELEPOLIS);
+    UA_UNIT(AT_HORSE_ARCHER, HORSE_ARCHER);
+    UA_UNIT(AT_IMPROVED_BOWMAN, IMPROVED_BOWMAN);
+    UA_UNIT(AT_SCOUT_SHIP, SCOUT_SHIP);
+    UA_UNIT(AT_SLINGER, SLINGER);
+    UA_UNIT(AT_STONE_THROWER, STONE_THROWER);
+    UA_UNIT(AT_TRIREME, TRIREME);
+    UA_UNIT(AT_WAR_GALLEY, WAR_GALLEY);
+
+    UA_UNIT_NORANGE(AT_ARMORED_ELEPHANT, ARMORED_ELEPHANT);
+    UA_UNIT_NORANGE(AT_AXEMAN, AXEMAN);
+    UA_UNIT_NORANGE(AT_BROAD_SWORDSMAN, BROAD_SWORDSMAN);
+    UA_UNIT_NORANGE(AT_CAMEL_RIDER, CAMEL_RIDER);
+    UA_UNIT_NORANGE(AT_CATAPHRACT, CATAPHRACT);
+    UA_UNIT_NORANGE(AT_CAVALRY, CAVALRY);
+    UA_UNIT_NORANGE(AT_CENTURION, CENTURION);
+    UA_UNIT_NORANGE(AT_CHARIOT, CHARIOT);
+    UA_UNIT_NORANGE(AT_CLUBMAN, CLUBMAN);
+    UA_UNIT_NORANGE(AT_HEAVY_CAVALRY, HEAVY_CAVALRY);
+    UA_UNIT_NORANGE(AT_HOPLITE, HOPLITE);
+    UA_UNIT_NORANGE(AT_LEGION, LEGION);
+    UA_UNIT_NORANGE(AT_LONG_SWORDSMAN, LONG_SWORDSMAN);
+    UA_UNIT_NORANGE(AT_PHALANX, PHALANX);
+    UA_UNIT_NORANGE(AT_SCOUT, SCOUT);
+    UA_UNIT_NORANGE(AT_SCYTHECHARIOT, SCYTHE_CHARIOT);
+    UA_UNIT_NORANGE(AT_SHORT_SWORDSMAN, SHORT_SWORDSMAN);
+    UA_UNIT_NORANGE(AT_WAR_ELEPHANT, WAR_ELEPHANT);
+
+    UA_UNIT_NOATK(AT_PRIEST, PRIEST);
+
+    // 村民
+    do{
+        t.bloodFarmer[FARMERTYPE_FARMER]=VILLAGER_HP;
+        t.farmer[FARMERTYPE_FARMER].speed=DetailPerSecond(VILLAGER_SPEED);
+        t.farmer[FARMERTYPE_FARMER].vision=VILLAGER_LINE_OF_SIGHT;
+        t.farmer[FARMERTYPE_FARMER].defenceClose=VILLAGER_HAND_ARMOR;
+        t.farmer[FARMERTYPE_FARMER].defenceShoot=VILLAGER_PIERCE_ARMOR;
+        ApplyAttack(t.farmer[FARMERTYPE_FARMER],VILLAGER_ATTACK);
+        if(VILLAGER_ATTACK_INTERVAL.raw()>0)t.farmer[FARMERTYPE_FARMER].attackTicks=TicksFromSeconds(VILLAGER_ATTACK_INTERVAL);
+    }while(0);
+
+    // 渔船 / 商船 / 运输船：Excel 里只有 HP / 速度 / 视野 / 护甲
+    UA_BOAT(FARMERTYPE_SMALL_SAILING,    FISHING_BOAT);
+    UA_BOAT(FARMERTYPE_BIG_SAILING,      FISHING_SHIP);
+    UA_BOAT(FARMERTYPE_SMALL_TRADE_BOAT, TRADE_BOAT);
+    UA_BOAT(FARMERTYPE_BIG_TRADE_BOAT,   MERCHANT_SHIP);
+    UA_BOAT(FARMERTYPE_LIGHT_TRANSPORT,  LIGHT_TRANSPORT);
+    UA_BOAT(FARMERTYPE_HEAVY_TRANSPORT,  HEAVY_TRANSPORT);
+
+#undef UA_UNIT
+#undef UA_UNIT_NORANGE
+#undef UA_UNIT_NOATK
+#undef UA_BOAT
+
+        // 建筑：Excel 里只给了这几个
+        if(TOWN_CENTER_HP>0)t.bloodBuilding[BUILDING_CENTER]=TOWN_CENTER_HP;
+        if(HOUSE_HP>0)      t.bloodBuilding[BUILDING_HOME]=HOUSE_HP;
+        if(BARRACKS_HP>0)   t.bloodBuilding[BUILDING_ARMYCAMP]=BARRACKS_HP;
+
+#define UA_TOWER(B,P) do{ \
+        if(P##_HP>0)t.bloodBuilding[B]=P##_HP; \
+        if(P##_LINE_OF_SIGHT>0)t.building[B].vision=P##_LINE_OF_SIGHT; \
+        if(P##_ATTACK>0)t.buildingAttack[B].attackShoot=P##_ATTACK; \
+        if(P##_RANGE>0)t.buildingAttack[B].attackRange=P##_RANGE; \
+        if(P##_ATTACK_INTERVAL.raw()>0)t.buildingAttack[B].attackTicks=TicksFromSeconds(P##_ATTACK_INTERVAL); \
+    }while(0)
+        UA_TOWER(BUILDING_WATCH_TOWER,    WATCH_TOWER);
+        UA_TOWER(BUILDING_SENTRY_TOWER,   SENTRY_TOWER);
+        UA_TOWER(BUILDING_GUARD_TOWER,    GUARD_TOWER);
+        UA_TOWER(BUILDING_BALLISTA_TOWER, BALLISTA_TOWER);
+#undef UA_TOWER
     }
 
     public:
     //获取开局初始资源
     static std::array<I32, 4> getStartResource(I32 civilization){
         array<I32, 4> tmp;
-        for(I32 i=0;i<4;i++){tmp[i] =BasicStartResource[i];}
-        if(civilization==CIVILIZATION_SHANG)tmp[RESOURCESORT_FOOD]-=40;
-        if(civilization==CIVILIZATION_PALMYRENEAN)tmp[RESOURCESORT_FOOD]+=75;
-        if(civilization==CIVILIZATION_CARTHAGINIAN){for(int i=0;i<4;i++){tmp[i]+=50;}};
+        for(I32 i=0;i<4;i++){tmp[i] = BasicStartResource[i];}
+        // 各文明开局资源加成/减成
+        if(civilization==CIVILIZATION_SHANG) tmp[RESOURCESORT_FOOD]-=40;
+        if(civilization==CIVILIZATION_PALMYRENEAN) tmp[RESOURCESORT_FOOD]+=75;
+        if(civilization==CIVILIZATION_CARTHAGINIAN) {for(int i=0;i<4;i++){tmp[i]+=50;}};
+
         return tmp;
     }
     //获取对象基础血量
     static Double getBasicBlood(I32 sort,I32 type){
-        if(!inRange(sort,SORT_MAXNUM))return Double::Zero();
-        if(BaseBlood[sort]==nullptr)return Double::Zero();
-        if(!inRange(type,typeCount(sort)))return Double::Zero();
-        return Double(BaseBlood[sort][type]);
+        const RuntimeTables& t=rt();
+        switch(sort){
+        case SORT_BUILDING:
+        case SORT_BUILDING_RESOURCE:
+            return inRange(type,BUILDING_TYPE_MAXNUM) ? Double(t.bloodBuilding[type]) : Double::Zero();
+        case SORT_ARMY:
+            return inRange(type,AT_ARMY_MAX_NUM) ? Double(t.bloodArmy[type]) : Double::Zero();
+        case SORT_FARMER:
+            return inRange(type,FARMERTYPE_MAXNUM) ? Double(t.bloodFarmer[type]) : Double::Zero();
+        case SORT_ANIMAL:
+            return inRange(type,ANIMLA_TYPE_MANNUM) ? Double(t.bloodAnimal[type]) : Double::Zero();
+        default:
+            return Double::Zero();
+        }
     }
     //对象名字
     static std::string getObjectName(I32 sort, I32 type){
@@ -323,10 +585,14 @@ class ObjectBaseValue{
     }
     //基础移动速度，单位：细节坐标/秒
     static Double getBasicSpeed(I32 sort,I32 type){
+        //投掷物没有 UnitValue 表，速度单独一张表（否则恒为 0，箭飞不出去）
+        if(sort==SORT_MISSILE){
+            return inRange(type,NUMBER_MISSILE) ? Double(MissileSpeed[type]) : Double::Zero();
+        }
         const UnitValue* value=findUnitValue(sort,type);
         return value==nullptr ? Double::Zero() : Double(value->speed);
     }
-    //基础资源最大值
+    //基础资源最大基础值
     static Double getResourceBasicMaxCnt(I32 sort,I32 type){
         switch(sort){
         case SORT_STATICRES:{
@@ -359,9 +625,10 @@ class ObjectBaseValue{
         }
     }
     //资源腐烂速度
+    //未填数值
     static Double getResourceDecayRate(I32 sort,I32 type){
         switch(sort){
-        case SORT_STATICRES:{
+        /*case SORT_STATICRES:{
             switch (type){
             case STATICRES_Bush:return Double::Zero();
             case STATICRES_Stone:return Double::Zero();
@@ -369,7 +636,7 @@ class ObjectBaseValue{
             case STATICRES_Fish:return Double::Zero();
             default:return Double::Zero();
         }
-        }
+        }*/
         case SORT_ANIMAL:{
             switch (type){
             case ANIMAL_TREE:return Double::Zero();
@@ -380,17 +647,17 @@ class ObjectBaseValue{
             default:return Double::Zero();
             }
         }
-        case SORT_BUILDING:
+        /*case SORT_BUILDING:
         case SORT_BUILDING_RESOURCE:{
             switch (type){
             case BUILDING_FARM:return Double::Zero();
             default:return Double::Zero();
             }
-        }
+        }*/
         default:return Double::Zero();
         }
     }
-    //农民采集最大量
+    //农民采集最大基础量
     static Double getFarmerBasicCollectMax(I32 sort,I32 type){
         switch(sort){
         case SORT_STATICRES:{
@@ -403,14 +670,7 @@ class ObjectBaseValue{
         }
         }
         case SORT_ANIMAL:{
-            switch (type){
-            case ANIMAL_TREE:return 10;
-            case ANIMAL_GAZELLE:return 10;
-            case ANIMAL_ELEPHANT:return 10;
-            case ANIMAL_LION:return 10;
-            case ANIMAL_ALLIGATOR:return 10;
-            default:return Double::Zero();
-            }
+            return 10;
         }
         case SORT_BUILDING:
         case SORT_BUILDING_RESOURCE:{
@@ -462,23 +722,41 @@ class ObjectBaseValue{
     }
     //基础攻击力 first=近战,second=远程
     static std::pair<Double,Double> getBasicAttack(I32 sort,I32 type){
+        //建筑只有远程攻击（目前只有箭塔/炮塔有值） 不考虑农田
+        if(sort==SORT_BUILDING){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return std::make_pair(Double::Zero(),value==nullptr?Double::Zero():Double(value->attackShoot));
+        }
         const UnitValue* value=findUnitValue(sort,type);
         if(value==nullptr)return std::make_pair(Double::Zero(),Double::Zero());
         return std::make_pair(Double(value->attackClose),Double(value->attackShoot));
     }
     //基础攻击范围 first=范围伤害影响的范围,second=攻击范围（单位：区块）
     static std::pair<I32,I32> getBasicAttackRange(I32 sort,I32 type){
+        if(sort==SORT_BUILDING){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return value==nullptr ? std::make_pair(0,0) : std::make_pair(value->splash,value->attackRange);
+        }
         const UnitValue* value=findUnitValue(sort,type);
         if(value==nullptr)return std::make_pair(0,0);
         return std::make_pair(value->splash,value->attackRange);
     }
     //基础攻击间隔（单位：帧）
     static I32 getAttackInterval(I32 sort,I32 type){
+        if(sort==SORT_BUILDING){
+            const BuildingAttackValue* value=findBuildingAttackValue(type);
+            return value==nullptr ? 0 : value->attackTicks;
+        }
         const UnitValue* value=findUnitValue(sort,type);
         return value==nullptr ? 0 : value->attackTicks;
     }
     //碰撞盒 first=碰撞盒类型(CrashBoxType),second=碰撞盒尺寸（圆形为半径，矩形为边长，单位：细节坐标）
     static pair<I32,I32> getCrashBox(I32 sort,I32 type){
+        //静态资源占 1×1 区块，按矩形碰撞盒处理（detail_pos 当作左上角）。
+        //不这样做的话会落到下面的「圆形半径 0」，等于资源完全不挡路。
+        if(sort==SORT_STATICRES){
+            return std::make_pair(static_cast<I32>(BOX_RECT),StaticResCrashSide);
+        }
         if(sort==SORT_BUILDING || sort==SORT_BUILDING_RESOURCE){
             const BuildingValue* value=findBuildingValue(type);
             if(value==nullptr)return std::make_pair(static_cast<I32>(BOX_RECT),0);

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <set>
 #include "Server/core/BaseObject/Army.h"
 #include "Server/core/BaseObject/Farmer.h"
 #include "Server/core/BaseObject/BuildingResource.h"
@@ -19,9 +18,6 @@ public:
     BuildingResource*   newBuildingResource(I32 type , IVec2 blockPos, WeakPtr<Development> playerScience,I32 Percent);
     Missile*            newMissile(I32 type, WeakPtr<Object> attacker , WeakPtr<Object> attackee,WeakPtr<Development> playerScience,I32 attack);
     //获取对象
-    //注意：资源型建筑（农田等，Sort 为 SORT_BUILDING_RESOURCE）只存在于
-    //buildingResources 中，不会出现在 buildings 里。需要遍历玩家全部建筑时，
-    //必须同时访问 getBuilding() 与 getBuildingResource()。
     vector<SafePtr<Army>>&              getArmy();
     vector<SafePtr<Farmer>>&            getFarmer();
     vector<SafePtr<Building>>&          getBuilding();
@@ -40,7 +36,12 @@ public:
     bool changeResource(I32 resourceSort, I32 changeAmount);        //增减一种资源的量
     bool changeResource(I32 changeWoodAmount, I32 changeFoodAmount, I32 changeStoneAmount, I32 changeGoldAmount); //增减所有资源的量(时候同时增减多种资源，不需要增减的资源填0即可)
     //接收敌对阵营的对象，并将其编入我方阵营（用于该对象被我方祭司转换的情况）
-    //转化后对象的科技会改为跟随本玩家的 playerScience，不再保留原阵营的科技快照。
+    //转化后对象的科技会改为跟随本玩家的 playerScience，并立即按我方科技重算数值。
+    //
+    //【调用约定】调用方必须先调原玩家的 removeXXX 把对象摘掉，再调这里的 receiveXXX。
+    //Player 之间互不可见，无法自己从对方容器里删除；不先摘除会让同一对象同时挂在
+    //两个玩家的容器里，双方都会刷新它，删除时也各删各的。
+    //注意：资源型建筑（农田）只能走 receiveBuildingResource，传给 receiveBuilding 会被拒绝。
     bool receiveBuilding(SafePtr<Building> building);
     bool receiveArmy(SafePtr<Army> army);
     bool receiveFarmer(SafePtr<Farmer> farmer);
@@ -48,8 +49,6 @@ public:
     //本玩家的科技（由第一次 newXXX 时传入的 Development 记录，只读）
     WeakPtr<Development> getPlayerScience() const;
     //内核通知：某个建筑动作已成功完成。
-    //科技/解锁类动作会让本玩家所有对象的缓存数值（血量、攻防、射程等）失效，
-    //这里统一按新科技重算一遍；与科技无关的动作（比如造人）直接忽略。
     //注意：内核应先让 Development 更新完科技状态，再调用本函数，否则重算到的还是旧值。
     void notifyBuildingActionFinish(WeakPtr<Object> object, I32 action);
     void tick();
@@ -58,8 +57,7 @@ private:
     I32 civilization;
     I32 teamID;
     I32 playerID;
-    //玩家科技。newArmy/newFarmer/... 会传入 Development，第一次拿到时记下来，
-    //供转化敌方单位等场合把对象的科技指向本玩家。
+    //玩家科技
     WeakPtr<Development> playerScience;
     //玩家资源信息
     array<I32,4> ResourceGroup;                    //玩家所持有的资源量，顺序为木材，粮食，石头，黄金。
@@ -69,15 +67,37 @@ private:
     vector<SafePtr<Building>>           buildings;
     vector<SafePtr<BuildingResource>>   buildingResources;
     vector<SafePtr<Missile>>            missiles;
-    //已经完成过的科技/解锁类建筑动作，用来判断新建对象该给到哪一级
-    std::set<I32>                       finishedActions;
     //记录本玩家的 Development：只存第一次传入的，后续重复传入不会覆盖。
     void rememberPlayerScience(WeakPtr<Development> science);
     //科技变化后，把本玩家名下需要跟随科技的对象的缓存数值重算一遍
     //（只有 Army / Farmer / Building；投掷物和农田按建成时的科技定格）。
     void refreshAllObjectScience();
-    //把场上属于「升级前那一级」的对象整体升到新一级（如棍棒兵→斧兵）
-    void upgradeObjectsForAction(I32 action);
-    //按已完成科技把请求的类型抬到实际可用的最高级别；已经是高级别的不会被降级。
-    I32 resolveCreateType(I32 sort, I32 type) const;
+protected:
+    I32 ObjectCanImprove(I32 sort,I32 type);
+    // __OBJECTREALLYTYPE__[code]：某个升级槽位目前已经升到的级别。
+    // 初值必须是该槽位的「底层类型」，redirectObjectType 靠
+    // __OBJECTREALLYTYPE__[code] <= type 判断有没有升过级。
+    // 编号分配：兵种/农民 0~13，箭塔 20，城墙 21（建筑与兵种不共用槽位）。
+    static const I32 __OBJECTREALLYTYPE_SIZE__ = 22;
+    I32 __OBJECTREALLYTYPE__[__OBJECTREALLYTYPE_SIZE__]={
+        FARMERTYPE_SMALL_SAILING,   //0  渔船链
+        FARMERTYPE_SMALL_TRADE_BOAT,//1  商船链
+        FARMERTYPE_LIGHT_TRANSPORT, //2  运输船链
+        AT_CLUBMAN,                 //3  棍棒兵链
+        AT_SHORT_SWORDSMAN,         //4  短剑兵链
+        AT_IMPROVED_BOWMAN,         //5  强弓兵链
+        AT_HORSE_ARCHER,            //6  弓骑兵链
+        AT_CAVALRY,                 //7  骑兵链
+        AT_CHARIOT,                 //8  战车链
+        AT_WAR_ELEPHANT,            //9  战象链
+        AT_STONE_THROWER,           //10 投石车链
+        AT_BALLISTA,                //11 弩炮链
+        AT_SCOUT_SHIP,              //12 战船链
+        AT_HOPLITE,                 //13 方阵兵链
+        0,0,0,0,0,0,                //14~19 预留
+        BUILDING_WATCH_TOWER,       //20 箭塔链
+        BUILDING_SMALL_WALL         //21 城墙链
+    };
+    I32 redirectObjectType(I32 sort,I32 type);
+    void changeObjectType(I32 sort,I32 code);
 };

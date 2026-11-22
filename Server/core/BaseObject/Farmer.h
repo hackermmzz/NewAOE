@@ -7,12 +7,11 @@ using namespace std;
 class Farmer:public Human
 {
 public:
-	I32 resource;		                      //当前持有的资源数量
-	I32 resourceMax;	                    //可以持有的资源最大数量
-	I32 resourceSort;	                    //资源类型
-	I32 quantity_GatherOnce;		          //资源采摘速度
-	vector<SafePtr<Human>>humanTransport;	//运输的人
-  //I32 TransportMax;	                    //运输的人数上限	
+	  I32 resource;		                      //当前持有的资源数量
+	  I32 resourceMax;	                    //基础携带量（不含科技加成，实际上限见 getResourceHaveMax）
+	  I32 resourceSort;	                    //资源类型
+	  I32 quantity_GatherOnce;		          //资源采摘速度
+	  vector<SafePtr<Human>>humanTransport;	//运输的人
 public:
     Farmer(IVec2 detailPos , WeakPtr<Development> playerScience,I32 type);
     I32 getResourceNowHave();           //获取当前持有的资源数量
@@ -23,5 +22,6 @@ public:
     bool isFullBackpack();              //是否采摘满了
     I32 getTransportMax();              //获取运输的人数上限
     void addResource(I32 quantity,I32 resourceSort);      //增加手持的资源
-    void transportHuman(SafePtr<Human> human);            //运输人员
+    void transportHuman(SafePtr<Human> human);            //运输人员（有容量上限）
+    void releasePassengers();                             //卸载全部乘客（船被击沉/手动卸载时调用）
   };

@@ -16,7 +16,7 @@ enum ARMYTYPE{
     //靶场生产
     AT_BOWMAN,              // 弓箭兵
 
-    AT_IMPROVED_BOWMAN,     // 强弓兵
+    AT_IMPROVED_BOWMAN,     // 改良弓兵
     AT_COMPOSITE_BOWMAN,    // 复合弓兵
 
     AT_HORSE_ARCHER,        // 弓骑兵
@@ -24,7 +24,7 @@ enum ARMYTYPE{
     
     AT_ELEPHANT_ARCHER,     // 象弓兵
     
-    AT_CHARIOT_ARCHER,      // 战车弓箭手
+    AT_CHARIOT_ARCHER,      // 战车弓兵
 
     //马厩生产
     AT_SCOUT,               //侦察骑兵
@@ -54,7 +54,7 @@ enum ARMYTYPE{
     
     AT_CATAPULT_TRIREME,    // 无敌战船
     
-    AT_FIRESAILBOAT,        //火帆船
+    AT_FIRESAILBOAT,        // 火帆船
     //学院生产
     AT_HOPLITE,             // 方阵兵
     AT_PHALANX,             // 十夫长
