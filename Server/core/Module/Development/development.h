@@ -4,7 +4,6 @@
 
 #include "Server/core/type.h"
 #include "Server/core/BaseObject/WeakPointer.hpp"
-// 真实的数据头文件路径
 #include "Server/core/Public/config/unit_attribute.h"
 #include "Server/core/Public/var/Army.h"
 #include "Server/core/Public/var/Civilization.h"
